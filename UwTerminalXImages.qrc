@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/EmptyCircle.png</file>
+        <file>images/GreenCircle.png</file>
+        <file>images/RedCircle.png</file>
+        <file>images/UwTerminal16.ico</file>
+        <file>images/UwTerminal32.ico</file>
+    </qresource>
+</RCC>
