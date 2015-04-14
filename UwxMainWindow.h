@@ -136,7 +136,7 @@ private slots:
     void on_btn_Duplicate_clicked
     (
     );
-    void on_text_TermData_customContextMenuRequested
+    void on_text_TermEditData_customContextMenuRequested
     (
     const QPoint &pos
     );
@@ -178,10 +178,6 @@ private slots:
     int index
     );
     void PollUSB();
-    void on_check_ShowHex_stateChanged
-    (
-    int arg1
-    );
 #ifdef OnlineXComp
     void replyFinished
     (

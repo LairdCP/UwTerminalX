@@ -39,9 +39,6 @@
 #endif
 
 /*
- * TODO: Load BASIC needs to load one line at a time and wait for response code (wolverine)
- * TODO: Make hex display like a hex editor
- * TODO: Disable resize of input entry?
  * TODO: Mac fonts look stupid for XCompile window and device serial number
  * TODO: Change input background/text colours?
  * Mode = 6/7 is for downloading files... 6 for File, 7 for File+? OR remove file+ and mode 7. ATTACH to menu
@@ -50,13 +47,12 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define Version "0.82b alpha" //Version string
+#define Version "0.85 alpha with Youssif's text idea" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
-//#define StaticBuild //Set if this is a build with a static Qt (& thus INTERNAL ONLY!)
 
-//
+//Defines for various file download functions
 #define MODE_COMPILE 1
 #define MODE_COMPILE_LOAD 2
 #define MODE_COMPILE_LOAD_RUN 3
@@ -95,6 +91,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gstrMacBundlePath = BundleDir.path().append("/");
     gpTermSettings = new QSettings(QString(gstrMacBundlePath).append("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
     gpErrorMessages = new QSettings(QString(gstrMacBundlePath).append("codes.csv"), QSettings::IniFormat); //Handle to error codes
+
+    //Fix mac's resize
+    resize(660, 360);
 #else
     //Open files in same directory
     gpTermSettings = new QSettings(QString("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
@@ -123,7 +122,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Disable redo/undo in read only terminal data and clear display buffer byte array.
     gbaDisplayBuffer.clear();
-    ui->text_TermData->setUndoRedoEnabled(false);
 
     //Check settings
 #if TARGET_OS_MAC
@@ -151,10 +149,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Move to 'About' tab
     ui->selector_Tab->setCurrentIndex(2);
 
-#ifdef QT_DEBUG
-    qDebug() << "Debug build started!";
-#endif
-
     //Set default values for combo boxes on 'Config' tab
     ui->combo_Baud->setCurrentIndex(8);
     ui->combo_Stop->setCurrentIndex(0);
@@ -181,7 +175,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->label_AboutI3->setPixmap(*gpGreenCirclePixmap);
 
     //Enable custom context menu policy
-    ui->text_TermData->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->text_TermEditData->setContextMenuPolicy(Qt::CustomContextMenu);
 
     //Connect process termination to signal
     connect(&gprocCompileProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(process_finished(int, QProcess::ExitStatus)));
@@ -208,19 +202,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifdef QT_DEBUG
     .append(" [DEBUG BUILD]")
 #endif
-#ifdef StaticBuild
-    .append(" [INTERNAL STATIC BUILD - DO NOT DISTRIBUTE!]")
-#endif
     );
-    MainWindow::setWindowTitle(QString("UwTerminalX (v").append(Version).append(")")
-#ifdef StaticBuild
-    .append(" [INTERNAL STATIC BUILD - DO NOT DISTRIBUTE!]")
-#endif
-    );
-
-#ifdef StaticBuild
-    ui->text_Terms->setPlainText(QString("THIS IS A QT STATIC BUILD AND IS NOT FOR DISTRIBUTION/ANYONE OUTSIDE OF LAIRD!\r\n\r\n").append(ui->text_Terms->toPlainText()));
-#endif
+    MainWindow::setWindowTitle(QString("UwTerminalX (v").append(Version).append(")"));
 
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
@@ -348,11 +331,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             {
                 //Off
                 ui->check_Line->setChecked(false);
+                on_check_Line_stateChanged();
             }
             else if (slArgs[chi].right(1) == "1")
             {
                 //On (default)
                 ui->check_Line->setChecked(true);
+                on_check_Line_stateChanged();
             }
         }
         else if (slArgs[chi] == "LOG")
@@ -834,8 +819,7 @@ MainWindow::on_btn_TermClear_clicked
     )
 {
     //Clears the screen of the terminal tab
-    gbaDisplayBuffer.clear();
-    ui->text_TermData->setPlainText("");
+    ui->text_TermEditData->ClearText();
 }
 
 //=============================================================================
@@ -985,7 +969,8 @@ MainWindow::readData
                         gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
 #elif TARGET_OS_MAC
                         //Mac
-                        gprocCompileProcess.start(QFile::exists(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
+                        gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
+                        //gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3), QStringList(gstrTermFilename));
 #else
                         //Assume linux
 //                      gprocCompileProcess.start(QString("wine"), QStringList(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe"))<<gstrTermFilename);
@@ -1133,13 +1118,13 @@ MainWindow::readData
 //=============================================================================
 //=============================================================================
 void
-    MainWindow::on_text_TermData_customContextMenuRequested
+    MainWindow::on_text_TermEditData_customContextMenuRequested
     (
     const QPoint &pos
     )
 {
     //Creates the custom context menu
-    gpMenu->popup(ui->text_TermData->viewport()->mapToGlobal(pos));
+    gpMenu->popup(ui->text_TermEditData->viewport()->mapToGlobal(pos));
 }
 
 void
@@ -1200,7 +1185,7 @@ MainWindow::triggered
     {
         //Shows a meaning for the error code selected (number in hex)
         bool bTmpBool;
-        unsigned int ErrCode = QString("0x").append(ui->text_TermData->textCursor().selection().toPlainText()).toUInt(&bTmpBool, 16);
+        unsigned int ErrCode = QString("0x").append(ui->text_TermEditData->textCursor().selection().toPlainText()).toUInt(&bTmpBool, 16);
         if (bTmpBool == true)
         {
             //Converted
@@ -1210,7 +1195,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Lookup Selected Error-Code (Int)")
     {
         //Shows a meaning for the error code selected (number as int)
-        MainWindow::LookupErrorCode(ui->text_TermData->textCursor().selection().toPlainText().toInt());
+        MainWindow::LookupErrorCode(ui->text_TermEditData->textCursor().selection().toPlainText().toInt());
     }
     else if (qaAction->text() == "Enable Loopback (Rx->Tx)" || qaAction->text() == "Disable Loopback (Rx->Tx)")
     {
@@ -1379,10 +1364,10 @@ MainWindow::triggered
     {
         //Change font
         bool bTmpBool;
-        QFont fTmpFont = QFontDialog::getFont(&bTmpBool, ui->text_TermData->font(), this);
+        QFont fTmpFont = QFontDialog::getFont(&bTmpBool, ui->text_TermEditData->font(), this);
         if (bTmpBool == true)
         {
-            ui->text_TermData->setFont(fTmpFont);
+            ui->text_TermEditData->setFont(fTmpFont);
         }
     }
     else if (qaAction->text() == "Run")
@@ -1472,8 +1457,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Clear Display")
     {
         //Clear display
-        gbaDisplayBuffer.clear();
-        ui->text_TermData->setPlainText("");
+        ui->text_TermEditData->ClearText();
     }
     else if (qaAction->text() == "Clear RX/TX count")
     {
@@ -1486,17 +1470,17 @@ MainWindow::triggered
     else if (qaAction->text() == "Copy")
     {
         //Copy selected data
-        QApplication::clipboard()->setText(ui->text_TermData->textCursor().selection().toPlainText());
+        QApplication::clipboard()->setText(ui->text_TermEditData->textCursor().selection().toPlainText());
     }
     else if (qaAction->text() == "Copy All")
     {
         //Copy all data
-        QApplication::clipboard()->setText(ui->text_TermData->toPlainText());
+        QApplication::clipboard()->setText(ui->text_TermEditData->toPlainText());
     }
     else if (qaAction->text() == "Select All")
     {
         //Select all text
-        ui->text_TermData->selectAll();
+        ui->text_TermEditData->selectAll();
     }
 }
 
@@ -1532,10 +1516,10 @@ MainWindow::EnterPressed
     //Enter pressed in line mode
     if (gspSerialPort.isOpen() == true && gbTermBusy == false && gbLoopbackMode == false)
     {
-        QByteArray baTmpBA = ui->text_TermEditData->toPlainText().replace("\n", "").replace("\r", "").toUtf8();
+        QByteArray baTmpBA = ui->text_TermEditData->GetText().replace("\n", "").replace("\r", "").toUtf8();
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
-        if (ui->check_Echo->isChecked() == true)
+        /*if (ui->check_Echo->isChecked() == true)
         {
             baTmpBA = ui->text_TermEditData->toPlainText().toUtf8();
             if (ui->check_ShowCLRF->isChecked() == true)
@@ -1550,9 +1534,9 @@ MainWindow::EnterPressed
             {
                 gtmrTextUpdateTimer.start();
             }
-        }
-        gpMainLog->WriteLogData(ui->text_TermEditData->toPlainText().append("\n"));
-        ui->text_TermEditData->setPlainText("");
+        }*/
+        //gpMainLog->WriteLogData(ui->text_TermEditData->GetText().append("\n"));
+        //ui->text_TermEditData->setPlainText("");
         MainWindow::DoLineEnd();
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
@@ -1564,6 +1548,8 @@ MainWindow::EnterPressed
             gtmrTextUpdateTimer.start();
         }
     }
+ui->text_TermEditData->AddText(ui->text_TermEditData->GetText());
+                            ui->text_TermEditData->ClearText2();
 }
 
 //=============================================================================
@@ -1698,7 +1684,7 @@ MainWindow::KeyPressed
             }
             else
             {
-                if (ui->check_ShowCLRF->isChecked() == true)
+                /*if (ui->check_ShowCLRF->isChecked() == true)
                 {
                     //Escape \t, \r and \n in addition to normal escaping
                     gbaDisplayBuffer.append(QString(QChar(intKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
@@ -1707,7 +1693,7 @@ MainWindow::KeyPressed
                 {
                     //Normal escaping
                     gbaDisplayBuffer.append(QString(QChar(intKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                }
+                }*/
             }
             if (!gtmrTextUpdateTimer.isActive())
             {
@@ -1989,6 +1975,9 @@ MainWindow::OpenSerial
         //Notify automation form
         mAutomation->ConnectionChange(true);
 
+        //Notify scroll edit
+        ui->text_TermEditData->SetSerialOpen(true);
+
         //Set focus to input text edit
         ui->text_TermEditData->setFocus();
 
@@ -2000,6 +1989,16 @@ MainWindow::OpenSerial
         //Error whilst opening
         ui->statusBar->showMessage("Error: ");
         ui->statusBar->showMessage(ui->statusBar->currentMessage().append(gspSerialPort.errorString()));
+
+        QString strMessage = tr("Error whilst attempting to open the serial device: ").append(gspSerialPort.errorString()).append("\n\nIf the serial port is open in another application, please close the other application")
+#if !defined(_WIN32) && !defined( __APPLE__)
+        .append(", please also ensure you have been granted permission to the serial device in /dev/")
+#endif
+        .append(" and try again.");
+        ;
+        mForm->show();
+        mForm->SetMessage(&strMessage);
+        ui->text_TermEditData->SetSerialOpen(false);
     }
 }
 
@@ -2169,6 +2168,7 @@ MainWindow::SerialError
         QString strMessage = tr("Fatal error with serial connection.\nPlease reconnect to the device to continue.");
         mForm->show();
         mForm->SetMessage(&strMessage);
+        ui->text_TermEditData->SetSerialOpen(false);
 
         //Disable timer
         gpSignalTimer->stop();
@@ -2319,7 +2319,7 @@ MainWindow::LookupErrorCode
     //Looks up an error code and outputs it in the edit (does NOT store it to the log)
     gbaDisplayBuffer.append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString().append("\n"));
     gtmrTextUpdateTimer.start();
-    ui->text_TermData->moveCursor(QTextCursor::End);
+    ui->text_TermEditData->moveCursor(QTextCursor::End);
 }
 
 //=============================================================================
@@ -2520,7 +2520,7 @@ MainWindow::UpdateReceiveText
     )
 {
     //Updates the receive text buffer, faster
-    unsigned int Pos;
+/*    unsigned int Pos;
     if (ui->text_TermData->verticalScrollBar()->sliderPosition() == ui->text_TermData->verticalScrollBar()->maximum())
     {
         //Scroll to bottom
@@ -2548,7 +2548,8 @@ MainWindow::UpdateReceiveText
     else
     {
         //Display as text
-        ui->text_TermData->setPlainText(QString(gbaDisplayBuffer));
+        ui->text_TermEditData->AddText(QString(gbaDisplayBuffer));
+        gbaDisplayBuffer.clear();
     }
 
     if (Pos == 65535)
@@ -2561,7 +2562,9 @@ MainWindow::UpdateReceiveText
         //Maintain
         ui->text_TermData->verticalScrollBar()->setValue(Pos);
     }
-    ui->text_TermData->setUpdatesEnabled(true);
+    ui->text_TermData->setUpdatesEnabled(true);*/
+    ui->text_TermEditData->AddText(QString(gbaDisplayBuffer));
+    gbaDisplayBuffer.clear();
 }
 
 //=============================================================================
@@ -2886,18 +2889,6 @@ MainWindow::replyFinished
     }
 }
 #endif
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_check_ShowHex_stateChanged
-    (
-    int arg1
-    )
-{
-    //Show text/hex data
-    UpdateReceiveText();
-}
 
 /******************************************************************************/
 // END OF FILE
