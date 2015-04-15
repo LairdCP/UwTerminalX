@@ -45,15 +45,15 @@ LrdLogger::~LrdLogger
 unsigned char
 LrdLogger::OpenLogFile
     (
-    QString Filename
+    QString strFilename
     )
 {
     //Opens the log file specified
-    bool NewFile = QFile::exists(Filename);
+    bool bNewFile = QFile::exists(strFilename);
     if (mbLogOpen == false)
     {
         //Open log file
-        mpLogFile = new QFile(Filename);
+        mpLogFile = new QFile(strFilename);
         if (!mpLogFile->open(QIODevice::Append | QIODevice::Text))
         {
             //Unable to open file
@@ -61,7 +61,7 @@ LrdLogger::OpenLogFile
         }
         mpStreamOut = new QTextStream(mpLogFile);
         mpStreamOut->setCodec("UTF-8");
-        if (NewFile == false)
+        if (bNewFile == false)
         {
             //Create UTF8 header
             mpStreamOut->setGenerateByteOrderMark(true);
@@ -104,13 +104,14 @@ LrdLogger::CloseLogFile
 unsigned char
 LrdLogger::WriteLogData
     (
-    QString Data
+    QString strData
     )
 {
     //Writes a line to the log file
-    *mpStreamOut << Data.toUtf8();
+    *mpStreamOut << strData.toUtf8();
+#ifdef FLUSHDATAONWRITE
     mpStreamOut->flush();
-//    mpLogFile->write(Data.toUtf8());
+#endif
     return LOG_OK;
 }
 
@@ -119,13 +120,14 @@ LrdLogger::WriteLogData
 unsigned char
 LrdLogger::WriteRawLogData
     (
-    QByteArray Data
+    QByteArray baData
     )
 {
     //Writes raw data to the log file
-    *mpStreamOut << Data;
+    *mpStreamOut << baData;
+#ifdef FLUSHDATAONWRITE
     mpStreamOut->flush();
-//    mpLogFile->write(Data.toUtf8());
+#endif
     return LOG_OK;
 }
 

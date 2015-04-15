@@ -38,38 +38,13 @@
     #define OS "Linux"
 #endif
 
-/*
- * TODO: Mac fonts look stupid for XCompile window and device serial number
- * TODO: Change input background/text colours?
- * Mode = 6/7 is for downloading files... 6 for File, 7 for File+? OR remove file+ and mode 7. ATTACH to menu
- */
-
-/******************************************************************************/
-// Defines
-/******************************************************************************/
-#define Version "0.85 alpha with Youssif's text idea" //Version string
-#define FileReadBlock 512 //Number of bytes to read per block when streaming files
-#define StreamProgress 10000 //Number of bytes between streaming progress updates
-#define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
-
-//Defines for various file download functions
-#define MODE_COMPILE 1
-#define MODE_COMPILE_LOAD 2
-#define MODE_COMPILE_LOAD_RUN 3
-#define MODE_LOAD 4
-#define MODE_LOAD_RUN 5
-#define MODE_SERVER_COMPILE 9
-#define MODE_SERVER_COMPILE_LOAD 10
-#define MODE_SERVER_COMPILE_LOAD_RUN 11
-
 /******************************************************************************/
 // Global/Static Variable Declarations
 /******************************************************************************/
-PopupMessage *mForm; //Error message form
-UwxAutomation *mAutomation; //Automation form
+PopupMessage *gpmErrorForm; //Error message form
+UwxAutomation *guaAutomationForm; //Automation form
 
 //gchTermMode:
-//??:
 //6 = download file?
 //7 = download file+?
 //8 = ?
@@ -189,21 +164,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->text_TermEditData, SIGNAL(KeyPressed(int)), this, SLOT(KeyPressed(int)));
 
     //Initialise popup message
-    mForm = new PopupMessage;
+    gpmErrorForm = new PopupMessage;
 
     //Initialise automation popup
-    mAutomation = new UwxAutomation;
+    guaAutomationForm = new UwxAutomation;
 
     //Populate the list of devices
     MainWindow::RefreshSerialDevices();
 
     //Display version
-    ui->statusBar->showMessage(QString("UwTerminalX version ").append(Version).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
+    ui->statusBar->showMessage(QString("UwTerminalX version ").append(UwVersion).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
 #ifdef QT_DEBUG
     .append(" [DEBUG BUILD]")
 #endif
     );
-    MainWindow::setWindowTitle(QString("UwTerminalX (v").append(Version).append(")"));
+    MainWindow::setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
 
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
@@ -381,8 +356,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             {
                 //Log not writeable
                 QString strMessage = tr("Error whilst opening log:\nPlease ensure you have access to the log file ").append(slArgs[chi].mid(4, -1)).append(" and have enough free space on your hard drive.");
-                mForm->show();
-                mForm->SetMessage(&strMessage);
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
             }
             bLoggerOpened = true;
         }
@@ -425,8 +400,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             {
                 //Log not writeable
                 QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(gpTermSettings->value("LogFile").toString()).append(" and have enough free space on your hard drive.");
-                mForm->show();
-                mForm->SetMessage(&strMessage);
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
             }
         }
     }
@@ -495,8 +470,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(&gspSerialPort, SIGNAL(bytesWritten(qint64)), this, SLOT(SerialBytesWritten(qint64)));
 
     //Populate window handles for automation object
-    mAutomation->SetPopupHandle(mForm);
-    mAutomation->SetMainHandle(this);
+    guaAutomationForm->SetPopupHandle(gpmErrorForm);
+    guaAutomationForm->SetMainHandle(this);
 
     //Set update text display timer to be single shot only and connect to slot
     gtmrTextUpdateTimer.setSingleShot(true);
@@ -580,15 +555,15 @@ MainWindow::~MainWindow()
     }
 
     //Close popups if open
-    if (mForm->isVisible())
+    if (gpmErrorForm->isVisible())
     {
         //Close warning message
-        mForm->close();
+        gpmErrorForm->close();
     }
-    if (mAutomation->isVisible())
+    if (guaAutomationForm->isVisible())
     {
         //Close automation form
-        mAutomation->close();
+        guaAutomationForm->close();
     }
 
     //Delete system tray object
@@ -623,8 +598,8 @@ MainWindow::~MainWindow()
     delete gpEmptyCirclePixmap;
     delete gpRedCirclePixmap;
     delete gpGreenCirclePixmap;
-    delete mForm;
-    delete mAutomation;
+    delete gpmErrorForm;
+    delete guaAutomationForm;
 #ifdef OnlineXComp
     delete gnmManager;
 #endif
@@ -640,15 +615,15 @@ MainWindow::closeEvent
     )
 {
     //Runs when the form is closed. Close child popups to exit the application
-    if (mForm->isVisible())
+    if (gpmErrorForm->isVisible())
     {
         //Close warning message form
-        mForm->close();
+        gpmErrorForm->close();
     }
-    if (mAutomation->isVisible())
+    if (guaAutomationForm->isVisible())
     {
         //Close automation form
-        mAutomation->close();
+        guaAutomationForm->close();
     }
 }
 
@@ -775,7 +750,7 @@ MainWindow::on_btn_TermClose_clicked
         ui->btn_TermClose->setText("&Open");
 
         //Notify automation form
-        mAutomation->ConnectionChange(false);
+        guaAutomationForm->ConnectionChange(false);
 
         //Disallow file drops
         setAcceptDrops(false);
@@ -819,7 +794,7 @@ MainWindow::on_btn_TermClear_clicked
     )
 {
     //Clears the screen of the terminal tab
-    ui->text_TermEditData->ClearText();
+    ui->text_TermEditData->ClearDatIn();
 }
 
 //=============================================================================
@@ -986,8 +961,8 @@ MainWindow::readData
                         .append(".exe")
 #endif
                         .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").");
-                        mForm->show();
-                        mForm->SetMessage(&strMessage);
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
                         gbTermBusy = false;
                         ui->btn_Cancel->setEnabled(false);
                     }
@@ -1076,8 +1051,8 @@ MainWindow::readData
                     gchTermMode = 0;
                     gchTermMode2 = 0;
                     QString strMessage = tr("Error whilst downloading data to device. If filesystem is full, please restart device with 'atz' and clear the filesystem using 'at&f 1'.\nPlease note this will erase ALL FILES on the device.\n\nReceived: ").append(QString::fromUtf8(baOrigData));
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                     if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"))))
                     {
                         //Remove UWC
@@ -1327,8 +1302,8 @@ MainWindow::triggered
                 {
                     //Unable to open file
                     QString strMessage = tr("Error during file streaming: Access to selected file is denied: ").append(strDataFilename);
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                     return;
                 }
 
@@ -1409,7 +1384,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Automation")
     {
         //Show automation window
-        mAutomation->show();
+        guaAutomationForm->show();
     }
     else if (qaAction->text() == "Batch")
     {
@@ -1427,8 +1402,8 @@ MainWindow::triggered
                 {
                     //Unable to open file
                     QString strMessage = tr("Error during batch streaming: Access to selected file is denied: ").append(strDataFilename);
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                     return;
                 }
 
@@ -1457,7 +1432,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Clear Display")
     {
         //Clear display
-        ui->text_TermEditData->ClearText();
+        ui->text_TermEditData->ClearDatIn();
     }
     else if (qaAction->text() == "Clear RX/TX count")
     {
@@ -1516,7 +1491,7 @@ MainWindow::EnterPressed
     //Enter pressed in line mode
     if (gspSerialPort.isOpen() == true && gbTermBusy == false && gbLoopbackMode == false)
     {
-        QByteArray baTmpBA = ui->text_TermEditData->GetText().replace("\n", "").replace("\r", "").toUtf8();
+        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n", "").replace("\r", "").toUtf8();
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
         /*if (ui->check_Echo->isChecked() == true)
@@ -1535,7 +1510,7 @@ MainWindow::EnterPressed
                 gtmrTextUpdateTimer.start();
             }
         }*/
-        //gpMainLog->WriteLogData(ui->text_TermEditData->GetText().append("\n"));
+        //gpMainLog->WriteLogData(ui->text_TermEditData->GetDatOut().append("\n"));
         //ui->text_TermEditData->setPlainText("");
         MainWindow::DoLineEnd();
     }
@@ -1548,8 +1523,15 @@ MainWindow::EnterPressed
             gtmrTextUpdateTimer.start();
         }
     }
-ui->text_TermEditData->AddText(ui->text_TermEditData->GetText());
-                            ui->text_TermEditData->ClearText2();
+
+    if (ui->check_Echo->isChecked() == true)
+    {
+        //Local echo
+        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->toUtf8();
+        baTmpBA.append("\n");
+        ui->text_TermEditData->AddDatInText(&baTmpBA);
+        ui->text_TermEditData->ClearDatOut();
+    }
 }
 
 //=============================================================================
@@ -1809,8 +1791,8 @@ MainWindow::process_finished
     {
         //Display an error message
         QString strMessage = tr("Error during XCompile:\n").append(gprocCompileProcess.readAllStandardOutput());
-        mForm->show();
-        mForm->SetMessage(&strMessage);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
         ui->btn_Cancel->setEnabled(false);
     }
@@ -1836,8 +1818,8 @@ MainWindow::process_finished
     {
         //Unknown exit reason
         QString strMessage = tr("Err code: ").append(QString::number(intExitCode));
-        mForm->show();
-        mForm->SetMessage(&strMessage);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
         ui->btn_Cancel->setEnabled(false);
     }
@@ -1914,7 +1896,7 @@ MainWindow::OpenSerial
         ui->statusBar->showMessage("");
 
         //Notify automation form
-        mAutomation->ConnectionChange(false);
+        guaAutomationForm->ConnectionChange(false);
 
         //Update images
         MainWindow::UpdateImages();
@@ -1973,7 +1955,7 @@ MainWindow::OpenSerial
         gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", "50").toUInt());
 
         //Notify automation form
-        mAutomation->ConnectionChange(true);
+        guaAutomationForm->ConnectionChange(true);
 
         //Notify scroll edit
         ui->text_TermEditData->SetSerialOpen(true);
@@ -1996,8 +1978,8 @@ MainWindow::OpenSerial
 #endif
         .append(" and try again.");
         ;
-        mForm->show();
-        mForm->SetMessage(&strMessage);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
         ui->text_TermEditData->SetSerialOpen(false);
     }
 }
@@ -2016,8 +1998,8 @@ MainWindow::LoadFile
     {
         //Unable to open file
         QString strMessage = tr("Error during XCompile: Access to selected file is denied: ").append((bToUWC ? (gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")) : gstrTermFilename));
-        mForm->show();
-        mForm->SetMessage(&strMessage);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
         ui->btn_Cancel->setEnabled(false);
         return;
@@ -2155,19 +2137,17 @@ MainWindow::SerialError
     else if (speErrorCode == QSerialPort::ParityError)
     {
         //Parity error
-//TODO - Log this?
     }
     else if (speErrorCode == QSerialPort::FramingError)
     {
         //Framing error
-//TODO - Log this?
     }
     else if (speErrorCode == QSerialPort::ResourceError || speErrorCode == QSerialPort::PermissionError)
     {
         //Resource error or permission error (device unplugged?)
         QString strMessage = tr("Fatal error with serial connection.\nPlease reconnect to the device to continue.");
-        mForm->show();
-        mForm->SetMessage(&strMessage);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
         ui->text_TermEditData->SetSerialOpen(false);
 
         //Disable timer
@@ -2223,10 +2203,10 @@ MainWindow::SerialError
         MainWindow::UpdateImages();
 
         //Notify automation form
-        mAutomation->ConnectionChange(false);
+        guaAutomationForm->ConnectionChange(false);
 
         //Show disconnection balloon
-        if (gbSysTrayEnabled == true && !this->isActiveWindow() && !mForm->isActiveWindow() && !mAutomation->isActiveWindow())
+        if (gbSysTrayEnabled == true && !this->isActiveWindow() && !gpmErrorForm->isActiveWindow() && !guaAutomationForm->isActiveWindow())
         {
             gpSysTray->showMessage(ui->combo_COM->currentText().append(" Removed"), QString("Connection to device ").append(ui->combo_COM->currentText()).append(" has been lost due to disconnection."), QSystemTrayIcon::Critical);
         }
@@ -2251,7 +2231,7 @@ MainWindow::on_btn_Duplicate_clicked
 {
     //Duplicates instance of UwTerminalX
     QProcess DuplicateProcess;
-    DuplicateProcess.startDetached(QCoreApplication::applicationFilePath());
+    DuplicateProcess.startDetached(QCoreApplication::applicationFilePath(), QStringList() << "ACCEPT" << tr("COM=").append(ui->combo_COM->currentText()) << tr("BAUD=").append(ui->combo_Baud->currentText()) << tr("STOP=").append(ui->combo_Stop->currentText()) << tr("DATA=").append(ui->combo_Data->currentText()) << tr("PAR=").append(ui->combo_Parity->currentText()) << tr("FLOW=").append(QString::number(ui->combo_Handshake->currentIndex())) << tr("ENDCHR=").append((ui->radio_LCR->isChecked() == true ? "0" : ui->radio_LLF->isChecked() == true ? "1" : ui->radio_LCRLF->isChecked() == true ? "2" : "3")) << tr("LOCALECHO=").append((ui->check_Echo->isChecked() == true ? "1" : "0")) << tr("LINEMODE=").append((ui->check_Line->isChecked() == true ? "1" : "0")));
 }
 
 //=============================================================================
@@ -2548,7 +2528,7 @@ MainWindow::UpdateReceiveText
     else
     {
         //Display as text
-        ui->text_TermEditData->AddText(QString(gbaDisplayBuffer));
+        ui->text_TermEditData->AddDatInText(QString(gbaDisplayBuffer));
         gbaDisplayBuffer.clear();
     }
 
@@ -2563,7 +2543,7 @@ MainWindow::UpdateReceiveText
         ui->text_TermData->verticalScrollBar()->setValue(Pos);
     }
     ui->text_TermData->setUpdatesEnabled(true);*/
-    ui->text_TermEditData->AddText(QString(gbaDisplayBuffer));
+    ui->text_TermEditData->AddDatInText(&gbaDisplayBuffer);
     gbaDisplayBuffer.clear();
 }
 
@@ -2721,8 +2701,8 @@ MainWindow::replyFinished
             {
                 //Server responded with error
                 QString strMessage = QString("Server responded with error code ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString());
-                mForm->show();
-                mForm->SetMessage(&strMessage);
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
             }
             else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
             {
@@ -2761,24 +2741,24 @@ MainWindow::replyFinished
                 {
                     //Device should be supported but something went wrong...
                     QString strMessage = QString("Unfortunately your device is not supported for online XCompiling.");
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                 }
             }
             else
             {
                 //Unknown response
                 QString strMessage = QString("Server responded with unknown response");
-                mForm->show();
-                mForm->SetMessage(&strMessage);
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
             }
         }
         else
         {
             //Error whilst decoding JSON
             QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(JsonError.errorString());
-            mForm->show();
-            mForm->SetMessage(&strMessage);
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
         }
     }
     else if (gchTermMode2 == MODE_SERVER_COMPILE)
@@ -2799,23 +2779,23 @@ MainWindow::replyFinished
                 {
                     //Error whilst compiling, show results
                     QString strMessage = QString("Failed to compile ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString().append("\r\n").append(JsonObject["Description"].toString()));
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                 }
                 else
                 {
-                    //
+                    //Server responded with error
                     QString strMessage = QString("Server responded with error code ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString());
-                    mForm->show();
-                    mForm->SetMessage(&strMessage);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
                 }
             }
             else
             {
                 //Error whilst decoding JSON
                 QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(JsonData.toBinaryData());
-                mForm->show();
-                mForm->SetMessage(&strMessage);
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
             }
         }
         else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
@@ -2883,8 +2863,8 @@ MainWindow::replyFinished
         {
             //Unknown response
             QString strMessage = tr("Unknown response from server.");
-            mForm->show();
-            mForm->SetMessage(&strMessage);
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
         }
     }
 }

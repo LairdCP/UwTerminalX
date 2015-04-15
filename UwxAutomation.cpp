@@ -68,11 +68,11 @@ UwxAutomation::~UwxAutomation
 void
 UwxAutomation::SetPopupHandle
     (
-    PopupMessage *NewHandle
+    PopupMessage *pmNewHandle
     )
 {
     //Sets the Popup Message handle
-    mFormAuto = NewHandle;
+    mFormAuto = pmNewHandle;
 }
 
 //=============================================================================
@@ -80,11 +80,11 @@ UwxAutomation::SetPopupHandle
 void
 UwxAutomation::SetMainHandle
     (
-    MainWindow *NewHandle
+    MainWindow *mwNewHandle
     )
 {
     //Sets the main window handle
-    mMainAuto = NewHandle;
+    mMainAuto = mwNewHandle;
 }
 
 //=============================================================================
@@ -95,17 +95,17 @@ UwxAutomation::on_btn_Load_clicked
     )
 {
     //Load button clicked
-    QString LoadFile;
-    LoadFile = QFileDialog::getOpenFileName(this, tr("Open Automation File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
-    if (LoadFile != "")
+    QString strLoadFile;
+    strLoadFile = QFileDialog::getOpenFileName(this, tr("Open Automation File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
+    if (strLoadFile != "")
     {
         //We have a file to load!
-        QFile file(LoadFile);
+        QFile file(strLoadFile);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             //Unable to open file
-            QString Message = tr("Error during automation file open: Access to selected file is denied: ").append(LoadFile);
-            mFormAuto->SetMessage(&Message);
+            QString strMessage = tr("Error during automation file open: Access to selected file is denied: ").append(strLoadFile);
+            mFormAuto->SetMessage(&strMessage);
             mFormAuto->show();
             return;
         }
@@ -122,8 +122,8 @@ UwxAutomation::on_btn_Load_clicked
         i = 0;
         while (!file.atEnd())
         {
-            QByteArray ThisLine = file.readLine();
-            mstrAutoItemArray[i] = ThisLine.replace("\r", "").replace("\n", "");
+            QByteArray baThisLine = file.readLine();
+            mstrAutoItemArray[i] = baThisLine.replace("\r", "").replace("\n", "");
             ++i;
             if (i > AutoItemAllow)
             {
@@ -158,18 +158,20 @@ UwxAutomation::on_btn_Save_clicked
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             //Unable to open file
-            QString Message = tr("Error during automation file save: Access to selected file is denied: ").append(strSaveFile);
-            mFormAuto->SetMessage(&Message);
+            QString strMessage = tr("Error during automation file save: Access to selected file is denied: ").append(strSaveFile);
+            mFormAuto->SetMessage(&strMessage);
             mFormAuto->show();
             return;
         }
 
+#ifdef SaveFilesWithUTF8Header
         //Output UTF-8 BOM header
-        QByteArray BOM;
-        BOM[0] = 0xEF;
-        BOM[1] = 0xBB;
-        BOM[2] = 0xBF;
-        file.write(BOM);
+        QByteArray baBOM;
+        baBOM[0] = 0xEF;
+        baBOM[1] = 0xBB;
+        baBOM[2] = 0xBF;
+        file.write(baBOM);
+#endif
 
         //Save the data
         unsigned char i = 0;

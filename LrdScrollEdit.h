@@ -41,22 +41,22 @@ public:
     );
     void insertFromMimeData
     (
-    const QMimeData *src
+    const QMimeData *mdSrc
     );
     void UpdateDisplay
     (
     );
-    void AddText
+    void AddDatInText
     (
-    QString Dat
+    QByteArray *baDat
     );
-    void ClearText
-    (
-    );
-    void ClearText2
+    void ClearDatIn
     (
     );
-    QString GetText
+    void ClearDatOut
+    (
+    );
+    QString *GetDatOut
     (
     );
     void UpdateCursor
@@ -91,9 +91,9 @@ private:
     unsigned char mchPosition; //Current position
     bool mbLineMode; //True enables line mode
     bool mbSerialOpen; //True if serial port is open
-    QString DatIn; //Incoming data (previous commands/received data)
-    QString DatOut; //Outgoing data (user typed keyboard data)
-    unsigned int CurPos; //Current cursor position
+    QString mstrDatIn; //Incoming data (previous commands/received data)
+    QString mstrDatOut; //Outgoing data (user typed keyboard data)
+    unsigned int muintCurPos; //Current cursor position
 };
 
 #endif // LRDSCROLLEDIT_H

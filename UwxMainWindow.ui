@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>648</width>
-    <height>389</height>
+    <height>391</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -80,7 +80,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1056,9 +1056,21 @@
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
                <widget class="QLabel" name="label_SerialInfo">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>300</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
-                  <pointsize>7</pointsize>
+                  <pointsize>8</pointsize>
                  </font>
                 </property>
                 <property name="text">
@@ -1267,10 +1279,10 @@ DATA=n
     [7..8]
 
 PAR=n
-    [0=None;1=Odd;2=Even]
+    [0=None; 1=Odd; 2=Even]
 
 FLOW=n
-    [0=None; 1=Cts/Rts]
+    [0=None; 1=Xon/Xoff; 2=Cts/Rts]
 
 ENDCHR=n
     [line termination character :: 0=CR, 1=LF, 2=CRLF, 3=LFCR]

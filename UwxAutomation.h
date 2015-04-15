@@ -23,7 +23,8 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define AutoItemAllow 40 //Number of items to allow
+#define AutoItemAllow 40        //Number of items in the list to allow
+#define SaveFilesWithUTF8Header //Define to save files with a UTF8 BOM header
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -48,11 +49,11 @@ public:
     ~UwxAutomation();
     void SetPopupHandle
     (
-    PopupMessage *NewHandle
+    PopupMessage *pmNewHandle
     );
     void SetMainHandle
     (
-    MainWindow *NewHandle
+    MainWindow *mwNewHandle
     );
     void ConnectionChange
     (

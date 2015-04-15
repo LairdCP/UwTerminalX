@@ -24,13 +24,13 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
 {
     //Enable an event filter
     installEventFilter(this);
-    mchItems = 0; //Number of items
-    mchPosition = 0; //Current position
-    mbLineMode = true; //True enables line mode
-    mbSerialOpen = false;
-    DatIn = "";
-    DatOut = "";
-    CurPos = 0;
+    mchItems = 0; //Number of items is 0
+    mchPosition = 0; //Current position is 0
+    mbLineMode = true; //Line mode is on by default
+    mbSerialOpen = false; //Serial port is not open by default
+    mstrDatIn = ""; //Data in is an empty string
+    mstrDatOut = ""; //Data out is empty string
+    muintCurPos = 0; //Current cursor position is 0
 }
 
 //=============================================================================
@@ -57,7 +57,7 @@ LrdScrollEdit::eventFilter
                 {
                     mchPosition = mchPosition-1;
                 }
-                DatOut = mstrItemArray[mchPosition];
+                mstrDatOut = mstrItemArray[mchPosition];
                 this->UpdateDisplay();
                 //this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 return true;
@@ -71,7 +71,7 @@ LrdScrollEdit::eventFilter
                 }
                 //this->setPlainText(mstrItemArray[mchPosition]);
                 //this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
-                DatOut = mstrItemArray[mchPosition];
+                mstrDatOut = mstrItemArray[mchPosition];
                 this->UpdateDisplay();
                 return true;
             }
@@ -80,7 +80,7 @@ LrdScrollEdit::eventFilter
                 //Enter pressed
                 if (mbSerialOpen == true)
                 {
-                    if (DatOut != mstrItemArray[mchItems])
+                    if (mstrDatOut != mstrItemArray[mchItems])
                     {
                         //Previous entry is not the same as this entry
                         if (mchItems > (ItemAllow-1))
@@ -95,7 +95,7 @@ LrdScrollEdit::eventFilter
                             mchItems--;
                         }
                         //mstrItemArray[mchItems] = this->toPlainText();
-                        mstrItemArray[mchItems] = DatOut;
+                        mstrItemArray[mchItems] = mstrDatOut;
                         mchItems++;
                         mchPosition = mchItems;
                     }
@@ -110,37 +110,38 @@ LrdScrollEdit::eventFilter
                 if ((keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //delete word
-                    if (DatOut.indexOf(" ") != -1)
+                    if (mstrDatOut.indexOf(" ") != -1)
                     {
-                        DatOut = DatOut.left(DatOut.lastIndexOf(" ")+1);
+                        mstrDatOut = mstrDatOut.left(mstrDatOut.lastIndexOf(" ")+1);
                     }
                     else
                     {
-                        DatOut = "";
+                        mstrDatOut = "";
                     }
                 }
                 else
                 {
                     //delete character
-                    DatOut = DatOut.left(DatOut.length()-1);
-                    if (CurPos > DatOut.length())
+                    mstrDatOut = mstrDatOut.left(mstrDatOut.length()-1);
+                    if (muintCurPos > mstrDatOut.length())
                     {
-                        --CurPos;
+                        --muintCurPos;
                     }
                 }
                 this->UpdateDisplay();
                 return true;
             }
-            else if (keyEvent->key() == Qt::Key_Left)
+#pragma warning("TODO: Add left/right code to Scroll edit")
+/*            else if (keyEvent->key() == Qt::Key_Left)
             {
                 if (keyEvent->modifiers() & Qt::ShiftModifier)
                 {
                     //
                 }
-                else if (CurPos > 0)
+                else if (muintCurPos > 0)
                 {
                     //
-                    --CurPos;
+                    --muintCurPos;
                     this->UpdateCursor();
                 }
                 return true;
@@ -151,12 +152,16 @@ LrdScrollEdit::eventFilter
                 {
                     //
                 }
-                else if (CurPos < DatOut.length())
+                else if (muintCurPos < mstrDatOut.length())
                 {
                     //
-                    ++CurPos;
+                    ++muintCurPos;
                     this->UpdateCursor();
                 }
+                return true;
+            }*/
+            else if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right)
+            {
                 return true;
             }
             else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
@@ -164,11 +169,11 @@ LrdScrollEdit::eventFilter
                 //Add character
                 if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
                 {
-                    DatOut += (keyEvent->key()+32);
+                    mstrDatOut += (keyEvent->key()+32);
                 }
                 else
                 {
-                    DatOut += keyEvent->key();
+                    mstrDatOut += keyEvent->key();
                 }
             }
         }
@@ -188,12 +193,12 @@ LrdScrollEdit::eventFilter
                         if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
                         {
                             //Shift isn't down, lowercase it
-                            //DatOut += keyEvent->key()+32;
+                            //mstrDatOut += keyEvent->key()+32;
                             emit KeyPressed(keyEvent->key()+32);
                         }
                         else
                         {
-                            //DatOut += keyEvent->key();
+                            //mstrDatOut += keyEvent->key();
                             emit KeyPressed(keyEvent->key());
                         }
                         this->UpdateDisplay();
@@ -224,59 +229,73 @@ LrdScrollEdit::SetLineMode
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::AddText(QString Dat)
+void
+LrdScrollEdit::AddDatInText
+    (
+    QByteArray *bDat
+    )
 {
-    DatIn += Dat;
-    if (DatIn.length() == Dat.length() && (Dat[0] == '\r' || Dat[0] == '\n'))
+    mstrDatIn += QString(*bDat);
+    if (mstrDatIn.length() == bDat->length() && (bDat[0] == "\r" || bDat[0] == "\n"))
     {
-        DatIn.remove(0, 1);
+        mstrDatIn.remove(0, 1);
     }
     this->UpdateDisplay();
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::ClearText()
+void
+LrdScrollEdit::ClearDatIn
+    (
+    )
 {
-    DatIn.clear();
+    mstrDatIn.clear();
     this->UpdateDisplay();
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::ClearText2()
+void
+LrdScrollEdit::ClearDatOut
+    (
+    )
 {
-    DatOut.clear();
+    mstrDatOut.clear();
     this->UpdateDisplay();
 }
 
-
-
-/* NEW FUNCTIONS BELOW */
-
-
-
 //=============================================================================
 //=============================================================================
-QString LrdScrollEdit::GetText()
+QString *
+LrdScrollEdit::GetDatOut
+    (
+    )
 {
-    return DatOut;
+    return &mstrDatOut;
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::insertFromMimeData(const QMimeData *src)
+void
+LrdScrollEdit::insertFromMimeData
+    (
+    const QMimeData *mdSrc
+    )
 {
-    if (mbLineMode == true && src->hasText() == true)
+    if (mbLineMode == true && mdSrc->hasText() == true)
     {
-        DatOut += src->text();
+        mstrDatOut += mdSrc->text();
         this->UpdateDisplay();
     }
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::UpdateDisplay()
+void
+LrdScrollEdit::UpdateDisplay
+    (
+    )
 {
     //Updates the receive text buffer, faster
     unsigned int Pos;
@@ -291,13 +310,13 @@ void LrdScrollEdit::UpdateDisplay()
         Pos = this->verticalScrollBar()->sliderPosition();
     }
     this->setUpdatesEnabled(false);
-    if (DatIn.length() > 0)
+    if (mstrDatIn.length() > 0)
     {
-        this->setPlainText(QString(DatIn).append("\n").append(DatOut));
+        this->setPlainText(QString(mstrDatIn).append("\n").append(mstrDatOut));
     }
     else
     {
-        this->setPlainText(DatOut);
+        this->setPlainText(mstrDatOut);
     }
     this->setUpdatesEnabled(true);
     if (Pos == 65535)
@@ -312,33 +331,43 @@ void LrdScrollEdit::UpdateDisplay()
         this->verticalScrollBar()->setValue(Pos);
     }
 
-    if (CurPos == DatOut.length()-1)
+    if (muintCurPos == mstrDatOut.length()-1)
     {
-        ++CurPos;
+        ++muintCurPos;
     }
     this->UpdateCursor();
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::UpdateCursor()
+void
+LrdScrollEdit::UpdateCursor
+    (
+    )
 {
     //Updates the text control's cursor position
-    QTextCursor ab = this->textCursor();
-    if (DatIn.length() > 0)
+#pragma warning("TODO: Add update cursor code.")
+    /*
+    QTextCursor tcTmpCur = this->textCursor();
+    if (mstrDatIn.length() > 0)
     {
-        ab.setPosition(DatIn.length()+1+CurPos);
+        tcTmpCur.setPosition(mstrDatIn.length()+1+muintCurPos);
     }
     else
     {
-        ab.setPosition(CurPos);
+        tcTmpCur.setPosition(muintCurPos);
     }
-    this->setTextCursor(ab);
+    this->setTextCursor(tcTmpCur);*/
+    this->moveCursor(QTextCursor::End);
 }
 
 //=============================================================================
 //=============================================================================
-void LrdScrollEdit::SetSerialOpen(bool SerialOpen)
+void
+LrdScrollEdit::SetSerialOpen
+    (
+    bool SerialOpen
+    )
 {
     mbSerialOpen = SerialOpen;
 }

@@ -53,6 +53,20 @@
 #include <QJsonObject>
 #include <QUrl>
 #endif
+//Defines for various file download functions
+#define MODE_COMPILE 1
+#define MODE_COMPILE_LOAD 2
+#define MODE_COMPILE_LOAD_RUN 3
+#define MODE_LOAD 4
+#define MODE_LOAD_RUN 5
+#define MODE_SERVER_COMPILE 9
+#define MODE_SERVER_COMPILE_LOAD 10
+#define MODE_SERVER_COMPILE_LOAD_RUN 11
+//Defines for version and functions
+#define UwVersion "0.85c alpha with Youssif's text idea" //Version string
+#define FileReadBlock 512 //Number of bytes to read per block when streaming files
+#define StreamProgress 10000 //Number of bytes between streaming progress updates
+#define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
