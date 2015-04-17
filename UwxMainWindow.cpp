@@ -49,8 +49,6 @@ UwxAutomation *guaAutomationForm; //Automation form
 //7 = download file+?
 //8 = ?
 
-#pragma warning("Add pre/post XComp config to ini file and loading/saving settings")
-
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
@@ -116,6 +114,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpTermSettings->setValue("DelUWCAfterDownload", "0"); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
         gpTermSettings->setValue("SysTrayIcon", "1"); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
         gpTermSettings->setValue("SerialSignalCheckInterval", "50"); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
+        gpTermSettings->setValue("PrePostXCompRun", "0"); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
+        gpTermSettings->setValue("PrePostXCompFail", "0"); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
+        gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
+        gpTermSettings->setValue("PrePostXCompPath", ""); //Filename to pre/post XCompiler executable
     }
 
     //Create logging handle and variables for logging mode
@@ -492,9 +494,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_Poll->setToolTip("Enable this to poll the device if it disconnects and automatically re-establish a connection.");
     ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
 
-    //Resize terminal data splititer
-    ui->split_Term->setSizes(QList<int>() << 160 << 65);
-
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
     {
@@ -511,6 +510,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpSysTray->show();
         gbSysTrayEnabled = true;
     }
+
+    //Update pre/post XCompile executable options
+    ui->check_PreXCompRun->setChecked(gpTermSettings->value("PrePostXCompRun", "0").toBool());
+    ui->check_PreXCompFail->setChecked(gpTermSettings->value("PrePostXCompFail", "0").toBool());
+    if (gpTermSettings->value("PrePostXCompMode", "0").toInt() == 1)
+    {
+        //Post-XCompiler run
+        ui->radio_XCompPost->setChecked(true);
+    }
+    else
+    {
+        //Pre-XCompiler run
+        ui->radio_XCompPre->setChecked(true);
+    }
+    ui->edit_PreXCompFilename->setText(gpTermSettings->value("PrePostXCompPath", "").toString());
 
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
@@ -2903,6 +2917,7 @@ void MainWindow::on_check_PreXCompRun_stateChanged(int iChecked)
         ui->edit_PreXCompFilename->setDisabled(false);
         ui->btn_PreXCompSelect->setDisabled(false);
         ui->label_PreXCompInfo->setDisabled(false);
+        gpTermSettings->setValue("PrePostXCompRun", "1");
     }
     else
     {
@@ -2913,6 +2928,7 @@ void MainWindow::on_check_PreXCompRun_stateChanged(int iChecked)
         ui->edit_PreXCompFilename->setDisabled(true);
         ui->btn_PreXCompSelect->setDisabled(true);
         ui->label_PreXCompInfo->setDisabled(true);
+        gpTermSettings->setValue("PrePostXCompRun", "0");
     }
 }
 
@@ -3020,7 +3036,42 @@ void MainWindow::on_btn_PreXCompSelect_clicked()
 
         //File selected is executable, update text box
         ui->edit_PreXCompFilename->setText(QString("\"").append(strFilename).append("\""));
+
+        //Update the INI settings
+        gpTermSettings->setValue("PrePostXCompPath", ui->edit_PreXCompFilename->text());
     }
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_radio_XCompPre_toggled(bool checked)
+{
+    //Pre/post XCompiler run time changed to run before XCompiler - update settings
+    gpTermSettings->setValue("PrePostXCompMode", "0");
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_radio_XCompPost_toggled(bool checked)
+{
+    //Pre/post XCompiler run time changed to run after XCompiler - update settings
+    gpTermSettings->setValue("PrePostXCompMode", "1");
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_check_PreXCompFail_stateChanged(int arg1)
+{
+    //Pre/post XCompiler run if XCompiler failed changed - update settings
+    gpTermSettings->setValue("PrePostXCompFail", ui->check_PreXCompFail->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_edit_PreXCompFilename_editingFinished()
+{
+    //Pre/post XCompiler executable changed - update settings
+    gpTermSettings->setValue("PrePostXCompPath", ui->edit_PreXCompFilename->text());
 }
 
 /******************************************************************************/
