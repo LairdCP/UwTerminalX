@@ -107,8 +107,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     {
         //No settings, set defaults
         gpTermSettings->setValue("LogFile", "UwTerminalX.log"); //Default log file
-#pragma warning("Add support for LogMode (ini setting to clear log before opening)")
-        gpTermSettings->setValue("LogMode", "1"); //Clear log before opening (NOT IMPLEMENTED)
+        gpTermSettings->setValue("LogMode", "0"); //Clear log before opening, 0 = no, 1 = yes
         gpTermSettings->setValue("LogLevel", "1"); //0 = none, 1 = single file, 2 = 1 + new file for each session
         gpTermSettings->setValue("CompilerDir", "compilers/"); //Directory that compilers go in
         gpTermSettings->setValue("CompilerSubDirs", "0"); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
@@ -396,6 +395,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
             {
                 //Log opened
+                if (gpTermSettings->value("LogMode", "0").toBool() == true)
+                {
+                    //Clear the log file
+                    gpMainLog->ClearLog();
+                }
                 gpMainLog->WriteLogData(tr("-").repeated(31));
                 gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
                 gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
