@@ -107,6 +107,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     {
         //No settings, set defaults
         gpTermSettings->setValue("LogFile", "UwTerminalX.log"); //Default log file
+#pragma warning("Add support for LogMode (ini setting to clear log before opening)")
         gpTermSettings->setValue("LogMode", "1"); //Clear log before opening (NOT IMPLEMENTED)
         gpTermSettings->setValue("LogLevel", "1"); //0 = none, 1 = single file, 2 = 1 + new file for each session
         gpTermSettings->setValue("CompilerDir", "compilers/"); //Directory that compilers go in
@@ -117,7 +118,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpTermSettings->setValue("PrePostXCompRun", "0"); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
         gpTermSettings->setValue("PrePostXCompFail", "0"); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
         gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
-        gpTermSettings->setValue("PrePostXCompPath", ""); //Filename to pre/post XCompiler executable
+        gpTermSettings->setValue("PrePostXCompPath", ""); //Filename of pre/post XCompiler executable (with additional arguments)
     }
 
     //Create logging handle and variables for logging mode
@@ -2901,13 +2902,11 @@ MainWindow::replyFinished
 }
 #endif
 
-/* NEW FUNCTIONS RELATING TO PRE/POST RUN EXECUTABLE */
-
 //=============================================================================
 //=============================================================================
 void MainWindow::on_check_PreXCompRun_stateChanged(int iChecked)
 {
-    //
+    //User has changed running pre/post XCompiler executable, update GUI
     if (iChecked == 2)
     {
         //Enabled
@@ -2941,10 +2940,59 @@ bool MainWindow::RunPrePostExecutable(QString strFilename)
     if (ui->edit_PreXCompFilename->text().left(1) == "\"")
     {
         //First character is a quote, search for end quote
-#pragma warning("TODO: quote system for file execution")
-        QString strMessage = tr("Error: Quote handling system for executable is not currently implemented.");
-        gpmErrorForm->show();
-        gpmErrorForm->SetMessage(&strMessage);
+        int i = 0;
+        while (i != -1)
+        {
+            i = ui->edit_PreXCompFilename->text().indexOf("\"", i+1);
+            if (i == -1)
+            {
+                //No end quote found
+                QString strMessage = tr("Error with Pre/Post-XCompile executable: No end quote found for executable file.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+                return false;
+            }
+            else if (ui->edit_PreXCompFilename->text().mid(i-1, 2) != "\\\"")
+            {
+                //Found end of quote
+                if (!QFile::exists(ui->edit_PreXCompFilename->text().mid(1, i-1)))
+                {
+                    //Executable file doesn't appear to exist
+                    QString strMessage = tr("Error with Pre/Post-XCompile executable: File ").append(ui->edit_PreXCompFilename->text().left(i+1)).append(" does not exist.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                    return false;
+                }
+
+                //Split up all the arguments
+                QList<QString> lArguments;
+                int l = ui->edit_PreXCompFilename->text().indexOf(" ", i+1);
+                while (l != -1)
+                {
+                    lArguments << ui->edit_PreXCompFilename->text().mid(l+1, ui->edit_PreXCompFilename->text().indexOf(" ", l+1)-l-1).replace("%1", strFilename);
+                    l = ui->edit_PreXCompFilename->text().indexOf(" ", l+1);
+                }
+
+                if (ui->edit_PreXCompFilename->text().mid(1, i-1).right(4).toLower() == ".bat")
+                {
+                    //Batch file - run through cmd
+                    lArguments.insert(0, ui->edit_PreXCompFilename->text().mid(1, i-1));
+                    lArguments.insert(0, "/C");
+                    pXProcess.start("cmd", lArguments);
+                }
+                else
+                {
+                    //Normal executable
+                    pXProcess.start(ui->edit_PreXCompFilename->text().mid(1, i-1), lArguments);
+                }
+                pXProcess.waitForFinished(PrePostXCompTimeout);
+                return true;
+
+                //Executable: ui->edit_PreXCompFilename->text().mid(1, i-1)
+                //Arguments : ui->edit_PreXCompFilename->text().mid(i+2, -1)
+            }
+        }
+
         return false;
     }
     else
@@ -3044,7 +3092,7 @@ void MainWindow::on_btn_PreXCompSelect_clicked()
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_radio_XCompPre_toggled(bool checked)
+void MainWindow::on_radio_XCompPre_toggled(bool bChecked)
 {
     //Pre/post XCompiler run time changed to run before XCompiler - update settings
     gpTermSettings->setValue("PrePostXCompMode", "0");
@@ -3052,7 +3100,7 @@ void MainWindow::on_radio_XCompPre_toggled(bool checked)
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_radio_XCompPost_toggled(bool checked)
+void MainWindow::on_radio_XCompPost_toggled(bool bChecked)
 {
     //Pre/post XCompiler run time changed to run after XCompiler - update settings
     gpTermSettings->setValue("PrePostXCompMode", "1");
@@ -3060,7 +3108,7 @@ void MainWindow::on_radio_XCompPost_toggled(bool checked)
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_check_PreXCompFail_stateChanged(int arg1)
+void MainWindow::on_check_PreXCompFail_stateChanged(int bChecked)
 {
     //Pre/post XCompiler run if XCompiler failed changed - update settings
     gpTermSettings->setValue("PrePostXCompFail", ui->check_PreXCompFail->isChecked());
