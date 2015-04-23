@@ -185,20 +185,16 @@ LrdScrollEdit::eventFilter
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Control key not held down
-//                    if ((keyEvent->key() > 31 && keyEvent->key() < 128) || keyEvent->key() == 9 || keyEvent->key() == 10 || keyEvent->key() == 13)
-//                  {
                     if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
                     {
                         //Not a special character
                         if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
                         {
                             //Shift isn't down, lowercase it
-                            //mstrDatOut += keyEvent->key()+32;
                             emit KeyPressed(keyEvent->key()+32);
                         }
                         else
                         {
-                            //mstrDatOut += keyEvent->key();
                             emit KeyPressed(keyEvent->key());
                         }
                         this->UpdateDisplay();

@@ -20,6 +20,7 @@
 /******************************************************************************/
 PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage)
 {
+    //Setup window to be a dialog
     this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
 }
@@ -40,6 +41,7 @@ PopupMessage::on_pushButton_clicked
     (
     )
 {
+    //Close button clicked, close popup.
     this->close();
 }
 
@@ -50,6 +52,7 @@ void PopupMessage::SetMessage
     QString *strMsg
     )
 {
+    //Update popup message
     ui->text_Message->setPlainText(*strMsg);
 }
 

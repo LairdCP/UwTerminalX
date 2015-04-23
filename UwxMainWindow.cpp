@@ -860,7 +860,6 @@ MainWindow::readData
             //Loopback enabled, send this data back
             gspSerialPort.write(baOrigData);
             gintQueuedTXBytes += baOrigData.length();
-//UNCOMMENT            ui->text_TermData->setPlainText(ui->text_TermData->toPlainText().append(Test));
             gpMainLog->WriteRawLogData(baOrigData);
             gbaDisplayBuffer.append(baDispData);
         }
@@ -886,8 +885,6 @@ MainWindow::readData
             {
                 //Send more data
                 QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
-//                gpMainLog->WriteRawLogData(FileData);
-//                gbaDisplayBuffer.append(FileData);
                 gspSerialPort.write(baFileData);
                 gintQueuedTXBytes += baFileData.length();
                 MainWindow::DoLineEnd();
@@ -1310,11 +1307,6 @@ MainWindow::triggered
             }
         }
     }
-/*    else if (qaAction->text() == "Multi Data File +")
-    {
-        //Multi data file + (Loads multiple data files one after another)
-
-    }*/
     else if (qaAction->text() == "Stream File Out")
     {
         //Stream out a file
@@ -2535,50 +2527,7 @@ MainWindow::UpdateReceiveText
     (
     )
 {
-    //Updates the receive text buffer, faster
-/*    unsigned int Pos;
-    if (ui->text_TermData->verticalScrollBar()->sliderPosition() == ui->text_TermData->verticalScrollBar()->maximum())
-    {
-        //Scroll to bottom
-        Pos = 65535;
-    }
-    else
-    {
-        //Stay here
-        Pos = ui->text_TermData->verticalScrollBar()->sliderPosition();
-    }
-    ui->text_TermData->setUpdatesEnabled(false);
-    if (ui->check_ShowHex->isChecked())
-    {
-        //Display as hex
-        unsigned long HexChange;
-        HexChange = gbaDisplayBuffer.length();
-        QByteArray baHexData(gbaDisplayBuffer.toHex());
-        while (HexChange > 0)
-        {
-            baHexData.insert(HexChange*2, " ");
-            --HexChange;
-        }
-        ui->text_TermData->setPlainText(QString(baHexData));
-    }
-    else
-    {
-        //Display as text
-        ui->text_TermEditData->AddDatInText(QString(gbaDisplayBuffer));
-        gbaDisplayBuffer.clear();
-    }
-
-    if (Pos == 65535)
-    {
-        //Bottom
-        ui->text_TermData->verticalScrollBar()->setValue(ui->text_TermData->verticalScrollBar()->maximum());
-    }
-    else
-    {
-        //Maintain
-        ui->text_TermData->verticalScrollBar()->setValue(Pos);
-    }
-    ui->text_TermData->setUpdatesEnabled(true);*/
+    //Updates the receive text buffer
     ui->text_TermEditData->AddDatInText(&gbaDisplayBuffer);
     gbaDisplayBuffer.clear();
 }

@@ -1185,11 +1185,16 @@
               </item>
               <item>
                <widget class="QLabel" name="label_PreXCompInfo">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="midLineWidth">
                  <number>50</number>
                 </property>
                 <property name="text">
-                 <string>This allows you to run a program or execute a batch/bash script before a smartBASIC file is XCompiled or before the file is downloaded, %1 can be used in the path which will be replaced with the filename (of either the .sb or .uwc file) when the execution takes place.</string>
+                 <string>This allows you to run a program/batch/bash file before a smartBASIC file is XCompiled or before the file is downloaded, %1 can be used which will be replaced with the filename (of the .sb or .uwc file) when the execution takes place.</string>
                 </property>
                 <property name="wordWrap">
                  <bool>true</bool>
