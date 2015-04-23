@@ -24,6 +24,7 @@
 #define LOG_OK 0                //Success
 #define LOG_ERR_OPEN_ALREADY 1  //Log already open
 #define LOG_ERR_ACCESS 2        //Access denied to log file
+#define FLUSHDATAONWRITE        //Set to flush data when it's written
 
 /******************************************************************************/
 // Class definitions
@@ -41,18 +42,18 @@ public:
     );
     unsigned char OpenLogFile
     (
-    QString Filename
+    QString strFilename
     );
     void CloseLogFile
     (
     );
     unsigned char WriteLogData
     (
-    QString Data
+    QString strData
     );
     unsigned char WriteRawLogData
     (
-    QByteArray Data
+    QByteArray baData
     );
     unsigned short GetLogSize
     (

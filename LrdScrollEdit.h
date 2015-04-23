@@ -39,6 +39,33 @@ public:
     (
     bool bNewLineMode
     );
+    void insertFromMimeData
+    (
+    const QMimeData *mdSrc
+    );
+    void UpdateDisplay
+    (
+    );
+    void AddDatInText
+    (
+    QByteArray *baDat
+    );
+    void ClearDatIn
+    (
+    );
+    void ClearDatOut
+    (
+    );
+    QString *GetDatOut
+    (
+    );
+    void UpdateCursor
+    (
+    );
+    void SetSerialOpen
+    (
+    bool SerialOpen
+    );
 
 protected:
     bool eventFilter
@@ -57,15 +84,16 @@ signals:
     );
 
 private slots:
-    void SendPasteData();
 
 private:
     QString mstrItemArray[ItemAllow+1]; //Item text
     unsigned char mchItems; //Number of items
     unsigned char mchPosition; //Current position
     bool mbLineMode; //True enables line mode
-    QTimer PasteTimer; //Timer for when something is pasted in character mode
-
+    bool mbSerialOpen; //True if serial port is open
+    QString mstrDatIn; //Incoming data (previous commands/received data)
+    QString mstrDatOut; //Outgoing data (user typed keyboard data)
+    unsigned int muintCurPos; //Current cursor position
 };
 
 #endif // LRDSCROLLEDIT_H
