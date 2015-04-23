@@ -107,13 +107,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     {
         //No settings, set defaults
         gpTermSettings->setValue("LogFile", "UwTerminalX.log"); //Default log file
-        gpTermSettings->setValue("LogMode", "1"); //Clear log before opening (NOT IMPLEMENTED)
+        gpTermSettings->setValue("LogMode", "0"); //Clear log before opening, 0 = no, 1 = yes
         gpTermSettings->setValue("LogLevel", "1"); //0 = none, 1 = single file, 2 = 1 + new file for each session
         gpTermSettings->setValue("CompilerDir", "compilers/"); //Directory that compilers go in
         gpTermSettings->setValue("CompilerSubDirs", "0"); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
         gpTermSettings->setValue("DelUWCAfterDownload", "0"); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
         gpTermSettings->setValue("SysTrayIcon", "1"); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
         gpTermSettings->setValue("SerialSignalCheckInterval", "50"); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
+        gpTermSettings->setValue("PrePostXCompRun", "0"); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
+        gpTermSettings->setValue("PrePostXCompFail", "0"); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
+        gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
+        gpTermSettings->setValue("PrePostXCompPath", ""); //Filename of pre/post XCompiler executable (with additional arguments)
     }
 
     //Create logging handle and variables for logging mode
@@ -391,6 +395,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
             {
                 //Log opened
+                if (gpTermSettings->value("LogMode", "0").toBool() == true)
+                {
+                    //Clear the log file
+                    gpMainLog->ClearLog();
+                }
                 gpMainLog->WriteLogData(tr("-").repeated(31));
                 gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
                 gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
@@ -490,9 +499,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_Poll->setToolTip("Enable this to poll the device if it disconnects and automatically re-establish a connection.");
     ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
 
-    //Resize terminal data splititer
-    ui->split_Term->setSizes(QList<int>() << 160 << 65);
-
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
     {
@@ -509,6 +515,24 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpSysTray->show();
         gbSysTrayEnabled = true;
     }
+
+    //Update pre/post XCompile executable options
+    ui->check_PreXCompRun->setChecked(gpTermSettings->value("PrePostXCompRun", "0").toBool());
+    ui->check_PreXCompFail->setChecked(gpTermSettings->value("PrePostXCompFail", "0").toBool());
+    if (gpTermSettings->value("PrePostXCompMode", "0").toInt() == 1)
+    {
+        //Post-XCompiler run
+        ui->radio_XCompPost->setChecked(true);
+    }
+    else
+    {
+        //Pre-XCompiler run
+        ui->radio_XCompPre->setChecked(true);
+    }
+    ui->edit_PreXCompFilename->setText(gpTermSettings->value("PrePostXCompPath", "").toString());
+
+    //Update GUI for pre/post XComp executable
+    on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
 
 #ifdef OnlineXComp
     //Setup QNetwork for Online XCompiler
@@ -836,7 +860,6 @@ MainWindow::readData
             //Loopback enabled, send this data back
             gspSerialPort.write(baOrigData);
             gintQueuedTXBytes += baOrigData.length();
-//UNCOMMENT            ui->text_TermData->setPlainText(ui->text_TermData->toPlainText().append(Test));
             gpMainLog->WriteRawLogData(baOrigData);
             gbaDisplayBuffer.append(baDispData);
         }
@@ -862,8 +885,6 @@ MainWindow::readData
             {
                 //Send more data
                 QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
-//                gpMainLog->WriteRawLogData(FileData);
-//                gbaDisplayBuffer.append(FileData);
                 gspSerialPort.write(baFileData);
                 gintQueuedTXBytes += baFileData.length();
                 MainWindow::DoLineEnd();
@@ -937,8 +958,14 @@ MainWindow::readData
 //                if (QFile::exists(QString(XCompDir).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe")) == true)
                     if (QFile::exists(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)) == true)
 #endif
+#pragma warning("Linux XCompile if statement needs fixing")
                     {
-                        //XCompiler found!
+                        //XCompiler found! - First run the Pre XCompile program if enabled and it exists
+                        if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
+                        {
+                            //Run Pre-XComp program
+                            RunPrePostExecutable(gstrTermFilename);
+                        }
 #ifdef _WIN32
                         //Windows
                         gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
@@ -1280,11 +1307,6 @@ MainWindow::triggered
             }
         }
     }
-/*    else if (qaAction->text() == "Multi Data File +")
-    {
-        //Multi data file + (Loads multiple data files one after another)
-
-    }*/
     else if (qaAction->text() == "Stream File Out")
     {
         //Stream out a file
@@ -1786,6 +1808,12 @@ MainWindow::process_finished
     QProcess::ExitStatus esExitStatus
     )
 {
+    if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPost->isChecked() == true && (intExitCode == 0 || ui->check_PreXCompFail->isChecked() == true))
+    {
+        //Run Post-XComp program
+        RunPrePostExecutable(gstrTermFilename);
+    }
+
     //Exit code 1: Fail, Exit code 0: Success
     if (intExitCode == 1)
     {
@@ -2499,50 +2527,7 @@ MainWindow::UpdateReceiveText
     (
     )
 {
-    //Updates the receive text buffer, faster
-/*    unsigned int Pos;
-    if (ui->text_TermData->verticalScrollBar()->sliderPosition() == ui->text_TermData->verticalScrollBar()->maximum())
-    {
-        //Scroll to bottom
-        Pos = 65535;
-    }
-    else
-    {
-        //Stay here
-        Pos = ui->text_TermData->verticalScrollBar()->sliderPosition();
-    }
-    ui->text_TermData->setUpdatesEnabled(false);
-    if (ui->check_ShowHex->isChecked())
-    {
-        //Display as hex
-        unsigned long HexChange;
-        HexChange = gbaDisplayBuffer.length();
-        QByteArray baHexData(gbaDisplayBuffer.toHex());
-        while (HexChange > 0)
-        {
-            baHexData.insert(HexChange*2, " ");
-            --HexChange;
-        }
-        ui->text_TermData->setPlainText(QString(baHexData));
-    }
-    else
-    {
-        //Display as text
-        ui->text_TermEditData->AddDatInText(QString(gbaDisplayBuffer));
-        gbaDisplayBuffer.clear();
-    }
-
-    if (Pos == 65535)
-    {
-        //Bottom
-        ui->text_TermData->verticalScrollBar()->setValue(ui->text_TermData->verticalScrollBar()->maximum());
-    }
-    else
-    {
-        //Maintain
-        ui->text_TermData->verticalScrollBar()->setValue(Pos);
-    }
-    ui->text_TermData->setUpdatesEnabled(true);*/
+    //Updates the receive text buffer
     ui->text_TermEditData->AddDatInText(&gbaDisplayBuffer);
     gbaDisplayBuffer.clear();
 }
@@ -2869,6 +2854,226 @@ MainWindow::replyFinished
     }
 }
 #endif
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_check_PreXCompRun_stateChanged(int iChecked)
+{
+    //User has changed running pre/post XCompiler executable, update GUI
+    if (iChecked == 2)
+    {
+        //Enabled
+        ui->check_PreXCompFail->setDisabled(false);
+        ui->radio_XCompPost->setDisabled(false);
+        ui->radio_XCompPre->setDisabled(false);
+        ui->edit_PreXCompFilename->setDisabled(false);
+        ui->btn_PreXCompSelect->setDisabled(false);
+        ui->label_PreXCompInfo->setDisabled(false);
+        gpTermSettings->setValue("PrePostXCompRun", "1");
+    }
+    else
+    {
+        //Disabled
+        ui->check_PreXCompFail->setDisabled(true);
+        ui->radio_XCompPost->setDisabled(true);
+        ui->radio_XCompPre->setDisabled(true);
+        ui->edit_PreXCompFilename->setDisabled(true);
+        ui->btn_PreXCompSelect->setDisabled(true);
+        ui->label_PreXCompInfo->setDisabled(true);
+        gpTermSettings->setValue("PrePostXCompRun", "0");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+bool MainWindow::RunPrePostExecutable(QString strFilename)
+{
+    //Runs the pre/post XCompile executable
+    QProcess pXProcess;
+    if (ui->edit_PreXCompFilename->text().left(1) == "\"")
+    {
+        //First character is a quote, search for end quote
+        int i = 0;
+        while (i != -1)
+        {
+            i = ui->edit_PreXCompFilename->text().indexOf("\"", i+1);
+            if (i == -1)
+            {
+                //No end quote found
+                QString strMessage = tr("Error with Pre/Post-XCompile executable: No end quote found for executable file.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+                return false;
+            }
+            else if (ui->edit_PreXCompFilename->text().mid(i-1, 2) != "\\\"")
+            {
+                //Found end of quote
+                if (!QFile::exists(ui->edit_PreXCompFilename->text().mid(1, i-1)))
+                {
+                    //Executable file doesn't appear to exist
+                    QString strMessage = tr("Error with Pre/Post-XCompile executable: File ").append(ui->edit_PreXCompFilename->text().left(i+1)).append(" does not exist.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                    return false;
+                }
+
+                //Split up all the arguments
+                QList<QString> lArguments;
+                int l = ui->edit_PreXCompFilename->text().indexOf(" ", i+1);
+                while (l != -1)
+                {
+                    lArguments << ui->edit_PreXCompFilename->text().mid(l+1, ui->edit_PreXCompFilename->text().indexOf(" ", l+1)-l-1).replace("%1", strFilename);
+                    l = ui->edit_PreXCompFilename->text().indexOf(" ", l+1);
+                }
+
+                if (ui->edit_PreXCompFilename->text().mid(1, i-1).right(4).toLower() == ".bat")
+                {
+                    //Batch file - run through cmd
+                    lArguments.insert(0, ui->edit_PreXCompFilename->text().mid(1, i-1));
+                    lArguments.insert(0, "/C");
+                    pXProcess.start("cmd", lArguments);
+                }
+                else
+                {
+                    //Normal executable
+                    pXProcess.start(ui->edit_PreXCompFilename->text().mid(1, i-1), lArguments);
+                }
+                pXProcess.waitForFinished(PrePostXCompTimeout);
+                return true;
+
+                //Executable: ui->edit_PreXCompFilename->text().mid(1, i-1)
+                //Arguments : ui->edit_PreXCompFilename->text().mid(i+2, -1)
+            }
+        }
+
+        return false;
+    }
+    else
+    {
+        //No quote character, search for a space
+        if (ui->edit_PreXCompFilename->text().indexOf(" ") == -1)
+        {
+            //No spaces found, assume whole string is executable
+            if (!QFile::exists(ui->edit_PreXCompFilename->text()))
+            {
+                //Executable file doesn't appear to exist
+                QString strMessage = tr("Error with Pre/Post-XCompile executable: File \"").append(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" "))).append("\" does not exist.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+                return false;
+            }
+
+            if (ui->edit_PreXCompFilename->text().right(4).toLower() == ".bat")
+            {
+                //Batch file - run through cmd
+                pXProcess.start("cmd", QList<QString>() << "/C" << ui->edit_PreXCompFilename->text().replace("/", "\\"));
+            }
+            else
+            {
+                //Normal executable
+                pXProcess.start(ui->edit_PreXCompFilename->text());
+            }
+            pXProcess.waitForFinished(PrePostXCompTimeout);
+        }
+        else
+        {
+            //Space found, assume everything before the space is a filename and after are arguments
+            QList<QString> lArguments;
+            int i = ui->edit_PreXCompFilename->text().indexOf(" ");
+            while (i != -1)
+            {
+//                if (ui->edit_PreXCompFilename->text().mid(i, l-i).indexOf("%1") != -1)
+                lArguments << ui->edit_PreXCompFilename->text().mid(i+1, ui->edit_PreXCompFilename->text().indexOf(" ", i+1)-i-1).replace("%1", strFilename);
+                i = ui->edit_PreXCompFilename->text().indexOf(" ", i+1);
+            }
+
+            if (!QFile::exists(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" "))))
+            {
+                //Executable file doesn't appear to exist
+                QString strMessage = tr("Error with Pre/Post-XCompile executable: File \"").append(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" "))).append("\" does not exist.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+                return false;
+            }
+
+            if (ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")).right(4).toLower() == ".bat")
+            {
+                //Batch file - run through cmd
+                lArguments.insert(0, ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")));
+                lArguments.insert(0, "/C");
+                pXProcess.start("cmd", lArguments);
+            }
+            else
+            {
+                //Normal executable
+                pXProcess.start(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")), lArguments);
+            }
+            pXProcess.waitForFinished(PrePostXCompTimeout);
+        }
+    }
+
+    //Return success code
+    return true;
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_btn_PreXCompSelect_clicked()
+{
+    //Opens an executable selector
+    QString strFilename;
+    strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", "", "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
+
+    if (strFilename.length() > 1)
+    {
+        if ((unsigned int)(QFile(strFilename).permissions() & (QFileDevice::ExeOther | QFileDevice::ExeGroup | QFileDevice::ExeUser | QFileDevice::ExeOwner)) == 0)
+        {
+            //File is not executable, give an error
+            QString strMessage = tr("Error: Selected file \"").append(strFilename).append("\" is not an executable file.");
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+            return;
+        }
+
+        //File selected is executable, update text box
+        ui->edit_PreXCompFilename->setText(QString("\"").append(strFilename).append("\""));
+
+        //Update the INI settings
+        gpTermSettings->setValue("PrePostXCompPath", ui->edit_PreXCompFilename->text());
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_radio_XCompPre_toggled(bool bChecked)
+{
+    //Pre/post XCompiler run time changed to run before XCompiler - update settings
+    gpTermSettings->setValue("PrePostXCompMode", "0");
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_radio_XCompPost_toggled(bool bChecked)
+{
+    //Pre/post XCompiler run time changed to run after XCompiler - update settings
+    gpTermSettings->setValue("PrePostXCompMode", "1");
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_check_PreXCompFail_stateChanged(int bChecked)
+{
+    //Pre/post XCompiler run if XCompiler failed changed - update settings
+    gpTermSettings->setValue("PrePostXCompFail", ui->check_PreXCompFail->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_edit_PreXCompFilename_editingFinished()
+{
+    //Pre/post XCompiler executable changed - update settings
+    gpTermSettings->setValue("PrePostXCompPath", ui->edit_PreXCompFilename->text());
+}
 
 /******************************************************************************/
 // END OF FILE
