@@ -37,3 +37,5 @@ win32:RC_FILE = version.rc
 win32:RC_ICONS = images/UwTerminal32.ico
 
 ICON = MacUwTerminalXIcon.icns
+
+DISTFILES +=

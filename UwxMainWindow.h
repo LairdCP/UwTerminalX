@@ -36,6 +36,7 @@
 #include <QTime>
 #include <QDate>
 #include <QElapsedTimer>
+#include <QDesktopServices>
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
 #include "LrdLogger.h"
@@ -43,7 +44,7 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-//#define OnlineXComp //Enable to enable online XCompiling
+//#define OnlineXComp //Enable this define to enable online XCompiling (requires a server setup to work)
 #ifdef OnlineXComp
 #define ServerHost "192.168.1.180" //Hostname/IP of online xcompile server
 #include <QNetworkAccessManager>
@@ -63,7 +64,7 @@
 #define MODE_SERVER_COMPILE_LOAD 10
 #define MODE_SERVER_COMPILE_LOAD_RUN 11
 //Defines for version and functions
-#define UwVersion "0.87c alpha" //Version string
+#define UwVersion "0.87e alpha" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -227,6 +228,8 @@ private slots:
     void on_edit_PreXCompFilename_editingFinished
     (
     );
+
+    void on_btn_GitHub_clicked();
 
 private:
     Ui::MainWindow *ui;

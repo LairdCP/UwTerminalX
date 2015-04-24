@@ -1177,39 +1177,14 @@
             <item row="1" column="4">
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
-               <widget class="QCheckBox" name="check_PreXCompRun">
-                <property name="text">
-                 <string>Run program before/after XCompile</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_PreXCompInfo">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
-                <property name="midLineWidth">
-                 <number>50</number>
-                </property>
-                <property name="text">
-                 <string>This allows you to run a program/batch/bash file before a smartBASIC file is XCompiled or before the file is downloaded, %1 can be used which will be replaced with the filename (of the .sb or .uwc file) when the execution takes place.</string>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
                <layout class="QHBoxLayout" name="horizontalLayout_5">
                 <property name="topMargin">
                  <number>5</number>
                 </property>
                 <item>
-                 <widget class="QLabel" name="label_7">
+                 <widget class="QCheckBox" name="check_PreXCompRun">
                   <property name="text">
-                   <string>Run:</string>
+                   <string>Run program</string>
                   </property>
                  </widget>
                 </item>
@@ -1234,6 +1209,13 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>XCompile</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -1247,6 +1229,24 @@
                  </spacer>
                 </item>
                </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_PreXCompInfo">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
+                <property name="midLineWidth">
+                 <number>50</number>
+                </property>
+                <property name="text">
+                 <string>This allows you to run a program/batch/bash file before a smartBASIC file is XCompiled/before the file is downloaded, %1 will be replaced with the sb/uwc file when the execution takes place.</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="check_PreXCompFail">
@@ -1291,6 +1291,19 @@
                 </item>
                </layout>
               </item>
+              <item>
+               <spacer name="verticalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
              </layout>
             </item>
            </layout>
@@ -1330,7 +1343,7 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
+            <item row="0" column="3">
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -1342,6 +1355,13 @@
                </size>
               </property>
              </spacer>
+            </item>
+            <item row="0" column="2">
+             <widget class="QPushButton" name="btn_GitHub">
+              <property name="text">
+               <string>Visit GitHub page</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -1419,7 +1439,8 @@ LOG=filename
 SHOWCRLF
     When displaying a TX or RX text on screen, show \t,\r,\n as well
 
-Copyright © Laird Technologies 2011-2015</string>
+Copyright © Laird Technologies 2011-2015
+For updates, check https://github.com/LairdCP/UwTerminalX</string>
               </property>
              </widget>
             </item>
