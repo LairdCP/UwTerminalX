@@ -201,8 +201,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
             //Default empty images
             ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);;
-            ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);;
+            ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
+            ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
             ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
         }
         else if (slArgs[chi].left(4) == "COM=")
@@ -829,7 +829,7 @@ MainWindow::readData
     )
 {
     //Read the data into a buffer and copy it to edit for the display data
-    QByteArray baOrigData = gspSerialPort.readAll();;
+    QByteArray baOrigData = gspSerialPort.readAll();
 
     if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6)))
     {
@@ -1313,7 +1313,7 @@ MainWindow::triggered
         if (gbTermBusy == false)
         {
             //Not currently busy
-            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), "", tr("Text Files (*.txt);;All Files (*.*)"));;
+            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), "", tr("Text Files (*.txt);;All Files (*.*)"));
 
             if (strDataFilename.length() > 1)
             {
