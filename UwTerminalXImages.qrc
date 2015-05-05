@@ -5,5 +5,7 @@
         <file>images/RedCircle.png</file>
         <file>images/UwTerminal16.ico</file>
         <file>images/UwTerminal32.ico</file>
+        <file>images/UwTerminal16.png</file>
+        <file>images/UwTerminal32.png</file>
     </qresource>
 </RCC>

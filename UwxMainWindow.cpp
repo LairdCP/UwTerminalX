@@ -138,8 +138,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gimEmptyCircleImage = QImage(":/images/EmptyCircle.png");
     gimRedCircleImage = QImage(":/images/RedCircle.png");
     gimGreenCircleImage = QImage(":/images/GreenCircle.png");
+#ifdef _WIN32
+    //Load ICOs for windows
     gimUw16Image = QImage(":/images/UwTerminal16.ico");
     gimUw32Image = QImage(":/images/UwTerminal32.ico");
+#else
+    //Load PNGs for Linux/Mac
+    gimUw16Image = QImage(":/images/UwTerminal16.png");
+    gimUw32Image = QImage(":/images/UwTerminal32.png");
+#endif
 
     //Create pixmaps
     gpEmptyCirclePixmap = new QPixmap(QPixmap::fromImage(gimEmptyCircleImage));
@@ -2681,6 +2688,7 @@ MainWindow::on_check_PreXCompRun_stateChanged
         ui->edit_PreXCompFilename->setDisabled(false);
         ui->btn_PreXCompSelect->setDisabled(false);
         ui->label_PreXCompInfo->setDisabled(false);
+        ui->label_PreXCompText->setDisabled(false);
         gpTermSettings->setValue("PrePostXCompRun", "1");
     }
     else
@@ -2692,6 +2700,7 @@ MainWindow::on_check_PreXCompRun_stateChanged
         ui->edit_PreXCompFilename->setDisabled(true);
         ui->btn_PreXCompSelect->setDisabled(true);
         ui->label_PreXCompInfo->setDisabled(true);
+        ui->label_PreXCompText->setDisabled(true);
         gpTermSettings->setValue("PrePostXCompRun", "0");
     }
 }
