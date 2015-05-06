@@ -64,7 +64,7 @@
 #define MODE_SERVER_COMPILE_LOAD 10
 #define MODE_SERVER_COMPILE_LOAD_RUN 11
 //Defines for version and functions
-#define UwVersion "0.87f alpha" //Version string
+#define UwVersion "0.87g alpha" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for

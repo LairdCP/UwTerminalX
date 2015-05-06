@@ -962,10 +962,8 @@ MainWindow::readData
                     if (QFile::exists(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
 #else
                     //Linux
-//                if (QFile::exists(QString(XCompDir).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe")) == true)
-                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)) == true)
+                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
 #endif
-#pragma warning("Linux XCompile if statement needs fixing")
                     {
                         //XCompiler found! - First run the Pre XCompile program if enabled and it exists
                         if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
@@ -995,6 +993,7 @@ MainWindow::readData
                         .append(".exe")
 #endif
                         .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").");
+#pragma warning("Add full file path for XCompilers?")
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
                         gbTermBusy = false;
