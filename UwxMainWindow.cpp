@@ -9,6 +9,8 @@
 **
 *******************************************************************************/
 
+//When line mode is on, can delete parts of edit, can input anywhere, etc.
+
 /******************************************************************************/
 // Include Files
 /******************************************************************************/
@@ -43,11 +45,6 @@
 /******************************************************************************/
 PopupMessage *gpmErrorForm; //Error message form
 UwxAutomation *guaAutomationForm; //Automation form
-
-//gchTermMode:
-//6 = download file?
-//7 = download file+?
-//8 = ?
 
 /******************************************************************************/
 // Local Functions or Private Members
@@ -95,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbStreamingBatch = false;
     gbaBatchReceive.clear();
 
-    //Disable redo/undo in read only terminal data and clear display buffer byte array.
+    //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
 
     //Check settings
@@ -118,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpTermSettings->setValue("PrePostXCompFail", "0"); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
         gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
         gpTermSettings->setValue("PrePostXCompPath", ""); //Filename of pre/post XCompiler executable (with additional arguments)
+        gpTermSettings->setValue("OnlineXComp", "1"); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
     }
 
     //Create logging handle and variables for logging mode
@@ -427,11 +425,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMenu->addAction(new QAction("XCompile", this));
     gpMenu->addAction(new QAction("XCompile + Load", this));
     gpMenu->addAction(new QAction("XCompile + Load + Run", this));
-#ifdef OnlineXComp
-    gpMenu->addAction(new QAction("Online XCompile", this));
-    gpMenu->addAction(new QAction("Online XCompile + Load", this));
-    gpMenu->addAction(new QAction("Online XCompile + Load + Run", this));
-#endif
     gpMenu->addAction(new QAction("Load", this));
     gpMenu->addAction(new QAction("Load + Run", this));
     gpMenu->addAction(new QAction("Lookup Selected Error-Code (Hex)", this));
@@ -473,7 +466,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Configure the timeout timer
     gtmrDownloadTimeoutTimer.setSingleShot(true);
-    gtmrDownloadTimeoutTimer.setInterval(3000);
+    gtmrDownloadTimeoutTimer.setInterval(ModuleTimeout);
     connect(&gtmrDownloadTimeoutTimer, SIGNAL(timeout()), this, SLOT(DevRespTimeout()));
 
     //Configure the signal timer
@@ -541,11 +534,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
 
-#ifdef OnlineXComp
+    //Set Online XCompilation test
+#ifdef _WIN32
+    //Windows
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found when attempting to compile an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
+#else
+    //Mac or Linux
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
+#endif
+    ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", "0").toBool());
+
     //Setup QNetwork for Online XCompiler
     gnmManager = new QNetworkAccessManager();
     connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
-#endif
 }
 
 //=============================================================================
@@ -567,9 +568,7 @@ MainWindow::~MainWindow()
     disconnect(this, SLOT(UpdateReceiveText()));
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(PollUSB()));
-#ifdef OnlineXComp
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
-#endif
 
     if (gspSerialPort.isOpen() == true)
     {
@@ -631,9 +630,7 @@ MainWindow::~MainWindow()
     delete gpGreenCirclePixmap;
     delete gpmErrorForm;
     delete guaAutomationForm;
-#ifdef OnlineXComp
     delete gnmManager;
-#endif
     delete ui;
 }
 
@@ -909,12 +906,12 @@ MainWindow::readData
             if (remTempREM.hasMatch() == true)
             {
                 //Got the error code
-                gbaDisplayBuffer.append("Error during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
+                gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
             }
             else
             {
                 //Unknown error code
-                gbaDisplayBuffer.append("Error during batch command, unknown error code.\n");
+                gbaDisplayBuffer.append("\nError during batch command, unknown error code.\n");
             }
             gtmrTextUpdateTimer.start();
 
@@ -942,13 +939,24 @@ MainWindow::readData
             QRegularExpressionMatch remTempREM = reTempRE.match(gstrTermBusyData);
             if (remTempREM.hasMatch() == true)
             {
-                if (gchTermMode == 9 || gchTermMode == 10 || gchTermMode == 11)
+                if (gchTermMode == MODE_SERVER_COMPILE || gchTermMode == MODE_SERVER_COMPILE_LOAD || gchTermMode == MODE_SERVER_COMPILE_LOAD_RUN)
                 {
-#ifdef OnlineXComp
-                    //Check if online XCompiler supports this device
-                    gnmManager->get(QNetworkRequest(QUrl(QString("http://").append(ServerHost).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
-                    ui->statusBar->showMessage("Device support request sent...", 500);
+                    if (ui->check_OnlineXComp->isChecked() == true)
+                    {
+                        //Check if online XCompiler supports this device
+                        gnmManager->get(QNetworkRequest(QUrl(QString("http")
+#ifdef UseSSL
+                        .append("s")
 #endif
+                        .append("://").append(ServerHost).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                    }
+                    else
+                    {
+                        //Online XCompiler not enabled
+                        QString strMessage = tr("Unable to XCompile application: Online XCompilation support must be enabled to XCompile applications on Mac/Linux.\nPlease enable it from the 'Config' tab and try again.");
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
+                    }
                 }
                 else
                 {
@@ -985,14 +993,37 @@ MainWindow::readData
 #endif
                         //gprocCompileProcess.waitForFinished(-1);
                     }
+                    else if (ui->check_OnlineXComp->isChecked() == true)
+                    {
+                        //XCompiler not found, try Online XCompiler
+                        gnmManager->get(QNetworkRequest(QUrl(QString("http")
+#ifdef UseSSL
+                        .append("s")
+#endif
+                        .append("://").append(ServerHost).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        ui->statusBar->showMessage("Device support request sent...", 500);
+
+                        if (gchTermMode == MODE_COMPILE)
+                        {
+                            gchTermMode = MODE_SERVER_COMPILE;
+                        }
+                        else if (gchTermMode == MODE_COMPILE_LOAD)
+                        {
+                            gchTermMode = MODE_SERVER_COMPILE_LOAD;
+                        }
+                        else if (gchTermMode == MODE_COMPILE_LOAD_RUN)
+                        {
+                            gchTermMode = MODE_SERVER_COMPILE_LOAD_RUN;
+                        }
+                    }
                     else
                     {
-                        //XCompiler not found
+                        //XCompiler not found, Online XCompiler disabled
                         QString strMessage = tr("Error during XCompile:\nXCompiler \"XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))
 #ifdef _WIN32
                         .append(".exe")
 #endif
-                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").");
+                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
 #pragma warning("Add full file path for XCompilers?")
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
@@ -1037,7 +1068,7 @@ MainWindow::readData
                         {
                             //Finished
                             gstrHexData = "";
-                            gbaDisplayBuffer.append("-- Finished downloading file --\n");
+                            gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
                             gtmrTextUpdateTimer.start();
                             gspSerialPort.write("AT+FCL");
                             gintQueuedTXBytes += 6;
@@ -1062,7 +1093,7 @@ MainWindow::readData
                     else
                     {
                         gstrHexData = "";
-                        gbaDisplayBuffer.append("-- Finished downloading file --\n");
+                        gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
                         gtmrTextUpdateTimer.start();
                         gspSerialPort.write("AT+FCL");
                         gintQueuedTXBytes += 6;
@@ -1148,17 +1179,29 @@ MainWindow::triggered
         if (qaAction->text() == "XCompile")
         {
             //Compiles SB applet
+#ifdef _WIN32
             MainWindow::CompileApp(MODE_COMPILE);
+#else
+            MainWindow::CompileApp(MODE_SERVER_COMPILE);
+#endif
         }
         else if (qaAction->text() == "XCompile + Load")
         {
             //Compiles and loads a SB applet
+#ifdef _WIN32
             MainWindow::CompileApp(MODE_COMPILE_LOAD);
+#else
+            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD);
+#endif
         }
         else if (qaAction->text() == "XCompile + Load + Run")
         {
             //Compiles, loads and runs a SB applet
+#ifdef _WIN32
             MainWindow::CompileApp(MODE_COMPILE_LOAD_RUN);
+#else
+            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD_RUN);
+#endif
         }
         else if (qaAction->text() == "Load" || qaAction->text() == "Load Precompiled BASIC" || qaAction->text() == "Data File +")
         {
@@ -1170,23 +1213,6 @@ MainWindow::triggered
             //Load and run an application
             MainWindow::CompileApp(MODE_LOAD_RUN);
         }
-#ifdef OnlineXComp
-        else if (qaAction->text() == "Online XCompile")
-        {
-            //Compiles SB applet
-            MainWindow::CompileApp(MODE_SERVER_COMPILE);
-        }
-        else if (qaAction->text() == "Online XCompile + Load")
-        {
-            //Compiles and loads a SB applet
-            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD);
-        }
-        else if (qaAction->text() == "Online XCompile + Load + Run")
-        {
-            //Compiles, loads and runs a SB applet
-            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD_RUN);
-        }
-#endif
     }
 
     if (qaAction->text() == "Lookup Selected Error-Code (Hex)")
@@ -1212,13 +1238,13 @@ MainWindow::triggered
         if (gbLoopbackMode == true)
         {
             //Enabled
-            gbaDisplayBuffer.append("[Loopback Enabled]\n");
+            gbaDisplayBuffer.append("\n[Loopback Enabled]\n");
             gpMenu->actions()[7]->setText("Disable Loopback (Rx->Tx)");
         }
         else
         {
             //Disabled
-            gbaDisplayBuffer.append("[Loopback Disabled]\n");
+            gbaDisplayBuffer.append("\n[Loopback Disabled]\n");
             gpMenu->actions()[7]->setText("Enable Loopback (Rx->Tx)");
         }
         gtmrTextUpdateTimer.start();
@@ -1270,7 +1296,7 @@ MainWindow::triggered
             gspSerialPort.write("at+dir");
             gintQueuedTXBytes += 6;
             DoLineEnd();
-            gbaDisplayBuffer.append("at+dir");
+            gbaDisplayBuffer.append("\nat+dir\n");
             gtmrTextUpdateTimer.start();
             gpMainLog->WriteLogData("at+dir\n");
         }
@@ -1545,7 +1571,7 @@ MainWindow::EnterPressed
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
     {
         //Loopback is enabled
-        gbaDisplayBuffer.append("[Cannot send: Loopback mode is enabled.]");
+        gbaDisplayBuffer.append("\n[Cannot send: Loopback mode is enabled.]\n");
         if (!gtmrTextUpdateTimer.isActive())
         {
             gtmrTextUpdateTimer.start();
@@ -1609,24 +1635,6 @@ MainWindow::CompileApp
             //Start the timeout timer
             gtmrDownloadTimeoutTimer.start();
         }
-#ifdef OnlineXComp
-        else if (chMode == MODE_SERVER_COMPILE || chMode == MODE_SERVER_COMPILE_LOAD || chMode == MODE_SERVER_COMPILE_LOAD_RUN)
-        {
-            //Check if device is supported for Online XCompile
-            gbTermBusy = true;
-            gchTermMode2 = 0;
-            gchTermBusyLines = 0;
-            gstrTermBusyData = tr("");
-            gspSerialPort.write("at i 0");
-            gintQueuedTXBytes += 6;
-            MainWindow::DoLineEnd();
-            gpMainLog->WriteLogData("at i 0\n");
-            gspSerialPort.write("at i 13");
-            gintQueuedTXBytes += 7;
-            MainWindow::DoLineEnd();
-            gpMainLog->WriteLogData("at i 13\n");
-        }
-#endif
         else
         {
             //A file was selected, get the version number
@@ -1794,7 +1802,7 @@ MainWindow::DevRespTimeout
     if (gbTermBusy == true)
     {
         //Update buffer
-        gbaDisplayBuffer.append(">TIMEOUT OCCURED!\n");
+        gbaDisplayBuffer.append("\nTimeout occured whilst attempting to XCompile application.\n");
         gtmrTextUpdateTimer.start();
 
         //Reset variables
@@ -2317,7 +2325,7 @@ MainWindow::MessagePass
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
     {
         //Loopback is enabled
-        gbaDisplayBuffer.append("[Cannot send: Loopback mode is enabled.]\n");
+        gbaDisplayBuffer.append("\n[Cannot send: Loopback mode is enabled.]\n");
         gtmrTextUpdateTimer.start();
     }
 }
@@ -2429,7 +2437,7 @@ MainWindow::on_btn_Cancel_clicked
         //Cancel download
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
-        gbaDisplayBuffer.append("-- File download cancelled --\n");
+        gbaDisplayBuffer.append("\n-- File download cancelled --\n");
         gtmrTextUpdateTimer.start();
         gspSerialPort.write("AT+FCL");
         gintQueuedTXBytes += 6;
@@ -2471,12 +2479,12 @@ MainWindow::FinishStream
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("Cancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("Finished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
     }
 
     //Initiate timer for buffer update
@@ -2503,12 +2511,12 @@ void MainWindow::FinishBatch
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("Cancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds)\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds)\n"));
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("Finished batch file, ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds\n"));
+        gbaDisplayBuffer.append(QString("\nFinished batch file, ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds\n"));
     }
 
     //Initiate timer for buffer update
@@ -2546,7 +2554,7 @@ MainWindow::BatchTimeoutSlot
     )
 {
     //A response to a batch command has timed out
-    gbaDisplayBuffer.append("TIMEOUT\n");
+    gbaDisplayBuffer.append("\nModule command timed out.\n");
     gtmrTextUpdateTimer.start();
     gbTermBusy = false;
     gbStreamingBatch = false;
@@ -2924,7 +2932,6 @@ MainWindow::on_btn_GitHub_clicked
     QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/UwTerminalX"));
 }
 
-#ifdef OnlineXComp
 //=============================================================================
 //=============================================================================
 void
@@ -2937,50 +2944,95 @@ QNetworkReply* nrReply
     if (gchTermMode2 == 0)
     {
         //Check if device is supported
-        QJsonParseError JsonError;
-        QJsonDocument JsonData = QJsonDocument::fromJson(nrReply->readAll(), &JsonError);
-        if (JsonError.error == QJsonParseError::NoError)
+        QJsonParseError jpeJsonError;
+        QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
+        if (jpeJsonError.error == QJsonParseError::NoError)
         {
             //Decoded JSON
-            QJsonObject JsonObject = JsonData.object();
+            QJsonObject joJsonObject = jdJsonData.object();
             if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
             {
                 //Server responded with error
-                QString strMessage = QString("Server responded with error code ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString());
+                QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
             else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
             {
                 //Server responded with OK
-                if (JsonObject["Result"].toString() == "1")
+                if (joJsonObject["Result"].toString() == "1")
                 {
                     //Device supported
-                    gstrDeviceID = JsonObject["ID"].toString();
-                    gchTermMode2 = 9;
+                    gstrDeviceID = joJsonObject["ID"].toString();
+                    gchTermMode2 = MODE_SERVER_COMPILE;
 
                     //Compile application
-                    QNetworkRequest ThisReq(QUrl(QString("http://").append(ServerHost).append("/xcompile.php?JSON=1")));
+                    QNetworkRequest nrThisReq(QUrl(QString("http")
+#ifdef UseSSL
+                    .append("s")
+#endif
+                    .append("://").append(ServerHost).append("/xcompile.php?JSON=1")));
                     QByteArray baPostData;
-                    baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(JsonObject["ID"].toString()).append("\r\n");
+                    baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
                     baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
 
-                    //Add file data here
+                    //Add file data
                     QFile file(gstrTermFilename);
+                    QByteArray tmpData;
                     if (!file.open(QIODevice::ReadOnly))
                     {
+                        //Failed to open file selected for download
                         return;
                     }
 
                     while (!file.atEnd())
                     {
-                        baPostData.append(file.readAll());
+                        tmpData.append(file.readAll());
+                    }
+                    file.close();
+
+                    QFileInfo fiFileInfo(gstrTermFilename);
+
+                    //Include other files
+                    QRegularExpression reTempRE("^(\\s{0,})#include(\\s{1,})\"(.*?)\"");
+                    reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
+                    bool bChangedState = true;
+                    while (bChangedState == true)
+                    {
+                        bChangedState = false;
+                        QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
+                        while (rx1match.hasNext())
+                        {
+                            //Found an include, add the file data
+                            QRegularExpressionMatch ThisMatch = rx1match.next();
+
+                            file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(3)));
+                            if (!file.open(QIODevice::ReadOnly))
+                            {
+                                //Failed to open include file
+                                return;
+                            }
+
+                            bChangedState = true;
+
+                            QByteArray tmpData2;
+                            while (!file.atEnd())
+                            {
+                                tmpData2.append(file.readAll());
+                            }
+                            file.close();
+                            unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
+                            tmpData.remove(i, ThisMatch.captured(0).length());
+                            tmpData.insert(i, tmpData2);
+                        }
                     }
 
+                    //Append the data to the POST request
+                    baPostData.append(tmpData);
                     baPostData.append("\r\n-----------------------------17192614014659--\r\n");
-                    ThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
-                    ThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
-                    gnmManager->post(ThisReq, baPostData);
+                    nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
+                    nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
+                    gnmManager->post(nrThisReq, baPostData);
                     ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
                 }
                 else
@@ -2994,7 +3046,7 @@ QNetworkReply* nrReply
             else
             {
                 //Unknown response
-                QString strMessage = QString("Server responded with unknown response");
+                QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -3002,7 +3054,7 @@ QNetworkReply* nrReply
         else
         {
             //Error whilst decoding JSON
-            QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(JsonError.errorString());
+            QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(jpeJsonError.errorString());
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
         }
@@ -3013,25 +3065,25 @@ QNetworkReply* nrReply
         if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
         {
             //Error compiling
-            QJsonParseError JsonError;
-            QJsonDocument JsonData = QJsonDocument::fromJson(nrReply->readAll(), &JsonError);
-            if (JsonError.error == QJsonParseError::NoError)
+            QJsonParseError jpeJsonError;
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
+            if (jpeJsonError.error == QJsonParseError::NoError)
             {
                 //Decoded JSON
-                QJsonObject JsonObject = JsonData.object();
+                QJsonObject joJsonObject = jdJsonData.object();
 
                 //Server responded with error
-                if (JsonObject["Result"].toString() == "-9")
+                if (joJsonObject["Result"].toString() == "-9")
                 {
                     //Error whilst compiling, show results
-                    QString strMessage = QString("Failed to compile ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString().append("\r\n").append(JsonObject["Description"].toString()));
+                    QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
                 else
                 {
                     //Server responded with error
-                    QString strMessage = QString("Server responded with error code ").append(JsonObject["Result"].toString()).append("; ").append(JsonObject["Error"].toString());
+                    QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
@@ -3039,7 +3091,7 @@ QNetworkReply* nrReply
             else
             {
                 //Error whilst decoding JSON
-                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(JsonData.toBinaryData());
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -3068,7 +3120,7 @@ QNetworkReply* nrReply
                 //Done
                 gtmrDownloadTimeoutTimer.stop();
                 gstrHexData = "";
-                gbaDisplayBuffer.append("-- Online XCompile complete --\n");
+                gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
                 gtmrTextUpdateTimer.start();
                 gchTermMode = 0;
                 gchTermMode2 = 0;
@@ -3115,7 +3167,14 @@ QNetworkReply* nrReply
         }
     }
 }
-#endif
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_check_OnlineXComp_stateChanged(int arg1)
+{
+    //Online XCompiler checkbox state changed
+    ui->label_OnlineXCompInfo->setEnabled(ui->check_OnlineXComp->isChecked());
+}
 
 /******************************************************************************/
 // END OF FILE
