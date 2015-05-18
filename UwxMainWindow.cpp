@@ -1074,10 +1074,11 @@ MainWindow::readData
                             gintQueuedTXBytes += 6;
                             MainWindow::DoLineEnd();
                             gpMainLog->WriteLogData("AT+FCL\n");
-                            if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"))))
+                            QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                            if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                             {
                                 //Remove UWC
-                                QFile::remove((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")));
+                                QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
                             }
                         }
                         else
@@ -1099,10 +1100,11 @@ MainWindow::readData
                         gintQueuedTXBytes += 6;
                         MainWindow::DoLineEnd();
                         gpMainLog->WriteLogData("AT+FCL\n");
-                        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"))))
+                        QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                         {
                             //Remove UWC
-                            QFile::remove((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")));
+                            QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
                         }
                         ++gchTermMode2;
                     }
@@ -1117,10 +1119,11 @@ MainWindow::readData
                     QString strMessage = tr("Error whilst downloading data to device. If filesystem is full, please restart device with 'atz' and clear the filesystem using 'at&f 1'.\nPlease note this will erase ALL FILES on the device.\n\nReceived: ").append(QString::fromUtf8(baOrigData));
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
-                    if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"))))
+                    QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                    if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                     {
                         //Remove UWC
-                        QFile::remove((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")));
+                        QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
                     }
                     ui->btn_Cancel->setEnabled(false);
                 }
@@ -2035,11 +2038,12 @@ MainWindow::LoadFile
     )
 {
     //Load
-    QFile file((bToUWC == true ? (gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")) : gstrTermFilename));
+    QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+    QFile file((bToUWC == true ? QString(lstFI[0]).append(lstFI[1]).append(".uwc") : gstrTermFilename));
     if (!file.open(QIODevice::ReadOnly))
     {
         //Unable to open file
-        QString strMessage = tr("Error during XCompile: Access to selected file is denied: ").append((bToUWC ? (gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")) : gstrTermFilename));
+        QString strMessage = tr("Error during XCompile: Access to selected file is denied: ").append((bToUWC ? QString(lstFI[0]).append(lstFI[1]).append(".uwc") : gstrTermFilename));
         gpmErrorForm->show();
         gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
@@ -2443,10 +2447,11 @@ MainWindow::on_btn_Cancel_clicked
         gintQueuedTXBytes += 6;
         MainWindow::DoLineEnd();
         gpMainLog->WriteLogData("AT+FCL\n");
-        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"))))
+        QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
         {
             //Remove UWC
-            QFile::remove((gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")));
+            QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
         }
         gchTermMode = 0;
         gchTermMode2 = 0;
@@ -2848,8 +2853,8 @@ MainWindow::RunPrePostExecutable
 //=============================================================================
 void
 MainWindow::on_btn_PreXCompSelect_clicked
-(
-)
+    (
+    )
 {
     //Opens an executable selector
     QString strFilename;
@@ -2878,9 +2883,9 @@ MainWindow::on_btn_PreXCompSelect_clicked
 //=============================================================================
 void
 MainWindow::on_radio_XCompPre_toggled
-(
+    (
     bool bChecked
-)
+    )
 {
     //Pre/post XCompiler run time changed to run before XCompiler - update settings
     gpTermSettings->setValue("PrePostXCompMode", "0");
@@ -2890,9 +2895,9 @@ MainWindow::on_radio_XCompPre_toggled
 //=============================================================================
 void
 MainWindow::on_radio_XCompPost_toggled
-(
+    (
     bool bChecked
-)
+    )
 {
     //Pre/post XCompiler run time changed to run after XCompiler - update settings
     gpTermSettings->setValue("PrePostXCompMode", "1");
@@ -2902,9 +2907,9 @@ MainWindow::on_radio_XCompPost_toggled
 //=============================================================================
 void
 MainWindow::on_check_PreXCompFail_stateChanged
-(
+    (
     int bChecked
-)
+    )
 {
     //Pre/post XCompiler run if XCompiler failed changed - update settings
     gpTermSettings->setValue("PrePostXCompFail", ui->check_PreXCompFail->isChecked());
@@ -2914,8 +2919,8 @@ MainWindow::on_check_PreXCompFail_stateChanged
 //=============================================================================
 void
 MainWindow::on_edit_PreXCompFilename_editingFinished
-(
-)
+    (
+    )
 {
     //Pre/post XCompiler executable changed - update settings
     gpTermSettings->setValue("PrePostXCompPath", ui->edit_PreXCompFilename->text());
@@ -2925,8 +2930,8 @@ MainWindow::on_edit_PreXCompFilename_editingFinished
 //=============================================================================
 void
 MainWindow::on_btn_GitHub_clicked
-(
-)
+    (
+    )
 {
     //Open webpage at the UwTerminalX github page)
     QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/UwTerminalX"));
@@ -2936,9 +2941,9 @@ MainWindow::on_btn_GitHub_clicked
 //=============================================================================
 void
 MainWindow::replyFinished
-(
-QNetworkReply* nrReply
-)
+    (
+    QNetworkReply* nrReply
+    )
 {
     //Response received from server regarding online XCompilation
     if (gchTermMode2 == 0)
@@ -3099,13 +3104,14 @@ QNetworkReply* nrReply
         else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
         {
             //Compiled - save file
-            if (!QFile::exists(gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc")))
+            QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+            if (!QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
             {
                 //Remove file
-                QFile::remove(gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"));
+                QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
             }
 
-            QFile file(gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc"));
+            QFile file(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
             if (file.open(QIODevice::WriteOnly))
             {
                 file.write(nrReply->readAll());
@@ -3113,7 +3119,7 @@ QNetworkReply* nrReply
             file.flush();
             file.close();
 
-            gstrTermFilename = gstrTermFilename.lastIndexOf(".") >= 0 ? gstrTermFilename.left(gstrTermFilename.lastIndexOf(".")).append(".uwc") : gstrTermFilename.append(".uwc");
+            gstrTermFilename = QString(lstFI[0]).append(lstFI[1]).append(".uwc");
 
             if (gchTermMode == MODE_SERVER_COMPILE)
             {
@@ -3170,10 +3176,39 @@ QNetworkReply* nrReply
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_check_OnlineXComp_stateChanged(int arg1)
+void
+MainWindow::on_check_OnlineXComp_stateChanged
+    (
+    int bChecked
+    )
 {
     //Online XCompiler checkbox state changed
     ui->label_OnlineXCompInfo->setEnabled(ui->check_OnlineXComp->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+QList<QString>
+MainWindow::SplitFilePath
+    (
+    QString strFilename
+    )
+{
+    //Extracts various parts from a file path; [0] path, [1] filename, [2] file extension
+    QFileInfo fiFile(strFilename);
+    QString strFilenameOnly = fiFile.fileName();
+    QString strFileExtension = "";
+    if (strFilenameOnly.indexOf(".") != -1)
+    {
+        //Dot found, only keep characters up to the dot
+        strFileExtension = strFilenameOnly.mid(strFilenameOnly.indexOf(".")+1, -1);
+        strFilenameOnly = strFilenameOnly.left(strFilenameOnly.indexOf("."));
+    }
+
+    //Return an array with path, filename and extension
+    QList<QString> lstReturnData;
+    lstReturnData << fiFile.path().append("/") << strFilenameOnly << strFileExtension;
+    return lstReturnData;
 }
 
 /******************************************************************************/

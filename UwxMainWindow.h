@@ -63,7 +63,7 @@
 #define MODE_SERVER_COMPILE_LOAD 10
 #define MODE_SERVER_COMPILE_LOAD_RUN 11
 //Defines for version and functions
-#define UwVersion "0.89 alpha" //Version string
+#define UwVersion "0.89b alpha" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -88,193 +88,256 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void MessagePass(QString strDataString, bool bEscapeString);
+    void
+    MessagePass
+        (
+        QString strDataString,
+        bool bEscapeString
+        );
 
 public slots:
-    void readData
-    (
-    );
-    void triggered
-    (
-    QAction* qaAction
-    );
-    void balloontriggered
-    (
-    QAction* qaAction
-    );
-    void DevRespTimeout
-    (
-    );
-    void process_finished
-    (
-    int intExitCode,
-    QProcess::ExitStatus esExitStatus
-    );
-    void SerialStatusSlot
-    (
-    );
-    void SerialError
-    (
-    QSerialPort::SerialPortError speErrorCode
-    );
-    void EnterPressed
-    (
-    );
-    void KeyPressed
-    (
-    int intKeyValue
-    );
-    void SerialBytesWritten
-    (
-    qint64 intByteCount
-    );
+    void
+    readData
+        (
+        );
+    void
+    triggered
+        (
+        QAction* qaAction
+        );
+    void
+    balloontriggered
+        (
+        QAction* qaAction
+        );
+    void
+    DevRespTimeout
+        (
+        );
+    void
+    process_finished
+        (
+        int intExitCode,
+        QProcess::ExitStatus esExitStatus
+        );
+    void
+    SerialStatusSlot
+        (
+        );
+    void
+    SerialError
+        (
+        QSerialPort::SerialPortError speErrorCode
+        );
+    void
+    EnterPressed
+        (
+        );
+    void
+    KeyPressed
+        (
+        int intKeyValue
+        );
+    void
+    SerialBytesWritten
+        (
+        qint64 intByteCount
+        );
 
 private slots:
-    void on_btn_Accept_clicked
-    (
-    );
-    void on_selector_Tab_currentChanged
-    (
-    int intIndex
-    );
-    void on_btn_Connect_clicked
-    (
-    );
-    void on_btn_TermClose_clicked
-    (
-    );
-    void on_btn_Refresh_clicked
-    (
-    );
-    void on_btn_TermClear_clicked
-    (
-    );
-    void on_btn_Duplicate_clicked
-    (
-    );
-    void on_text_TermEditData_customContextMenuRequested
-    (
-    const QPoint &pos
-    );
-    void on_check_Break_stateChanged
-    (
-    );
-    void on_check_RTS_stateChanged
-    (
-    );
-    void on_check_DTR_stateChanged
-    (
-    );
-    void on_check_Line_stateChanged
-    (
-    );
-    void closeEvent(
-    QCloseEvent *event
-    );
-    void on_btn_Default600_clicked
-    (
-    );
-    void on_btn_Default620US_clicked
-    (
-    );
-    void on_btn_Default900_clicked
-    (
-    );
-    void on_btn_Cancel_clicked
-    (
-    );
-    void UpdateReceiveText
-    (
-    );
-    void BatchTimeoutSlot
-    (
-    );
-    void on_combo_COM_currentIndexChanged
-    (
-    int index
-    );
-    void PollUSB
-    (
-    );
-    void replyFinished
-    (
-    QNetworkReply* nrReply
-    );
-    void on_check_PreXCompRun_stateChanged
-    (
-    int iChecked
-    );
-    bool RunPrePostExecutable
-    (
-    QString strFilename
-    );
-    void on_btn_PreXCompSelect_clicked
-    (
-    );
-    void on_radio_XCompPre_toggled
-    (
-    bool bChecked
-    );
-    void on_radio_XCompPost_toggled
-    (
-    bool bChecked
-    );
-    void on_check_PreXCompFail_stateChanged
-    (
-    int bChecked
-    );
-    void on_edit_PreXCompFilename_editingFinished
-    (
-    );
-    void on_btn_GitHub_clicked
-    (
-    );
-    void on_check_OnlineXComp_stateChanged
-    (
-    int arg1
-    );
+    void
+    on_btn_Accept_clicked
+        (
+        );
+    void
+    on_selector_Tab_currentChanged
+        (
+        int intIndex
+        );
+    void
+    on_btn_Connect_clicked
+        (
+        );
+    void
+    on_btn_TermClose_clicked
+        (
+        );
+    void
+    on_btn_Refresh_clicked
+        (
+        );
+    void
+    on_btn_TermClear_clicked
+        (
+        );
+    void
+    on_btn_Duplicate_clicked
+        (
+        );
+    void
+    on_text_TermEditData_customContextMenuRequested
+        (
+        const QPoint &pos
+        );
+    void
+    on_check_Break_stateChanged
+        (
+        );
+    void
+    on_check_RTS_stateChanged
+        (
+        );
+    void
+    on_check_DTR_stateChanged
+        (
+        );
+    void
+    on_check_Line_stateChanged
+        (
+        );
+    void
+    closeEvent
+        (
+        QCloseEvent *event
+        );
+    void
+    on_btn_Default600_clicked
+        (
+        );
+    void
+    on_btn_Default620US_clicked
+        (
+        );
+    void
+    on_btn_Default900_clicked
+        (
+        );
+    void
+    on_btn_Cancel_clicked
+        (
+        );
+    void
+    UpdateReceiveText
+        (
+        );
+    void
+    BatchTimeoutSlot
+        (
+        );
+    void
+    on_combo_COM_currentIndexChanged
+        (
+        int index
+        );
+    void
+    PollUSB
+        (
+        );
+    void
+    replyFinished
+        (
+        QNetworkReply* nrReply
+        );
+    void
+    on_check_PreXCompRun_stateChanged
+        (
+        int iChecked
+        );
+    bool
+    RunPrePostExecutable
+        (
+        QString strFilename
+        );
+    void
+    on_btn_PreXCompSelect_clicked
+        (
+        );
+    void
+    on_radio_XCompPre_toggled
+        (
+        bool bChecked
+        );
+    void
+    on_radio_XCompPost_toggled
+        (
+        bool bChecked
+        );
+    void
+    on_check_PreXCompFail_stateChanged
+        (
+        int bChecked
+        );
+    void
+    on_edit_PreXCompFilename_editingFinished
+        (
+        );
+    void
+    on_btn_GitHub_clicked
+        (
+        );
+    void
+    on_check_OnlineXComp_stateChanged
+        (
+        int bChecked
+        );
+    QList<QString>
+    SplitFilePath
+        (
+        QString strFilename
+        );
 
 private:
     Ui::MainWindow *ui;
-    void RefreshSerialDevices
-    (
-    );
-    unsigned char CompileApp
-    (
-    unsigned char chMode
-    );
-    void UpdateImages
-    (
-    );
-    void DoLineEnd
-    (
-    );
-    void SerialStatus
-    (
-    bool bType
-    );
-    void OpenSerial
-    (
-    );
-    void LoadFile
-    (
-    bool bToUWC
-    );
-    void RunApplication
-    (
-    );
-    void LookupErrorCode
-    (
-    unsigned int intErrorCode
-    );
-    void FinishStream
-    (
-    bool bType
-    );
-    void FinishBatch
-    (
-    bool bType
-    );
+    void
+    RefreshSerialDevices
+        (
+        );
+    unsigned char
+    CompileApp
+        (
+        unsigned char chMode
+        );
+    void
+    UpdateImages
+        (
+        );
+    void
+    DoLineEnd
+        (
+        );
+    void
+    SerialStatus
+        (
+        bool bType
+        );
+    void
+    OpenSerial
+        (
+        );
+    void
+    LoadFile
+        (
+        bool bToUWC
+        );
+    void
+    RunApplication
+        (
+        );
+    void
+    LookupErrorCode
+        (
+        unsigned int intErrorCode
+        );
+    void
+    FinishStream
+        (
+        bool bType
+        );
+    void
+    FinishBatch
+        (
+        bool bType
+        );
 
     //Private variables
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
@@ -336,13 +399,13 @@ private:
 
 protected:
     void dragEnterEvent
-    (
-    QDragEnterEvent *event
-    );
+        (
+        QDragEnterEvent *event
+        );
     void dropEvent
-    (
-    QDropEvent *event
-    );
+        (
+        QDropEvent *event
+        );
 };
 
 #endif // UWXMAINWINDOW_H
