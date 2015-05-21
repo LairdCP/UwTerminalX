@@ -116,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
         gpTermSettings->setValue("PrePostXCompPath", ""); //Filename of pre/post XCompiler executable (with additional arguments)
         gpTermSettings->setValue("OnlineXComp", "1"); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
+        gpTermSettings->setValue("OnlineXCompServer", ServerHost); //Online XCompiler server IP/Hostname
     }
 
     //Create logging handle and variables for logging mode
@@ -948,7 +949,7 @@ MainWindow::readData
 #ifdef UseSSL
                         .append("s")
 #endif
-                        .append("://").append(ServerHost).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                     }
                     else
                     {
@@ -1000,8 +1001,8 @@ MainWindow::readData
 #ifdef UseSSL
                         .append("s")
 #endif
-                        .append("://").append(ServerHost).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
-                        ui->statusBar->showMessage("Device support request sent...", 500);
+                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        ui->statusBar->showMessage("Device support request sent...", 2000);
 
                         if (gchTermMode == MODE_COMPILE)
                         {
@@ -1176,7 +1177,7 @@ MainWindow::triggered
     )
 {
     //Runs when a menu item is selected
-    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false)
+    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
     {
         //Serial is open, allow xcompile functions
         if (qaAction->text() == "XCompile")
@@ -2946,149 +2947,130 @@ MainWindow::replyFinished
     )
 {
     //Response received from server regarding online XCompilation
-    if (gchTermMode2 == 0)
+    if (nrReply->error() != QNetworkReply::NoError)
     {
-        //Check if device is supported
-        QJsonParseError jpeJsonError;
-        QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
-        if (jpeJsonError.error == QJsonParseError::NoError)
-        {
-            //Decoded JSON
-            QJsonObject joJsonObject = jdJsonData.object();
-            if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
-            {
-                //Server responded with error
-                QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-            else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
-            {
-                //Server responded with OK
-                if (joJsonObject["Result"].toString() == "1")
-                {
-                    //Device supported
-                    gstrDeviceID = joJsonObject["ID"].toString();
-                    gchTermMode2 = MODE_SERVER_COMPILE;
+        //An error occured
+        gtmrDownloadTimeoutTimer.stop();
+        gstrHexData = "";
+        gtmrTextUpdateTimer.start();
+        gchTermMode = 0;
+        gchTermMode2 = 0;
+        gbTermBusy = false;
 
-                    //Compile application
-                    QNetworkRequest nrThisReq(QUrl(QString("http")
-#ifdef UseSSL
-                    .append("s")
-#endif
-                    .append("://").append(ServerHost).append("/xcompile.php?JSON=1")));
-                    QByteArray baPostData;
-                    baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
-                    baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
-
-                    //Add file data
-                    QFile file(gstrTermFilename);
-                    QByteArray tmpData;
-                    if (!file.open(QIODevice::ReadOnly))
-                    {
-                        //Failed to open file selected for download
-                        return;
-                    }
-
-                    while (!file.atEnd())
-                    {
-                        tmpData.append(file.readAll());
-                    }
-                    file.close();
-
-                    QFileInfo fiFileInfo(gstrTermFilename);
-
-                    //Include other files
-                    QRegularExpression reTempRE("^(\\s{0,})#include(\\s{1,})\"(.*?)\"");
-                    reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
-                    bool bChangedState = true;
-                    while (bChangedState == true)
-                    {
-                        bChangedState = false;
-                        QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
-                        while (rx1match.hasNext())
-                        {
-                            //Found an include, add the file data
-                            QRegularExpressionMatch ThisMatch = rx1match.next();
-
-                            file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(3)));
-                            if (!file.open(QIODevice::ReadOnly))
-                            {
-                                //Failed to open include file
-                                return;
-                            }
-
-                            bChangedState = true;
-
-                            QByteArray tmpData2;
-                            while (!file.atEnd())
-                            {
-                                tmpData2.append(file.readAll());
-                            }
-                            file.close();
-                            unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
-                            tmpData.remove(i, ThisMatch.captured(0).length());
-                            tmpData.insert(i, tmpData2);
-                        }
-                    }
-
-                    //Append the data to the POST request
-                    baPostData.append(tmpData);
-                    baPostData.append("\r\n-----------------------------17192614014659--\r\n");
-                    nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
-                    nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
-                    gnmManager->post(nrThisReq, baPostData);
-                    ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
-                }
-                else
-                {
-                    //Device should be supported but something went wrong...
-                    QString strMessage = QString("Unfortunately your device is not supported for online XCompiling.");
-                    gpmErrorForm->show();
-                    gpmErrorForm->SetMessage(&strMessage);
-                }
-            }
-            else
-            {
-                //Unknown response
-                QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-        }
-        else
-        {
-            //Error whilst decoding JSON
-            QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(jpeJsonError.errorString());
-            gpmErrorForm->show();
-            gpmErrorForm->SetMessage(&strMessage);
-        }
+        //Display error message
+        QString strMessage = QString("An error occured during Online XCompilation: ").append(nrReply->errorString());
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
     }
-    else if (gchTermMode2 == MODE_SERVER_COMPILE)
+    else
     {
-        //XCompile result
-        if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
+        if (gchTermMode2 == 0)
         {
-            //Error compiling
+            //Check if device is supported
             QJsonParseError jpeJsonError;
             QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
             if (jpeJsonError.error == QJsonParseError::NoError)
             {
                 //Decoded JSON
                 QJsonObject joJsonObject = jdJsonData.object();
-
-                //Server responded with error
-                if (joJsonObject["Result"].toString() == "-9")
-                {
-                    //Error whilst compiling, show results
-                    QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
-                    gpmErrorForm->show();
-                    gpmErrorForm->SetMessage(&strMessage);
-                }
-                else
+                if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
                 {
                     //Server responded with error
                     QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+                else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
+                {
+                    //Server responded with OK
+                    if (joJsonObject["Result"].toString() == "1")
+                    {
+                        //Device supported
+                        gstrDeviceID = joJsonObject["ID"].toString();
+                        gchTermMode2 = MODE_SERVER_COMPILE;
+
+                        //Compile application
+                        QNetworkRequest nrThisReq(QUrl(QString("http")
+#ifdef UseSSL
+                        .append("s")
+#endif
+                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/xcompile.php?JSON=1")));
+                        QByteArray baPostData;
+                        baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
+                        baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
+
+                        //Add file data
+                        QFile file(gstrTermFilename);
+                        QByteArray tmpData;
+                        if (!file.open(QIODevice::ReadOnly))
+                        {
+                            //Failed to open file selected for download
+                            return;
+                        }
+
+                        while (!file.atEnd())
+                        {
+                            tmpData.append(file.readAll());
+                        }
+                        file.close();
+
+                        QFileInfo fiFileInfo(gstrTermFilename);
+
+                        //Include other files
+                        QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})\"(.*?)\"");
+                        reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
+                        bool bChangedState = true;
+                        while (bChangedState == true)
+                        {
+                            bChangedState = false;
+                            QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
+                            while (rx1match.hasNext())
+                            {
+                                //Found an include, add the file data
+                                QRegularExpressionMatch ThisMatch = rx1match.next();
+
+                                file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5)));
+                                if (!file.open(QIODevice::ReadOnly))
+                                {
+                                    //Failed to open include file
+                                    return;
+                                }
+
+                                bChangedState = true;
+
+                                QByteArray tmpData2;
+                                while (!file.atEnd())
+                                {
+                                    tmpData2.append(file.readAll());
+                                }
+                                file.close();
+                                unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
+                                tmpData.remove(i, ThisMatch.captured(0).length());
+                                tmpData.insert(i, "\r\n");
+                                tmpData.insert(i+2, tmpData2);
+                            }
+                        }
+
+                        //Append the data to the POST request
+                        baPostData.append(tmpData);
+                        baPostData.append("\r\n-----------------------------17192614014659--\r\n");
+                        nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
+                        nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
+                        gnmManager->post(nrThisReq, baPostData);
+                        ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
+                    }
+                    else
+                    {
+                        //Device should be supported but something went wrong...
+                        QString strMessage = QString("Unfortunately your device is not supported for online XCompiling.");
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
+                    }
+                }
+                else
+                {
+                    //Unknown response
+                    QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
@@ -3096,80 +3078,118 @@ MainWindow::replyFinished
             else
             {
                 //Error whilst decoding JSON
-                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(jpeJsonError.errorString());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
         }
-        else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
+        else if (gchTermMode2 == MODE_SERVER_COMPILE)
         {
-            //Compiled - save file
-            QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-            if (!QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+            //XCompile result
+            if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
             {
-                //Remove file
-                QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
-            }
-
-            QFile file(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
-            if (file.open(QIODevice::WriteOnly))
-            {
-                file.write(nrReply->readAll());
-            }
-            file.flush();
-            file.close();
-
-            gstrTermFilename = QString(lstFI[0]).append(lstFI[1]).append(".uwc");
-
-            if (gchTermMode == MODE_SERVER_COMPILE)
-            {
-                //Done
-                gtmrDownloadTimeoutTimer.stop();
-                gstrHexData = "";
-                gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
-                gtmrTextUpdateTimer.start();
-                gchTermMode = 0;
-                gchTermMode2 = 0;
-                gbTermBusy = false;
-
-                //Disable button
-                ui->btn_Cancel->setEnabled(false);
-            }
-            else
-            {
-                //Next step
-                if (gchTermMode == MODE_SERVER_COMPILE_LOAD)
+                //Error compiling
+                QJsonParseError jpeJsonError;
+                QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
+                if (jpeJsonError.error == QJsonParseError::NoError)
                 {
-                    //Just load the file
-                    gchTermMode = MODE_LOAD;
+                    //Decoded JSON
+                    QJsonObject joJsonObject = jdJsonData.object();
+
+                    //Server responded with error
+                    if (joJsonObject["Result"].toString() == "-9")
+                    {
+                        //Error whilst compiling, show results
+                        QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
+                    }
+                    else
+                    {
+                        //Server responded with error
+                        QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
+                    }
                 }
                 else
                 {
-                    //Load the file then run it
-                    gchTermMode = MODE_LOAD_RUN;
+                    //Error whilst decoding JSON
+                    QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
+            else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
+            {
+                //Compiled - save file
+                QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                if (!QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+                {
+                    //Remove file
+                    QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
                 }
 
-                //Loading a compiled application
-                MainWindow::LoadFile(false);
+                QFile file(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
+                if (file.open(QIODevice::WriteOnly))
+                {
+                    file.write(nrReply->readAll());
+                }
+                file.flush();
+                file.close();
 
-                //Download to the device
-                gchTermMode2 = MODE_COMPILE;
-                QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
-                gspSerialPort.write(baTmpBA);
-                gintQueuedTXBytes += baTmpBA.size();
-                MainWindow::DoLineEnd();
-                gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+                gstrTermFilename = QString(lstFI[0]).append(lstFI[1]).append(".uwc");
 
-                //Start the timeout timer
-                gtmrDownloadTimeoutTimer.start();
+                if (gchTermMode == MODE_SERVER_COMPILE)
+                {
+                    //Done
+                    gtmrDownloadTimeoutTimer.stop();
+                    gstrHexData = "";
+                    gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
+                    gtmrTextUpdateTimer.start();
+                    gchTermMode = 0;
+                    gchTermMode2 = 0;
+                    gbTermBusy = false;
+
+                    //Disable button
+                    ui->btn_Cancel->setEnabled(false);
+                }
+                else
+                {
+                    //Next step
+                    if (gchTermMode == MODE_SERVER_COMPILE_LOAD)
+                    {
+                        //Just load the file
+                        gchTermMode = MODE_LOAD;
+                    }
+                    else
+                    {
+                        //Load the file then run it
+                        gchTermMode = MODE_LOAD_RUN;
+                    }
+
+                    //Loading a compiled application
+                    MainWindow::LoadFile(false);
+
+                    //Download to the device
+                    gchTermMode2 = MODE_COMPILE;
+                    QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
+                    gspSerialPort.write(baTmpBA);
+                    gintQueuedTXBytes += baTmpBA.size();
+                    MainWindow::DoLineEnd();
+                    gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+
+                    //Start the timeout timer
+                    gtmrDownloadTimeoutTimer.start();
+                }
             }
-        }
-        else
-        {
-            //Unknown response
-            QString strMessage = tr("Unknown response from server.");
-            gpmErrorForm->show();
-            gpmErrorForm->SetMessage(&strMessage);
+            else
+            {
+                //Unknown response
+                QString strMessage = tr("Unknown response from server.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
         }
     }
 }
@@ -3184,6 +3204,7 @@ MainWindow::on_check_OnlineXComp_stateChanged
 {
     //Online XCompiler checkbox state changed
     ui->label_OnlineXCompInfo->setEnabled(ui->check_OnlineXComp->isChecked());
+    gpTermSettings->setValue("OnlineXComp", ui->check_OnlineXComp->isChecked());
 }
 
 //=============================================================================
