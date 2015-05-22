@@ -285,6 +285,18 @@ private slots:
         (
         QString strFilename
         );
+    void
+    on_btn_BL600Apps_clicked
+        (
+        );
+    void
+    on_btn_BL620Apps_clicked
+        (
+        );
+    void
+    on_btn_BT900Apps_clicked
+        (
+        );
 
 private:
     Ui::MainWindow *ui;

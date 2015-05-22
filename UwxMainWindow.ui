@@ -80,7 +80,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -377,11 +377,6 @@
                    </colorrole>
                   </disabled>
                  </palette>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Courier</family>
-                 </font>
                 </property>
                 <property name="verticalScrollBarPolicy">
                  <enum>Qt::ScrollBarAsNeeded</enum>
@@ -1522,7 +1517,7 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="3">
+            <item row="0" column="6">
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -1539,6 +1534,27 @@
              <widget class="QPushButton" name="btn_GitHub">
               <property name="text">
                <string>Visit GitHub page</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="btn_BL600Apps">
+              <property name="text">
+               <string>BL600 Applications</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QPushButton" name="btn_BL620Apps">
+              <property name="text">
+               <string>BL620 Applications</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="5">
+             <widget class="QPushButton" name="btn_BT900Apps">
+              <property name="text">
+               <string>BT900 Applications</string>
               </property>
              </widget>
             </item>
@@ -1579,7 +1595,7 @@ COM=n
     Mac: [todo]
 
 BAUD=n
-    [1200..921600] Could be limited to 115200 depending on PC hardware
+    [1200..921600] Could be limited to 115200 depending on PC hardware (limited to 230400 on Mac)
 
 STOP=n
     [1..2]

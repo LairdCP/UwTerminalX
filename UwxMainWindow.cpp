@@ -11,7 +11,6 @@
 
 //When line mode is on, can delete parts of edit, can input anywhere, etc.
 #pragma warning("if something goes wrong with XCompile (like has #include) then cancel button is not disabled")
-#pragma warning("add in github link for bt900/bl600/bl620 repos")
 #pragma warning("data download should show at+fwrh stuff too")
 #pragma warning("codes.csv forgot to add - add server side downloading of latest version?")
 #pragma warning("add something to output when online XComp is finished (and download is starting)")
@@ -553,6 +552,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             }
         }
     }
+
+    //Change terminal font to a monospaced font
+    ui->text_TermEditData->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 }
 
 //=============================================================================
@@ -1261,7 +1263,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Erase File" || qaAction->text() == "Erase File +")
     {
         //Erase file
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
             QString strFilename;
@@ -1299,7 +1301,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Dir")
     {
         //Dir
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //List current directory contents
             gspSerialPort.write("at+dir");
@@ -1313,7 +1315,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Run")
     {
         //Run an application
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
             QString strFilename;
@@ -1351,7 +1353,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Stream File Out")
     {
         //Stream out a file
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
             QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), "", tr("Text Files (*.txt);;All Files (*.*)"));
@@ -1411,7 +1413,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Run")
     {
         //Runs an application
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
             QString strFilename;
@@ -1452,7 +1454,7 @@ MainWindow::triggered
     else if (qaAction->text() == "Batch")
     {
         //Start a Batch file script
-        if (gbTermBusy == false)
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
             QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
@@ -3277,6 +3279,39 @@ MainWindow::SplitFilePath
     QList<QString> lstReturnData;
     lstReturnData << fiFile.path().append("/") << strFilenameOnly << strFileExtension;
     return lstReturnData;
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_BL600Apps_clicked
+    (
+    )
+{
+    //BL600 Applications button clicked
+    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL600-Applications"));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_BL620Apps_clicked
+    (
+    )
+{
+    //BL620 Applications button clicked
+    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL620-Applications"));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_BT900Apps_clicked
+    (
+    )
+{
+    //BT900 Applications button clicked
+    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
 }
 
 /******************************************************************************/
