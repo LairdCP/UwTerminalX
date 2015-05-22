@@ -10,6 +10,11 @@
 *******************************************************************************/
 
 //When line mode is on, can delete parts of edit, can input anywhere, etc.
+#pragma warning("if something goes wrong with XCompile (like has #include) then cancel button is not disabled")
+#pragma warning("add in github link for bt900/bl600/bl620 repos")
+#pragma warning("data download should show at+fwrh stuff too")
+#pragma warning("codes.csv forgot to add - add server side downloading of latest version?")
+#pragma warning("add something to output when online XComp is finished (and download is starting)")
 
 /******************************************************************************/
 // Include Files
@@ -190,237 +195,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     );
     MainWindow::setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
 
-    //Check command line
-    QStringList slArgs = QCoreApplication::arguments();
-    unsigned char chi = 1;
-    bool bArgCom = false;
-    while (chi < slArgs.length())
-    {
-        if (slArgs[chi] == "ACCEPT")
-        {
-            //Skip the front panel - disable buttons
-            ui->btn_Accept->setEnabled(false);
-            ui->btn_Decline->setEnabled(false);
-
-            //Switch to config tab
-            ui->selector_Tab->setCurrentIndex(1);
-
-            //Default empty images
-            ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
-        }
-        else if (slArgs[chi].left(4) == "COM=")
-        {
-            //Set com port
-            ui->combo_COM->setCurrentText(slArgs[chi].right(slArgs[chi].length()-4));
-            bArgCom = true;
-        }
-        else if (slArgs[chi].left(5) == "BAUD=")
-        {
-            //Set baud rate
-            ui->combo_Baud->setCurrentText(slArgs[chi].right(slArgs[chi].length()-5));
-        }
-        else if (slArgs[chi].left(5) == "STOP=")
-        {
-            //Set stop bits
-            if (slArgs[chi].right(1) == "1")
-            {
-                //One
-                ui->combo_Stop->setCurrentIndex(0);
-            }
-            else if (slArgs[chi].right(1) == "2")
-            {
-                //Two
-                ui->combo_Stop->setCurrentIndex(1);
-            }
-        }
-        else if (slArgs[chi].left(5) == "DATA=")
-        {
-            //Set data bits
-            if (slArgs[chi].right(1) == "7")
-            {
-                //Seven
-                ui->combo_Data->setCurrentIndex(0);
-            }
-            else if (slArgs[chi].right(1) == "8")
-            {
-                //Eight
-                ui->combo_Data->setCurrentIndex(1);
-            }
-        }
-        else if (slArgs[chi].left(4) == "PAR=")
-        {
-            //Set parity
-            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
-            {
-                ui->combo_Parity->setCurrentIndex(slArgs[chi].right(1).toInt());
-            }
-        }
-        else if (slArgs[chi].left(5) == "FLOW=")
-        {
-            //Set flow control
-            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
-            {
-                ui->combo_Handshake->setCurrentIndex(slArgs[chi].right(1).toInt());
-            }
-        }
-        else if (slArgs[chi].left(7) == "ENDCHR=")
-        {
-            //Sets the end of line character
-            if (slArgs[chi].right(1) == "0")
-            {
-                //CR
-                ui->radio_LCR->setChecked(true);
-            }
-            else if (slArgs[chi].right(1) == "1")
-            {
-                //LF
-                ui->radio_LLF->setChecked(true);
-            }
-            else if (slArgs[chi].right(1) == "2")
-            {
-                //CRLF
-                ui->radio_LCRLF->setChecked(true);
-            }
-            else if (slArgs[chi].right(1) == "3")
-            {
-                //LFCR
-                ui->radio_LLFCR->setChecked(true);
-            }
-        }
-        else if (slArgs[chi] == "POLL")
-        {
-            //Enables poll mode
-            ui->check_Poll->setChecked(true);
-        }
-        else if (slArgs[chi].left(10) == "LOCALECHO=")
-        {
-            //Enable or disable local echo
-            if (slArgs[chi].right(1) == "0")
-            {
-                //Off
-                ui->check_Echo->setChecked(false);
-            }
-            else if (slArgs[chi].right(1) == "1")
-            {
-                //On (default)
-                ui->check_Echo->setChecked(true);
-            }
-        }
-        else if (slArgs[chi].left(9) == "LINEMODE=")
-        {
-            //Enable or disable line mode
-            if (slArgs[chi].right(1) == "0")
-            {
-                //Off
-                ui->check_Line->setChecked(false);
-                on_check_Line_stateChanged();
-            }
-            else if (slArgs[chi].right(1) == "1")
-            {
-                //On (default)
-                ui->check_Line->setChecked(true);
-                on_check_Line_stateChanged();
-            }
-        }
-        else if (slArgs[chi] == "LOG")
-        {
-            //Enables logging
-            if (bLoggerOpened == true)
-            {
-                //Clear the file contents
-                gpMainLog->ClearLog();
-
-                //Add log opened message
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-            }
-            chLoggerMode = 1;
-        }
-        else if (slArgs[chi] == "LOG+")
-        {
-            //Enables appending to the previous log file instead of erasing
-            chLoggerMode = 2;
-        }
-        else if (slArgs[chi].left(4) == "LOG=" && bLoggerOpened == false)
-        {
-            //Specifies log filename
-            if (chLoggerMode == 1)
-            {
-                //Clear log file before opening
-                QFile::remove(slArgs[chi].mid(4, -1));
-            }
-
-            if (gpMainLog->OpenLogFile(slArgs[chi].mid(4, -1)) == LOG_OK)
-            {
-                //Log opened
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-                gbMainLogEnabled = true;
-            }
-            else
-            {
-                //Log not writeable
-                QString strMessage = tr("Error whilst opening log:\nPlease ensure you have access to the log file ").append(slArgs[chi].mid(4, -1)).append(" and have enough free space on your hard drive.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-            bLoggerOpened = true;
-        }
-        else if (slArgs[chi] == "SHOWCRLF")
-        {
-            //Displays \t, \r, \n etc. as \t, \r, \n instead of [tab], [new line], [carriage return]
-            ui->check_ShowCLRF->setChecked(true);
-        }
-        else if (slArgs[chi] == "CONNECT")
-        {
-            //Connect to device at startup
-            if (ui->btn_Accept->isEnabled() == false && bArgCom == true)
-            {
-                //Enough information to connect!
-                MainWindow::OpenSerial();
-            }
-        }
-        ++chi;
-    }
-
-    if (bLoggerOpened == false)
-    {
-        //Log file was not opened from command line
-        if (gpTermSettings->value("LogLevel", "1").toInt() == 1 || gpTermSettings->value("LogLevel", "1").toInt() == 2)
-        {
-            //Logging is enabled
-#if TARGET_OS_MAC
-            if (gpMainLog->OpenLogFile(QString(gstrMacBundlePath).append(gpTermSettings->value("LogFile").toString())) == LOG_OK)
-#else
-            if (gpMainLog->OpenLogFile(gpTermSettings->value("LogFile").toString()) == LOG_OK)
-#endif
-            {
-                //Log opened
-                if (gpTermSettings->value("LogMode", "0").toBool() == true)
-                {
-                    //Clear the log file
-                    gpMainLog->ClearLog();
-                }
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-                gbMainLogEnabled = true;
-            }
-            else
-            {
-                //Log not writeable
-                QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(gpTermSettings->value("LogFile").toString()).append(" and have enough free space on your hard drive.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-        }
-    }
-
     //Create menu items
     gpMenu = new QMenu(this);
     gpMenu->addAction(new QAction("XCompile", this));
@@ -548,6 +322,237 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Setup QNetwork for Online XCompiler
     gnmManager = new QNetworkAccessManager();
     connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+
+    //Check command line
+    QStringList slArgs = QCoreApplication::arguments();
+    unsigned char chi = 1;
+    bool bArgCom = false;
+    while (chi < slArgs.length())
+    {
+        if (slArgs[chi].toUpper() == "ACCEPT")
+        {
+            //Skip the front panel - disable buttons
+            ui->btn_Accept->setEnabled(false);
+            ui->btn_Decline->setEnabled(false);
+
+            //Switch to config tab
+            ui->selector_Tab->setCurrentIndex(1);
+
+            //Default empty images
+            ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
+            ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
+            ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
+            ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+        }
+        else if (slArgs[chi].left(4).toUpper() == "COM=")
+        {
+            //Set com port
+            ui->combo_COM->setCurrentText(slArgs[chi].right(slArgs[chi].length()-4));
+            bArgCom = true;
+        }
+        else if (slArgs[chi].left(5).toUpper() == "BAUD=")
+        {
+            //Set baud rate
+            ui->combo_Baud->setCurrentText(slArgs[chi].right(slArgs[chi].length()-5));
+        }
+        else if (slArgs[chi].left(5).toUpper() == "STOP=")
+        {
+            //Set stop bits
+            if (slArgs[chi].right(1) == "1")
+            {
+                //One
+                ui->combo_Stop->setCurrentIndex(0);
+            }
+            else if (slArgs[chi].right(1) == "2")
+            {
+                //Two
+                ui->combo_Stop->setCurrentIndex(1);
+            }
+        }
+        else if (slArgs[chi].left(5).toUpper() == "DATA=")
+        {
+            //Set data bits
+            if (slArgs[chi].right(1) == "7")
+            {
+                //Seven
+                ui->combo_Data->setCurrentIndex(0);
+            }
+            else if (slArgs[chi].right(1).toUpper() == "8")
+            {
+                //Eight
+                ui->combo_Data->setCurrentIndex(1);
+            }
+        }
+        else if (slArgs[chi].left(4).toUpper() == "PAR=")
+        {
+            //Set parity
+            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
+            {
+                ui->combo_Parity->setCurrentIndex(slArgs[chi].right(1).toInt());
+            }
+        }
+        else if (slArgs[chi].left(5).toUpper() == "FLOW=")
+        {
+            //Set flow control
+            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
+            {
+                ui->combo_Handshake->setCurrentIndex(slArgs[chi].right(1).toInt());
+            }
+        }
+        else if (slArgs[chi].left(7).toUpper() == "ENDCHR=")
+        {
+            //Sets the end of line character
+            if (slArgs[chi].right(1) == "0")
+            {
+                //CR
+                ui->radio_LCR->setChecked(true);
+            }
+            else if (slArgs[chi].right(1) == "1")
+            {
+                //LF
+                ui->radio_LLF->setChecked(true);
+            }
+            else if (slArgs[chi].right(1) == "2")
+            {
+                //CRLF
+                ui->radio_LCRLF->setChecked(true);
+            }
+            else if (slArgs[chi].right(1) == "3")
+            {
+                //LFCR
+                ui->radio_LLFCR->setChecked(true);
+            }
+        }
+        else if (slArgs[chi].toUpper() == "POLL")
+        {
+            //Enables poll mode
+            ui->check_Poll->setChecked(true);
+        }
+        else if (slArgs[chi].left(10).toUpper() == "LOCALECHO=")
+        {
+            //Enable or disable local echo
+            if (slArgs[chi].right(1) == "0")
+            {
+                //Off
+                ui->check_Echo->setChecked(false);
+            }
+            else if (slArgs[chi].right(1) == "1")
+            {
+                //On (default)
+                ui->check_Echo->setChecked(true);
+            }
+        }
+        else if (slArgs[chi].left(9).toUpper() == "LINEMODE=")
+        {
+            //Enable or disable line mode
+            if (slArgs[chi].right(1) == "0")
+            {
+                //Off
+                ui->check_Line->setChecked(false);
+                on_check_Line_stateChanged();
+            }
+            else if (slArgs[chi].right(1) == "1")
+            {
+                //On (default)
+                ui->check_Line->setChecked(true);
+                on_check_Line_stateChanged();
+            }
+        }
+        else if (slArgs[chi].toUpper() == "LOG")
+        {
+            //Enables logging
+            if (bLoggerOpened == true)
+            {
+                //Clear the file contents
+                gpMainLog->ClearLog();
+
+                //Add log opened message
+                gpMainLog->WriteLogData(tr("-").repeated(31));
+                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
+                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
+            }
+            chLoggerMode = 1;
+        }
+        else if (slArgs[chi].toUpper() == "LOG+")
+        {
+            //Enables appending to the previous log file instead of erasing
+            chLoggerMode = 2;
+        }
+        else if (slArgs[chi].left(4).toUpper() == "LOG=" && bLoggerOpened == false)
+        {
+            //Specifies log filename
+            if (chLoggerMode == 1)
+            {
+                //Clear log file before opening
+                QFile::remove(slArgs[chi].mid(4, -1));
+            }
+
+            if (gpMainLog->OpenLogFile(slArgs[chi].mid(4, -1)) == LOG_OK)
+            {
+                //Log opened
+                gpMainLog->WriteLogData(tr("-").repeated(31));
+                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
+                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
+                gbMainLogEnabled = true;
+            }
+            else
+            {
+                //Log not writeable
+                QString strMessage = tr("Error whilst opening log:\nPlease ensure you have access to the log file ").append(slArgs[chi].mid(4, -1)).append(" and have enough free space on your hard drive.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+            bLoggerOpened = true;
+        }
+        else if (slArgs[chi].toUpper() == "SHOWCRLF")
+        {
+            //Displays \t, \r, \n etc. as \t, \r, \n instead of [tab], [new line], [carriage return]
+            ui->check_ShowCLRF->setChecked(true);
+        }
+        else if (slArgs[chi].toUpper() == "CONNECT")
+        {
+            //Connect to device at startup
+            if (ui->btn_Accept->isEnabled() == false && bArgCom == true)
+            {
+                //Enough information to connect!
+                MainWindow::OpenSerial();
+            }
+        }
+        ++chi;
+    }
+
+    if (bLoggerOpened == false)
+    {
+        //Log file was not opened from command line
+        if (gpTermSettings->value("LogLevel", "1").toInt() == 1 || gpTermSettings->value("LogLevel", "1").toInt() == 2)
+        {
+            //Logging is enabled
+#if TARGET_OS_MAC
+            if (gpMainLog->OpenLogFile(QString(gstrMacBundlePath).append(gpTermSettings->value("LogFile").toString())) == LOG_OK)
+#else
+            if (gpMainLog->OpenLogFile(gpTermSettings->value("LogFile").toString()) == LOG_OK)
+#endif
+            {
+                //Log opened
+                if (gpTermSettings->value("LogMode", "0").toBool() == true)
+                {
+                    //Clear the log file
+                    gpMainLog->ClearLog();
+                }
+                gpMainLog->WriteLogData(tr("-").repeated(31));
+                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
+                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
+                gbMainLogEnabled = true;
+            }
+            else
+            {
+                //Log not writeable
+                QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(gpTermSettings->value("LogFile").toString()).append(" and have enough free space on your hard drive.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+        }
+    }
 }
 
 //=============================================================================
@@ -715,7 +720,7 @@ MainWindow::on_btn_TermClose_clicked
     (
     )
 {
-    if (ui->btn_TermClose->text() == "&Open")
+    if (ui->btn_TermClose->text() == "&Open Port")
     {
         //Open connection
         if (gtmrPollTimer.isActive())
@@ -725,7 +730,7 @@ MainWindow::on_btn_TermClose_clicked
         }
         MainWindow::OpenSerial();
     }
-    else if (ui->btn_TermClose->text() == "C&lose")
+    else if (ui->btn_TermClose->text() == "C&lose Port")
     {
         //Close, but first clear up from download/streaming
         gbTermBusy = false;
@@ -776,7 +781,7 @@ MainWindow::on_btn_TermClose_clicked
         ui->statusBar->showMessage("");
 
         //Change button text
-        ui->btn_TermClose->setText("&Open");
+        ui->btn_TermClose->setText("&Open Port");
 
         //Notify automation form
         guaAutomationForm->ConnectionChange(false);
@@ -1992,7 +1997,7 @@ MainWindow::OpenSerial
         ui->check_Line->setEnabled(true);
 
         //Update button text
-        ui->btn_TermClose->setText("C&lose");
+        ui->btn_TermClose->setText("C&lose Port");
 
         //Signal checking
         MainWindow::SerialStatus(1);
@@ -2244,7 +2249,7 @@ MainWindow::SerialError
         ui->statusBar->showMessage("");
 
         //Change button text
-        ui->btn_TermClose->setText("&Open");
+        ui->btn_TermClose->setText("&Open Port");
 
         //Update images
         MainWindow::UpdateImages();
@@ -2947,7 +2952,7 @@ MainWindow::replyFinished
     )
 {
     //Response received from server regarding online XCompilation
-    if (nrReply->error() != QNetworkReply::NoError)
+    if (nrReply->error() != QNetworkReply::NoError && nrReply->error() != QNetworkReply::ServiceUnavailableError)
     {
         //An error occured
         gtmrDownloadTimeoutTimer.stop();
@@ -2976,6 +2981,13 @@ MainWindow::replyFinished
                 if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 503)
                 {
                     //Server responded with error
+                    gtmrDownloadTimeoutTimer.stop();
+                    gstrHexData = "";
+                    gtmrTextUpdateTimer.start();
+                    gchTermMode = 0;
+                    gchTermMode2 = 0;
+                    gbTermBusy = false;
+
                     QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
@@ -3062,6 +3074,13 @@ MainWindow::replyFinished
                     else
                     {
                         //Device should be supported but something went wrong...
+                        gtmrDownloadTimeoutTimer.stop();
+                        gstrHexData = "";
+                        gtmrTextUpdateTimer.start();
+                        gchTermMode = 0;
+                        gchTermMode2 = 0;
+                        gbTermBusy = false;
+
                         QString strMessage = QString("Unfortunately your device is not supported for online XCompiling.");
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
@@ -3070,6 +3089,13 @@ MainWindow::replyFinished
                 else
                 {
                     //Unknown response
+                    gtmrDownloadTimeoutTimer.stop();
+                    gstrHexData = "";
+                    gtmrTextUpdateTimer.start();
+                    gchTermMode = 0;
+                    gchTermMode2 = 0;
+                    gbTermBusy = false;
+
                     QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
@@ -3078,6 +3104,13 @@ MainWindow::replyFinished
             else
             {
                 //Error whilst decoding JSON
+                gtmrDownloadTimeoutTimer.stop();
+                gstrHexData = "";
+                gtmrTextUpdateTimer.start();
+                gchTermMode = 0;
+                gchTermMode2 = 0;
+                gbTermBusy = false;
+
                 QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(jpeJsonError.errorString());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
@@ -3091,6 +3124,13 @@ MainWindow::replyFinished
                 //Error compiling
                 QJsonParseError jpeJsonError;
                 QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
+                gtmrDownloadTimeoutTimer.stop();
+                gstrHexData = "";
+                gtmrTextUpdateTimer.start();
+                gchTermMode = 0;
+                gchTermMode2 = 0;
+                gbTermBusy = false;
+
                 if (jpeJsonError.error == QJsonParseError::NoError)
                 {
                     //Decoded JSON
@@ -3186,6 +3226,13 @@ MainWindow::replyFinished
             else
             {
                 //Unknown response
+                gtmrDownloadTimeoutTimer.stop();
+                gstrHexData = "";
+                gtmrTextUpdateTimer.start();
+                gchTermMode = 0;
+                gchTermMode2 = 0;
+                gbTermBusy = false;
+
                 QString strMessage = tr("Unknown response from server.");
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
