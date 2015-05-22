@@ -62,8 +62,10 @@
 #define MODE_SERVER_COMPILE 9
 #define MODE_SERVER_COMPILE_LOAD 10
 #define MODE_SERVER_COMPILE_LOAD_RUN 11
+#define MODE_CHECK_ERROR_CODE_VERSIONS 14
+#define MODE_CHECK_UWTERMINALX_VERSIONS 15
 //Defines for version and functions
-#define UwVersion "0.89f alpha" //Version string
+#define UwVersion "0.90" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -297,6 +299,16 @@ private slots:
     on_btn_BT900Apps_clicked
         (
         );
+    void
+    on_btn_ErrorCodeUpdate_clicked
+        (
+        );
+    void
+    on_btn_UwTerminalXUpdate_clicked
+        (
+        );
+
+    void on_check_Echo_stateChanged(int arg1);
 
 private:
     Ui::MainWindow *ui;

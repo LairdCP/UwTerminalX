@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     unsigned char chLoggerMode = 0;
 
     //Move to 'About' tab
-    ui->selector_Tab->setCurrentIndex(2);
+    ui->selector_Tab->setCurrentIndex(3);
 
     //Set default values for combo boxes on 'Config' tab
     ui->combo_Baud->setCurrentIndex(8);
@@ -326,6 +326,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QStringList slArgs = QCoreApplication::arguments();
     unsigned char chi = 1;
     bool bArgCom = false;
+    bool bArgAccept = false;
+    bool bArgNoConnect = false;
     while (chi < slArgs.length())
     {
         if (slArgs[chi].toUpper() == "ACCEPT")
@@ -342,12 +344,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
             ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
             ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+
+            bArgAccept = true;
         }
         else if (slArgs[chi].left(4).toUpper() == "COM=")
         {
             //Set com port
             ui->combo_COM->setCurrentText(slArgs[chi].right(slArgs[chi].length()-4));
             bArgCom = true;
+
+            //Update serial port info
+            on_combo_COM_currentIndexChanged(0);
         }
         else if (slArgs[chi].left(5).toUpper() == "BAUD=")
         {
@@ -393,9 +400,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         else if (slArgs[chi].left(5).toUpper() == "FLOW=")
         {
             //Set flow control
-            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
+            if (slArgs[chi].right(1).toInt() == 0)
             {
-                ui->combo_Handshake->setCurrentIndex(slArgs[chi].right(1).toInt());
+                //None
+                ui->combo_Handshake->setCurrentIndex(0);
+            }
+            else if (slArgs[chi].right(1).toInt() == 1)
+            {
+                //Hardware
+                ui->combo_Handshake->setCurrentIndex(2);
+            }
+            else if (slArgs[chi].right(1).toInt() == 2)
+            {
+                //Software
+                ui->combo_Handshake->setCurrentIndex(1);
             }
         }
         else if (slArgs[chi].left(7).toUpper() == "ENDCHR=")
@@ -508,14 +526,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             //Displays \t, \r, \n etc. as \t, \r, \n instead of [tab], [new line], [carriage return]
             ui->check_ShowCLRF->setChecked(true);
         }
-        else if (slArgs[chi].toUpper() == "CONNECT")
+        else if (slArgs[chi].toUpper() == "NOCONNECT")
         {
             //Connect to device at startup
-            if (ui->btn_Accept->isEnabled() == false && bArgCom == true)
-            {
-                //Enough information to connect!
-                MainWindow::OpenSerial();
-            }
+            bArgNoConnect = true;
         }
         ++chi;
     }
@@ -555,6 +569,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Change terminal font to a monospaced font
     ui->text_TermEditData->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+
+    if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
+    {
+        //Enough information to connect!
+        MainWindow::OpenSerial();
+    }
 }
 
 //=============================================================================
@@ -695,7 +715,7 @@ MainWindow::on_selector_Tab_currentChanged
     if (ui->btn_Accept->isEnabled() == true && intIndex != 3)
     {
         //Not accepted the terms yet
-        ui->selector_Tab->setCurrentIndex(2);
+        ui->selector_Tab->setCurrentIndex(3);
     }
 }
 
@@ -815,11 +835,28 @@ MainWindow::RefreshSerialDevices
     )
 {
     //Clears and refreshes the list of serial devices
+    QString strPrev;
+    unsigned int bPrevAt = 0;
+    if (ui->combo_COM->count() > 0)
+    {
+        //Remember previous option
+        strPrev = ui->combo_COM->currentText();
+    }
     ui->combo_COM->clear();
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
         ui->combo_COM->addItem(info.portName());
+        if (info.portName() == strPrev)
+        {
+            bPrevAt = ui->combo_COM->count()-1;
+        }
     }
+
+    //Set index back to previous
+    ui->combo_COM->setCurrentIndex(bPrevAt);
+
+    //Update serial port info
+    on_combo_COM_currentIndexChanged(0);
 }
 
 //=============================================================================
@@ -1595,8 +1632,8 @@ MainWindow::EnterPressed
         QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->toUtf8();
         baTmpBA.append("\n");
         ui->text_TermEditData->AddDatInText(&baTmpBA);
-        ui->text_TermEditData->ClearDatOut();
     }
+    ui->text_TermEditData->ClearDatOut();
 }
 
 //=============================================================================
@@ -1743,15 +1780,18 @@ MainWindow::KeyPressed
             QByteArray baTmpBA = QString(QChar(intKeyValue)).toUtf8();
             gspSerialPort.write(baTmpBA);
             gintQueuedTXBytes += baTmpBA.size();
-            if (ui->check_ShowCLRF->isChecked() == true)
+            if (ui->check_Echo->isChecked())
             {
-                //Escape \t, \r and \n in addition to normal escaping
-                gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-            }
-            else
-            {
-                //Normal escaping
-                gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                if (ui->check_ShowCLRF->isChecked() == true)
+                {
+                    //Escape \t, \r and \n in addition to normal escaping
+                    gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                }
+                else
+                {
+                    //Normal escaping
+                    gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                }
             }
             if (!gtmrTextUpdateTimer.isActive())
             {
@@ -2332,7 +2372,11 @@ MainWindow::MessagePass
             gtmrTextUpdateTimer.start();
         }
         gpMainLog->WriteLogData(strDataString);
-        MainWindow::DoLineEnd();
+        if (bEscapeString == false)
+        {
+            //Not escaping sequences so send line end
+            MainWindow::DoLineEnd();
+        }
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
     {
@@ -2957,6 +3001,11 @@ MainWindow::replyFinished
     if (nrReply->error() != QNetworkReply::NoError && nrReply->error() != QNetworkReply::ServiceUnavailableError)
     {
         //An error occured
+        if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
+        {
+            ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_UwTerminalXUpdate->setEnabled(true);
+        }
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
         gtmrTextUpdateTimer.start();
@@ -3240,6 +3289,49 @@ MainWindow::replyFinished
                 gpmErrorForm->SetMessage(&strMessage);
             }
         }
+        else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS)
+        {
+            //Error code update response
+            QByteArray tmpBA = nrReply->readAll();
+            QJsonParseError jpeJsonError;
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+
+            if (jpeJsonError.error == QJsonParseError::NoError)
+            {
+                //Decoded JSON
+                QJsonObject joJsonObject = jdJsonData.object();
+
+                //Server responded with error
+                if (joJsonObject["Result"].toString() == "-9")
+                {
+                    //Error whilst compiling, show results
+                    QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+                else
+                {
+                    //Server responded with error
+                    QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
+            else
+            {
+                //Error whilst decoding JSON
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+//            qDebug() << tmpBA;
+        }
+        else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
+        {
+            //UwTerminalX update response
+            ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_UwTerminalXUpdate->setEnabled(true);
+        }
     }
 }
 
@@ -3271,8 +3363,8 @@ MainWindow::SplitFilePath
     if (strFilenameOnly.indexOf(".") != -1)
     {
         //Dot found, only keep characters up to the dot
-        strFileExtension = strFilenameOnly.mid(strFilenameOnly.indexOf(".")+1, -1);
-        strFilenameOnly = strFilenameOnly.left(strFilenameOnly.indexOf("."));
+        strFileExtension = strFilenameOnly.mid(strFilenameOnly.lastIndexOf(".")+1, -1);
+        strFilenameOnly = strFilenameOnly.left(strFilenameOnly.lastIndexOf("."));
     }
 
     //Return an array with path, filename and extension
@@ -3312,6 +3404,69 @@ MainWindow::on_btn_BT900Apps_clicked
 {
     //BT900 Applications button clicked
     QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_ErrorCodeUpdate_clicked
+    (
+    )
+{
+    //Check for updates to error codes
+    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+    {
+        //Send request
+        gbTermBusy = true;
+        gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
+        gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
+        gbaBatchReceive.clear();
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        gnmManager->get(QNetworkRequest(QUrl(QString("http")
+#ifdef UseSSL
+        .append("s")
+#endif
+        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_UwTerminalXUpdate_clicked
+    (
+    )
+{
+    //Check for updates to UwTerminalX
+    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+    {
+        //Send request
+        gbTermBusy = true;
+        gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
+        gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
+        gbaBatchReceive.clear();
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        gnmManager->get(QNetworkRequest(QUrl(QString("http")
+#ifdef UseSSL
+        .append("s")
+#endif
+        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/uwterminalx.php?Ver=").append(UwVersion))));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_Echo_stateChanged
+    (
+    int arg1
+    )
+{
+    ui->text_TermEditData->mbLocalEcho = ui->check_Echo->isChecked();
 }
 
 /******************************************************************************/

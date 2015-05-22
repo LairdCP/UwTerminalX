@@ -94,6 +94,9 @@ private:
     QString mstrDatIn; //Incoming data (previous commands/received data)
     QString mstrDatOut; //Outgoing data (user typed keyboard data)
     unsigned int muintCurPos; //Current cursor position
+
+public:
+    bool mbLocalEcho; //True if local echo is enabled
 };
 
 #endif // LRDSCROLLEDIT_H

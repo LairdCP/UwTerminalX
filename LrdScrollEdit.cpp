@@ -16,6 +16,7 @@
 #include <QScrollBar>
 #include <QMimeData>
 #include <QTextCursor>
+#include <QDebug>
 
 /******************************************************************************/
 // Local Functions or Private Members
@@ -28,6 +29,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
     mchPosition = 0; //Current position is 0
     mbLineMode = true; //Line mode is on by default
     mbSerialOpen = false; //Serial port is not open by default
+    mbLocalEcho = true; //Local echo mode on by default
     mstrDatIn = ""; //Data in is an empty string
     mstrDatOut = ""; //Data out is empty string
     muintCurPos = 0; //Current cursor position is 0
@@ -46,6 +48,7 @@ LrdScrollEdit::eventFilter
     if (event->type() == QEvent::KeyPress)
     {
         //Key has been pressed...
+        this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         if (mbLineMode == true)
         {
@@ -109,7 +112,7 @@ LrdScrollEdit::eventFilter
             {
                 if ((keyEvent->modifiers() & Qt::ControlModifier))
                 {
-                    //delete word
+                    //Delete word
                     if (mstrDatOut.indexOf(" ") != -1)
                     {
                         mstrDatOut = mstrDatOut.left(mstrDatOut.lastIndexOf(" ")+1);
@@ -121,7 +124,7 @@ LrdScrollEdit::eventFilter
                 }
                 else
                 {
-                    //delete character
+                    //Delete character
                     mstrDatOut = mstrDatOut.left(mstrDatOut.length()-1);
                     if (muintCurPos > mstrDatOut.length())
                     {
@@ -185,7 +188,7 @@ LrdScrollEdit::eventFilter
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Control key not held down
-                    if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
+                    if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && /*keyEvent->key() != Qt::Key_Backspace &&*/ keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
                     {
                         //Not a special character
                         if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
@@ -208,6 +211,13 @@ LrdScrollEdit::eventFilter
             }
         }
     }
+
+    if (mbLocalEcho == false)
+    {
+        //Return true now if local echo is off
+        return true;
+    }
+
     return QObject::eventFilter(target, event);
 }
 
@@ -308,7 +318,7 @@ LrdScrollEdit::UpdateDisplay
     this->setUpdatesEnabled(false);
     if (mstrDatIn.length() > 0)
     {
-        this->setPlainText(QString(mstrDatIn).append("\n").append(mstrDatOut));
+        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true ? mstrDatOut : "")));
     }
     else
     {
