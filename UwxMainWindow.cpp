@@ -11,7 +11,6 @@
 
 //When line mode is on, can delete parts of edit, can input anywhere, etc.
 #pragma warning("if something goes wrong with XCompile (like has #include) then cancel button is not disabled")
-#pragma warning("data download should show at+fwrh stuff too")
 #pragma warning("codes.csv forgot to add - add server side downloading of latest version?")
 #pragma warning("add something to output when online XComp is finished (and download is starting)")
 
@@ -103,24 +102,71 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #if TARGET_OS_MAC
     if (!QFile::exists(QString(gstrMacBundlePath).append("UwTerminalX.ini")))
 #else
-    if (!QFile::exists("UwTerminalX.ini"))
+    if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion", UwVersion).toString() != UwVersion)
 #endif
     {
-        //No settings, set defaults
-        gpTermSettings->setValue("LogFile", "UwTerminalX.log"); //Default log file
-        gpTermSettings->setValue("LogMode", "0"); //Clear log before opening, 0 = no, 1 = yes
-        gpTermSettings->setValue("LogLevel", "1"); //0 = none, 1 = single file, 2 = 1 + new file for each session
-        gpTermSettings->setValue("CompilerDir", "compilers/"); //Directory that compilers go in
-        gpTermSettings->setValue("CompilerSubDirs", "0"); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
-        gpTermSettings->setValue("DelUWCAfterDownload", "0"); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
-        gpTermSettings->setValue("SysTrayIcon", "1"); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
-        gpTermSettings->setValue("SerialSignalCheckInterval", "50"); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
-        gpTermSettings->setValue("PrePostXCompRun", "0"); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
-        gpTermSettings->setValue("PrePostXCompFail", "0"); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
-        gpTermSettings->setValue("PrePostXCompMode", "0"); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
-        gpTermSettings->setValue("PrePostXCompPath", ""); //Filename of pre/post XCompiler executable (with additional arguments)
-        gpTermSettings->setValue("OnlineXComp", "1"); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
-        gpTermSettings->setValue("OnlineXCompServer", ServerHost); //Online XCompiler server IP/Hostname
+        //No settings, or some config values not present defaults
+        if (gpTermSettings->value("LogFile").isNull())
+        {
+            gpTermSettings->setValue("LogFile", DefaultLogFile); //Default log file
+        }
+        if (gpTermSettings->value("LogMode").isNull())
+        {
+            gpTermSettings->setValue("LogMode", DefaultLogMode); //Clear log before opening, 0 = no, 1 = yes
+        }
+        if (gpTermSettings->value("LogLevel").isNull())
+        {
+            gpTermSettings->setValue("LogLevel", DefaultLogLevel); //0 = none, 1 = single file, 2 = 1 + new file for each session
+        }
+        if (gpTermSettings->value("CompilerDir").isNull())
+        {
+            gpTermSettings->setValue("CompilerDir", DefaultCompilerDir); //Directory that compilers go in
+        }
+        if (gpTermSettings->value("CompilerSubDirs").isNull())
+        {
+            gpTermSettings->setValue("CompilerSubDirs", DefaultCompilerSubDirs); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
+        }
+        if (gpTermSettings->value("DelUWCAfterDownload").isNull())
+        {
+            gpTermSettings->setValue("DelUWCAfterDownload", DefaultDelUWCAfterDownload); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
+        }
+        if (gpTermSettings->value("SysTrayIcon").isNull())
+        {
+            gpTermSettings->setValue("SysTrayIcon", DefaultSysTrayIcon); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
+        }
+        if (gpTermSettings->value("SerialSignalCheckInterval").isNull())
+        {
+            gpTermSettings->setValue("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
+        }
+        if (gpTermSettings->value("PrePostXCompRun").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompRun", DefaultPrePostXCompRun); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
+        }
+        if (gpTermSettings->value("PrePostXCompFail").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompFail", DefaultPrePostXCompFail); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
+        }
+        if (gpTermSettings->value("PrePostXCompMode").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompMode", DefaultPrePostXCompMode); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
+        }
+        if (gpTermSettings->value("PrePostXCompPath").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompPath", DefaultPrePostXCompPath); //Filename of pre/post XCompiler executable (with additional arguments)
+        }
+        if (gpTermSettings->value("OnlineXComp").isNull())
+        {
+            gpTermSettings->setValue("OnlineXComp", DefaultOnlineXComp); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
+        }
+        if (gpTermSettings->value("OnlineXCompServer").isNull())
+        {
+            gpTermSettings->setValue("OnlineXCompServer", ServerHost); //Online XCompiler server IP/Hostname
+        }
+        if (gpTermSettings->value("TextUpdateInterval").isNull())
+        {
+            gpTermSettings->setValue("TextUpdateInterval", DefaultTextUpdateInterval); //Interval between screen updates in mS, lower = faster but can be problematic when receiving/sending large amounts of data (200 is good for this)
+        }
+        gpTermSettings->setValue("ConfigVersion", UwVersion);
     }
 
     //Create logging handle and variables for logging mode
@@ -135,7 +181,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->combo_Baud->setCurrentIndex(8);
     ui->combo_Stop->setCurrentIndex(0);
     ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(2);
+    ui->combo_Handshake->setCurrentIndex(1);
 
     //Load images
     gimEmptyCircleImage = QImage(":/images/EmptyCircle.png");
@@ -258,7 +304,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Set update text display timer to be single shot only and connect to slot
     gtmrTextUpdateTimer.setSingleShot(true);
-    gtmrTextUpdateTimer.setInterval(200);
+    gtmrTextUpdateTimer.setInterval(gpTermSettings->value("TextUpdateInterval", DefaultTextUpdateInterval).toInt());
     connect(&gtmrTextUpdateTimer, SIGNAL(timeout()), this, SLOT(UpdateReceiveText()));
 
     //Setup timer for batch file timeout
@@ -280,7 +326,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     //Enable system tray if it's available and enabled
-    if (gpTermSettings->value("SysTrayIcon", "1").toBool() == true && QSystemTrayIcon::isSystemTrayAvailable())
+    if (gpTermSettings->value("SysTrayIcon", DefaultSysTrayIcon).toBool() == true && QSystemTrayIcon::isSystemTrayAvailable())
     {
         //System tray enabled and available on system, set it up with contect menu/icon and show it
         gpSysTray = new QSystemTrayIcon;
@@ -291,9 +337,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     //Update pre/post XCompile executable options
-    ui->check_PreXCompRun->setChecked(gpTermSettings->value("PrePostXCompRun", "0").toBool());
-    ui->check_PreXCompFail->setChecked(gpTermSettings->value("PrePostXCompFail", "0").toBool());
-    if (gpTermSettings->value("PrePostXCompMode", "0").toInt() == 1)
+    ui->check_PreXCompRun->setChecked(gpTermSettings->value("PrePostXCompRun", DefaultPrePostXCompRun).toBool());
+    ui->check_PreXCompFail->setChecked(gpTermSettings->value("PrePostXCompFail", DefaultPrePostXCompFail).toBool());
+    if (gpTermSettings->value("PrePostXCompMode", DefaultPrePostXCompMode).toInt() == 1)
     {
         //Post-XCompiler run
         ui->radio_XCompPost->setChecked(true);
@@ -303,7 +349,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         //Pre-XCompiler run
         ui->radio_XCompPre->setChecked(true);
     }
-    ui->edit_PreXCompFilename->setText(gpTermSettings->value("PrePostXCompPath", "").toString());
+    ui->edit_PreXCompFilename->setText(gpTermSettings->value("PrePostXCompPath", DefaultPrePostXCompPath).toString());
 
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
@@ -316,7 +362,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Mac or Linux
     ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
 #endif
-    ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", "0").toBool());
+    ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", DefaultOnlineXComp).toBool());
 
     //Setup QNetwork for Online XCompiler
     gnmManager = new QNetworkAccessManager();
@@ -400,20 +446,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         else if (slArgs[chi].left(5).toUpper() == "FLOW=")
         {
             //Set flow control
-            if (slArgs[chi].right(1).toInt() == 0)
+            if (slArgs[chi].right(1).toInt() >= 0 && slArgs[chi].right(1).toInt() < 3)
             {
-                //None
-                ui->combo_Handshake->setCurrentIndex(0);
-            }
-            else if (slArgs[chi].right(1).toInt() == 1)
-            {
-                //Hardware
-                ui->combo_Handshake->setCurrentIndex(2);
-            }
-            else if (slArgs[chi].right(1).toInt() == 2)
-            {
-                //Software
-                ui->combo_Handshake->setCurrentIndex(1);
+                //Valid
+                ui->combo_Handshake->setCurrentIndex(slArgs[chi].right(1).toInt());
             }
         }
         else if (slArgs[chi].left(7).toUpper() == "ENDCHR=")
@@ -537,7 +573,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (bLoggerOpened == false)
     {
         //Log file was not opened from command line
-        if (gpTermSettings->value("LogLevel", "1").toInt() == 1 || gpTermSettings->value("LogLevel", "1").toInt() == 2)
+        if (gpTermSettings->value("LogLevel", DefaultLogLevel).toInt() == 1 || gpTermSettings->value("LogLevel", DefaultLogLevel).toInt() == 2)
         {
             //Logging is enabled
 #if TARGET_OS_MAC
@@ -547,7 +583,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
             {
                 //Log opened
-                if (gpTermSettings->value("LogMode", "0").toBool() == true)
+                if (gpTermSettings->value("LogMode", DefaultLogMode).toBool() == true)
                 {
                     //Clear the log file
                     gpMainLog->ClearLog();
@@ -837,6 +873,10 @@ MainWindow::RefreshSerialDevices
     //Clears and refreshes the list of serial devices
     QString strPrev;
     unsigned int bPrevAt = 0;
+    QRegularExpression reTempRE("^(\\D*?)(\\d+)$");
+    QList<unsigned int> Entries;
+    Entries.clear();
+
     if (ui->combo_COM->count() > 0)
     {
         //Remember previous option
@@ -845,7 +885,35 @@ MainWindow::RefreshSerialDevices
     ui->combo_COM->clear();
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
-        ui->combo_COM->addItem(info.portName());
+        QRegularExpressionMatch remTempREM = reTempRE.match(info.portName());
+        if (remTempREM.hasMatch() == true)
+        {
+            //Can sort this item
+            int i = Entries.count()-1;
+            while (i >= 0)
+            {
+                if (remTempREM.captured(2).toInt() > Entries[i])
+                {
+                    //Found correct order position, add here
+                    ui->combo_COM->insertItem(i+1, info.portName());
+                    Entries.insert(i+1, remTempREM.captured(2).toInt());
+                    i = -1;
+                }
+                --i;
+            }
+
+            if (i == -1)
+            {
+                //Position not found, add to beginning
+                ui->combo_COM->insertItem(0, info.portName());
+                Entries.insert(0, remTempREM.captured(2).toInt());
+            }
+        }
+        else
+        {
+            //Cannot sort this item
+            ui->combo_COM->insertItem(ui->combo_COM->count(), info.portName());
+        }
         if (info.portName() == strPrev)
         {
             bPrevAt = ui->combo_COM->count()-1;
@@ -958,7 +1026,10 @@ MainWindow::readData
                 //Unknown error code
                 gbaDisplayBuffer.append("\nError during batch command, unknown error code.\n");
             }
-            gtmrTextUpdateTimer.start();
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
 
             //Clear up and cancel timer
             gtmrBatchTimeoutTimer.stop();
@@ -1007,15 +1078,18 @@ MainWindow::readData
                 {
                     //Matched and split, now start the compilation!
                     gtmrDownloadTimeoutTimer.stop();
+
+                    //
+                    QList<QString> lstFI = SplitFilePath(gstrTermFilename);
 #ifdef _WIN32
                     //Windows
-                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
 #elif TARGET_OS_MAC
                     //Mac
-                    if (QFile::exists(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
+                    if (QFile::exists(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
 #else
                     //Linux
-                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
+                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
 #endif
                     {
                         //XCompiler found! - First run the Pre XCompile program if enabled and it exists
@@ -1026,17 +1100,30 @@ MainWindow::readData
                         }
 #ifdef _WIN32
                         //Windows
-                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
 #elif TARGET_OS_MAC
                         //Mac
-                        gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
-                        //gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3), QStringList(gstrTermFilename));
+                        gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
+                        //gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3), QStringList(gstrTermFilename));
 #else
                         //Assume linux
-//                      gprocCompileProcess.start(QString("wine"), QStringList(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe"))<<gstrTermFilename);
-                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
+//                      gprocCompileProcess.start(QString("wine"), QStringList(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe"))<<gstrTermFilename);
+                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
 #endif
                         //gprocCompileProcess.waitForFinished(-1);
+                    }
+                    else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                    {
+                        //XCompiler found in directory with sB file
+                        if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
+                        {
+                            //Run Pre-XComp program
+                            RunPrePostExecutable(gstrTermFilename);
+                        }
+#ifdef _WIN32
+                        //Windows
+                        gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+#endif
                     }
                     else if (ui->check_OnlineXComp->isChecked() == true)
                     {
@@ -1068,7 +1155,7 @@ MainWindow::readData
 #ifdef _WIN32
                         .append(".exe")
 #endif
-                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", "compilers/").toString()).append((gpTermSettings->value("CompilerSubDirs", "0").toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
+                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
 #pragma warning("Add full file path for XCompilers?")
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
@@ -1091,6 +1178,25 @@ MainWindow::readData
                 gintQueuedTXBytes += baTmpBA.size();
                 MainWindow::DoLineEnd();
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+                if (ui->check_SkipDL->isChecked() == false)
+                {
+                    //Output download details
+                    if (ui->check_ShowCLRF->isChecked() == true)
+                    {
+                        //Escape \t, \r and \n
+                        baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                    }
+
+                    //Replace unprintable characters
+                    baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                    //Update display buffer
+                    gbaDisplayBuffer.append(baTmpBA);
+                    if (!gtmrTextUpdateTimer.isActive())
+                    {
+                        gtmrTextUpdateTimer.start();
+                    }
+                }
                 gstrTermBusyData = "";
             }
             else if (gchTermMode2 == 2)
@@ -1109,18 +1215,46 @@ MainWindow::readData
                         gintQueuedTXBytes += baTmpBA.size();
                         MainWindow::DoLineEnd();
                         gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+                        if (ui->check_SkipDL->isChecked() == false)
+                        {
+                            //Output download details
+                            if (ui->check_ShowCLRF->isChecked() == true)
+                            {
+                                //Escape \t, \r and \n
+                                baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                            }
+
+                            //Replace unprintable characters
+                            baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                            //Update display buffer
+                            gbaDisplayBuffer.append(baTmpBA);
+                            if (!gtmrTextUpdateTimer.isActive())
+                            {
+                                gtmrTextUpdateTimer.start();
+                            }
+                        }
+
                         if (gstrHexData.length() < ui->edit_FWRH->toPlainText().toInt())
                         {
                             //Finished
                             gstrHexData = "";
                             gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
-                            gtmrTextUpdateTimer.start();
                             gspSerialPort.write("AT+FCL");
                             gintQueuedTXBytes += 6;
                             MainWindow::DoLineEnd();
                             gpMainLog->WriteLogData("AT+FCL\n");
+                            if (ui->check_SkipDL->isChecked() == false)
+                            {
+                                //Output download details
+                                gbaDisplayBuffer.append("AT+FCL\n");
+                            }
+                            if (!gtmrTextUpdateTimer.isActive())
+                            {
+                                gtmrTextUpdateTimer.start();
+                            }
                             QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                            if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+                            if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                             {
                                 //Remove UWC
                                 QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
@@ -1140,13 +1274,21 @@ MainWindow::readData
                     {
                         gstrHexData = "";
                         gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
-                        gtmrTextUpdateTimer.start();
                         gspSerialPort.write("AT+FCL");
                         gintQueuedTXBytes += 6;
                         MainWindow::DoLineEnd();
                         gpMainLog->WriteLogData("AT+FCL\n");
+                        if (ui->check_SkipDL->isChecked() == false)
+                        {
+                            //Output download details
+                            gbaDisplayBuffer.append("AT+FCL\n");
+                        }
+                        if (!gtmrTextUpdateTimer.isActive())
+                        {
+                            gtmrTextUpdateTimer.start();
+                        }
                         QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+                        if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                         {
                             //Remove UWC
                             QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
@@ -1165,7 +1307,7 @@ MainWindow::readData
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                     QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                    if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+                    if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                     {
                         //Remove UWC
                         QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
@@ -1295,7 +1437,10 @@ MainWindow::triggered
             gbaDisplayBuffer.append("\n[Loopback Disabled]\n");
             gpMenu->actions()[7]->setText("Enable Loopback (Rx->Tx)");
         }
-        gtmrTextUpdateTimer.start();
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
     }
     else if (qaAction->text() == "Erase File" || qaAction->text() == "Erase File +")
     {
@@ -1304,10 +1449,13 @@ MainWindow::triggered
         {
             //Not currently busy
             QString strFilename;
-            strFilename = QFileDialog::getOpenFileName(this, "Open File", "", "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            strFilename = QFileDialog::getOpenFileName(this, "Open File", gpTermSettings->value("LastFileDirectory", "").toString(), "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
+                //Set last directory config
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+
                 //Delete file
                 if (strFilename.lastIndexOf(".") >= 0)
                 {
@@ -1330,7 +1478,10 @@ MainWindow::triggered
                 gintQueuedTXBytes += baTmpBA.size();
                 DoLineEnd();
                 gbaDisplayBuffer.append(baTmpBA);
-                gtmrTextUpdateTimer.start();
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             }
         }
@@ -1345,7 +1496,10 @@ MainWindow::triggered
             gintQueuedTXBytes += 6;
             DoLineEnd();
             gbaDisplayBuffer.append("\nat+dir\n");
-            gtmrTextUpdateTimer.start();
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
             gpMainLog->WriteLogData("at+dir\n");
         }
     }
@@ -1356,10 +1510,13 @@ MainWindow::triggered
         {
             //Not currently busy
             QString strFilename;
-            strFilename = QFileDialog::getOpenFileName(this, "Open File", "", "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            strFilename = QFileDialog::getOpenFileName(this, "Open File", gpTermSettings->value("LastFileDirectory", "").toString(), "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
+                //Set last directory config
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+
                 //Delete file
                 if (strFilename.lastIndexOf(".") >= 0)
                 {
@@ -1382,7 +1539,10 @@ MainWindow::triggered
                 gintQueuedTXBytes += baTmpBA.size();
                 DoLineEnd();
                 gbaDisplayBuffer.append(baTmpBA);
-                gtmrTextUpdateTimer.start();
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             }
         }
@@ -1393,10 +1553,13 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), "", tr("Text Files (*.txt);;All Files (*.*)"));
+            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gpTermSettings->value("LastFileDirectory", "").toString(), tr("Text Files (*.txt);;All Files (*.*)"));
 
             if (strDataFilename.length() > 1)
             {
+                //Set last directory config
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strDataFilename)[0]);
+
                 //File was selected - start streaming it out
                 gpStreamFileHandle = new QFile(strDataFilename);
 
@@ -1454,10 +1617,13 @@ MainWindow::triggered
         {
             //Not currently busy
             QString strFilename;
-            strFilename = QFileDialog::getOpenFileName(this, "Open File", "", "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            strFilename = QFileDialog::getOpenFileName(this, "Open File", gpTermSettings->value("LastFileDirectory", "").toString(), "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
+                //Set last directory config
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+
                 //Run file
                 if (strFilename.lastIndexOf(".") >= 0)
                 {
@@ -1480,6 +1646,13 @@ MainWindow::triggered
                 gintQueuedTXBytes += baTmpBA.size();
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
                 DoLineEnd();
+
+                //Update display buffer
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
             }
         }
     }
@@ -1494,9 +1667,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
+            QString strDataFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gpTermSettings->value("LastFileDirectory", "").toString(), tr("Text Files (*.txt);;All Files (*.*)"));
             if (strDataFilename.length() > 1)
             {
+                //Set last directory config
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strDataFilename)[0]);
+
                 //File selected
                 gpStreamFileHandle = new QFile(strDataFilename);
 
@@ -1646,9 +1822,12 @@ MainWindow::CompileApp
 {
     //Runs when an application is to be compiled
     gchTermMode = chMode;
-    gstrTermFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), "", (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
+    gstrTermFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gpTermSettings->value("LastFileDirectory", "").toString(), (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
     if (gstrTermFilename != "")
     {
+        //Set last directory config
+        gpTermSettings->setValue("LastFileDirectory", SplitFilePath(gstrTermFilename)[0]);
+
         if (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN)
         {
             //Loading a compiled application
@@ -1662,6 +1841,25 @@ MainWindow::CompileApp
             gintQueuedTXBytes += baTmpBA.size();
             MainWindow::DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            if (ui->check_SkipDL->isChecked() == false)
+            {
+                //Output download details
+                if (ui->check_ShowCLRF->isChecked() == true)
+                {
+                    //Escape \t, \r and \n
+                    baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                }
+
+                //Replace unprintable characters
+                baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                //Update display buffer
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
 
             //Start the timeout timer
             gtmrDownloadTimeoutTimer.start();
@@ -1679,6 +1877,25 @@ MainWindow::CompileApp
             gintQueuedTXBytes += baTmpBA.size();
             MainWindow::DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            if (ui->check_SkipDL->isChecked() == false)
+            {
+                //Output download details
+                if (ui->check_ShowCLRF->isChecked() == true)
+                {
+                    //Escape \t, \r and \n
+                    baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                }
+
+                //Replace unprintable characters
+                baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                //Update display buffer
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
 
             //Start the timeout timer
             gtmrDownloadTimeoutTimer.start();
@@ -1854,7 +2071,10 @@ MainWindow::DevRespTimeout
     {
         //Update buffer
         gbaDisplayBuffer.append("\nTimeout occured whilst attempting to XCompile application.\n");
-        gtmrTextUpdateTimer.start();
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
 
         //Reset variables
         gbTermBusy = false;
@@ -1905,6 +2125,25 @@ MainWindow::process_finished
             MainWindow::DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             gtmrDownloadTimeoutTimer.start();
+            if (ui->check_SkipDL->isChecked() == false)
+            {
+                //Output download details
+                if (ui->check_ShowCLRF->isChecked() == true)
+                {
+                    //Escape \t, \r and \n
+                    baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                }
+
+                //Replace unprintable characters
+                baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                //Update display buffer
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
         }
     }
     else
@@ -2004,7 +2243,7 @@ MainWindow::OpenSerial
     gspSerialPort.setParity((ui->combo_Parity->currentIndex() == 1 ? QSerialPort::OddParity : (ui->combo_Parity->currentIndex() == 2 ? QSerialPort::EvenParity : QSerialPort::NoParity)));
 
     //Flow control
-    gspSerialPort.setFlowControl((ui->combo_Handshake->currentIndex() == 2 ? QSerialPort::HardwareControl : (ui->combo_Handshake->currentIndex() == 1 ? QSerialPort::SoftwareControl : QSerialPort::NoFlowControl)));
+    gspSerialPort.setFlowControl((ui->combo_Handshake->currentIndex() == 1 ? QSerialPort::HardwareControl : (ui->combo_Handshake->currentIndex() == 2 ? QSerialPort::SoftwareControl : QSerialPort::NoFlowControl)));
 
     if (gspSerialPort.open(QIODevice::ReadWrite))
     {
@@ -2022,7 +2261,7 @@ MainWindow::OpenSerial
         gspSerialPort.setDataTerminalReady(ui->check_DTR->isChecked());
 
         //Flow control
-        if (ui->combo_Handshake->currentIndex() != 2)
+        if (ui->combo_Handshake->currentIndex() != 1)
         {
             //Not hardware handshaking - RTS
             ui->check_RTS->setEnabled(true);
@@ -2045,7 +2284,7 @@ MainWindow::OpenSerial
         MainWindow::SerialStatus(1);
 
         //Enable timer
-        gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", "50").toUInt());
+        gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval).toUInt());
 
         //Notify automation form
         guaAutomationForm->ConnectionChange(true);
@@ -2162,6 +2401,25 @@ MainWindow::RunApplication
     gspSerialPort.write(baTmpBA);
     gintQueuedTXBytes += baTmpBA.size();
     MainWindow::DoLineEnd();
+    if (ui->check_SkipDL->isChecked() == false)
+    {
+        //Output download details
+        if (ui->check_ShowCLRF->isChecked() == true)
+        {
+            //Escape \t, \r and \n
+            baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+        }
+
+        //Replace unprintable characters
+        baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+        //Update display buffer
+        gbaDisplayBuffer.append(baTmpBA);
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
+    }
 
     if (gchTermMode == MODE_COMPILE_LOAD_RUN || gchTermMode == MODE_LOAD_RUN)
     {
@@ -2277,6 +2535,9 @@ MainWindow::SerialError
         gchTermMode = 0;
         gchTermMode2 = 0;
 
+        //Disable cancel button
+        ui->btn_Cancel->setEnabled(false);
+
         //Disable active checkboxes
         ui->check_Break->setEnabled(false);
         ui->check_DTR->setEnabled(false);
@@ -2369,7 +2630,10 @@ MainWindow::MessagePass
 
             //Output to display buffer
             gbaDisplayBuffer.append(baTmpBA);
-            gtmrTextUpdateTimer.start();
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
         }
         gpMainLog->WriteLogData(strDataString);
         if (bEscapeString == false)
@@ -2382,7 +2646,10 @@ MainWindow::MessagePass
     {
         //Loopback is enabled
         gbaDisplayBuffer.append("\n[Cannot send: Loopback mode is enabled.]\n");
-        gtmrTextUpdateTimer.start();
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
     }
 }
 
@@ -2396,7 +2663,10 @@ MainWindow::LookupErrorCode
 {
     //Looks up an error code and outputs it in the edit (does NOT store it to the log)
     gbaDisplayBuffer.append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString().append("\n"));
-    gtmrTextUpdateTimer.start();
+    if (!gtmrTextUpdateTimer.isActive())
+    {
+        gtmrTextUpdateTimer.start();
+    }
     ui->text_TermEditData->moveCursor(QTextCursor::End);
 }
 
@@ -2412,7 +2682,7 @@ MainWindow::on_btn_Default600_clicked
     ui->combo_Parity->setCurrentIndex(0);
     ui->combo_Stop->setCurrentIndex(0);
     ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(2);
+    ui->combo_Handshake->setCurrentIndex(1);
 }
 
 //=============================================================================
@@ -2442,7 +2712,7 @@ MainWindow::on_btn_Default900_clicked
     ui->combo_Parity->setCurrentIndex(0);
     ui->combo_Stop->setCurrentIndex(0);
     ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(2);
+    ui->combo_Handshake->setCurrentIndex(1);
 }
 
 //=============================================================================
@@ -2474,7 +2744,10 @@ MainWindow::SerialBytesWritten
         {
             //Progress output
             gbaDisplayBuffer.append(QString("Streamed ").append(QString::number(gintStreamBytesRead)).append(" bytes.\n"));
-            gtmrTextUpdateTimer.start();
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
             gintStreamBytesProgress = gintStreamBytesProgress + StreamProgress;
         }
     }
@@ -2494,13 +2767,21 @@ MainWindow::on_btn_Cancel_clicked
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
         gbaDisplayBuffer.append("\n-- File download cancelled --\n");
-        gtmrTextUpdateTimer.start();
         gspSerialPort.write("AT+FCL");
         gintQueuedTXBytes += 6;
         MainWindow::DoLineEnd();
         gpMainLog->WriteLogData("AT+FCL\n");
+        if (ui->check_SkipDL->isChecked() == false)
+        {
+            //Output download details
+            gbaDisplayBuffer.append("AT+FCL\n");
+        }
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
         QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-        if (gpTermSettings->value("DelUWCAfterDownload", "0").toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+        if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
         {
             //Remove UWC
             QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
@@ -2545,7 +2826,10 @@ MainWindow::FinishStream
     }
 
     //Initiate timer for buffer update
-    gtmrTextUpdateTimer.start();
+    if (!gtmrTextUpdateTimer.isActive())
+    {
+        gtmrTextUpdateTimer.start();
+    }
 
     //Clear up
     gtmrStreamTimer.invalidate();
@@ -2577,7 +2861,10 @@ void MainWindow::FinishBatch
     }
 
     //Initiate timer for buffer update
-    gtmrTextUpdateTimer.start();
+    if (!gtmrTextUpdateTimer.isActive())
+    {
+        gtmrTextUpdateTimer.start();
+    }
 
     //Clear up and cancel timer
     gtmrStreamTimer.invalidate();
@@ -2612,11 +2899,15 @@ MainWindow::BatchTimeoutSlot
 {
     //A response to a batch command has timed out
     gbaDisplayBuffer.append("\nModule command timed out.\n");
-    gtmrTextUpdateTimer.start();
+    if (!gtmrTextUpdateTimer.isActive())
+    {
+        gtmrTextUpdateTimer.start();
+    }
     gbTermBusy = false;
     gbStreamingBatch = false;
     gchTermMode = 0;
     gpStreamFileHandle->close();
+    ui->btn_Cancel->setEnabled(false);
     delete gpStreamFileHandle;
 }
 
@@ -2726,6 +3017,25 @@ MainWindow::dropEvent
     gintQueuedTXBytes += baTmpBA.size();
     MainWindow::DoLineEnd();
     gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+    if (ui->check_SkipDL->isChecked() == false)
+    {
+        //Output download details
+        if (ui->check_ShowCLRF->isChecked() == true)
+        {
+            //Escape \t, \r and \n
+            baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+        }
+
+        //Replace unprintable characters
+        baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+        //Update display buffer
+        gbaDisplayBuffer.append(baTmpBA);
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
+    }
 
     //Start the timeout timer
     gtmrDownloadTimeoutTimer.start();
@@ -2910,10 +3220,13 @@ MainWindow::on_btn_PreXCompSelect_clicked
 {
     //Opens an executable selector
     QString strFilename;
-    strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", "", "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
+    strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gpTermSettings->value("LastFileDirectory", "").toString(), "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
 
     if (strFilename.length() > 1)
     {
+        //Set last directory config
+        gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+
         if ((unsigned int)(QFile(strFilename).permissions() & (QFileDevice::ExeOther | QFileDevice::ExeGroup | QFileDevice::ExeUser | QFileDevice::ExeOwner)) == 0)
         {
             //File is not executable, give an error
@@ -3008,7 +3321,10 @@ MainWindow::replyFinished
         }
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
-        gtmrTextUpdateTimer.start();
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
         gchTermMode = 0;
         gchTermMode2 = 0;
         gbTermBusy = false;
@@ -3034,10 +3350,14 @@ MainWindow::replyFinished
                     //Server responded with error
                     gtmrDownloadTimeoutTimer.stop();
                     gstrHexData = "";
-                    gtmrTextUpdateTimer.start();
+                    if (!gtmrTextUpdateTimer.isActive())
+                    {
+                        gtmrTextUpdateTimer.start();
+                    }
                     gchTermMode = 0;
                     gchTermMode2 = 0;
                     gbTermBusy = false;
+                    ui->btn_Cancel->setEnabled(false);
 
                     QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
                     gpmErrorForm->show();
@@ -3114,6 +3434,9 @@ MainWindow::replyFinished
                             }
                         }
 
+                        //Remove all extra #include statments
+                        tmpData.replace("#include", "");
+
                         //Append the data to the POST request
                         baPostData.append(tmpData);
                         baPostData.append("\r\n-----------------------------17192614014659--\r\n");
@@ -3127,10 +3450,14 @@ MainWindow::replyFinished
                         //Device should be supported but something went wrong...
                         gtmrDownloadTimeoutTimer.stop();
                         gstrHexData = "";
-                        gtmrTextUpdateTimer.start();
+                        if (!gtmrTextUpdateTimer.isActive())
+                        {
+                            gtmrTextUpdateTimer.start();
+                        }
                         gchTermMode = 0;
                         gchTermMode2 = 0;
                         gbTermBusy = false;
+                        ui->btn_Cancel->setEnabled(false);
 
                         QString strMessage = QString("Unfortunately your device is not supported for online XCompiling.");
                         gpmErrorForm->show();
@@ -3142,10 +3469,14 @@ MainWindow::replyFinished
                     //Unknown response
                     gtmrDownloadTimeoutTimer.stop();
                     gstrHexData = "";
-                    gtmrTextUpdateTimer.start();
+                    if (!gtmrTextUpdateTimer.isActive())
+                    {
+                        gtmrTextUpdateTimer.start();
+                    }
                     gchTermMode = 0;
                     gchTermMode2 = 0;
                     gbTermBusy = false;
+                    ui->btn_Cancel->setEnabled(false);
 
                     QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
                     gpmErrorForm->show();
@@ -3157,10 +3488,14 @@ MainWindow::replyFinished
                 //Error whilst decoding JSON
                 gtmrDownloadTimeoutTimer.stop();
                 gstrHexData = "";
-                gtmrTextUpdateTimer.start();
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 gchTermMode = 0;
                 gchTermMode2 = 0;
                 gbTermBusy = false;
+                ui->btn_Cancel->setEnabled(false);
 
                 QString strMessage = QString("Error: Unable to decode server JSON response, debug: ").append(jpeJsonError.errorString());
                 gpmErrorForm->show();
@@ -3177,10 +3512,14 @@ MainWindow::replyFinished
                 QJsonDocument jdJsonData = QJsonDocument::fromJson(nrReply->readAll(), &jpeJsonError);
                 gtmrDownloadTimeoutTimer.stop();
                 gstrHexData = "";
-                gtmrTextUpdateTimer.start();
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 gchTermMode = 0;
                 gchTermMode2 = 0;
                 gbTermBusy = false;
+                ui->btn_Cancel->setEnabled(false);
 
                 if (jpeJsonError.error == QJsonParseError::NoError)
                 {
@@ -3231,18 +3570,19 @@ MainWindow::replyFinished
 
                 gstrTermFilename = QString(lstFI[0]).append(lstFI[1]).append(".uwc");
 
+                gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 if (gchTermMode == MODE_SERVER_COMPILE)
                 {
                     //Done
                     gtmrDownloadTimeoutTimer.stop();
                     gstrHexData = "";
-                    gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
-                    gtmrTextUpdateTimer.start();
                     gchTermMode = 0;
                     gchTermMode2 = 0;
                     gbTermBusy = false;
-
-                    //Disable button
                     ui->btn_Cancel->setEnabled(false);
                 }
                 else
@@ -3269,6 +3609,25 @@ MainWindow::replyFinished
                     gintQueuedTXBytes += baTmpBA.size();
                     MainWindow::DoLineEnd();
                     gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+                    if (ui->check_SkipDL->isChecked() == false)
+                    {
+                        //Output download details
+                        if (ui->check_ShowCLRF->isChecked() == true)
+                        {
+                            //Escape \t, \r and \n
+                            baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                        }
+
+                        //Replace unprintable characters
+                        baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                        //Update display buffer
+                        gbaDisplayBuffer.append(baTmpBA);
+                        if (!gtmrTextUpdateTimer.isActive())
+                        {
+                            gtmrTextUpdateTimer.start();
+                        }
+                    }
 
                     //Start the timeout timer
                     gtmrDownloadTimeoutTimer.start();
@@ -3279,10 +3638,14 @@ MainWindow::replyFinished
                 //Unknown response
                 gtmrDownloadTimeoutTimer.stop();
                 gstrHexData = "";
-                gtmrTextUpdateTimer.start();
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
                 gchTermMode = 0;
                 gchTermMode2 = 0;
                 gbTermBusy = false;
+                ui->btn_Cancel->setEnabled(false);
 
                 QString strMessage = tr("Unknown response from server.");
                 gpmErrorForm->show();
@@ -3324,7 +3687,6 @@ MainWindow::replyFinished
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
-//            qDebug() << tmpBA;
         }
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {

@@ -65,12 +65,27 @@
 #define MODE_CHECK_ERROR_CODE_VERSIONS 14
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
 //Defines for version and functions
-#define UwVersion "0.90" //Version string
+#define UwVersion "0.91" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
 #define PrePostXCompTimeout 15000 //Time (in mS) to allow a pre/post XCompilation process to execute for
 #define ModuleTimeout 3000 //Time (in mS) that an AT command sent to a module times out
+//Defines for default config values
+#define DefaultLogFile "UwTerminalX.log"
+#define DefaultLogMode 0
+#define DefaultLogLevel 1
+#define DefaultCompilerDir "compilers/"
+#define DefaultCompilerSubDirs 0
+#define DefaultDelUWCAfterDownload 0
+#define DefaultSysTrayIcon 1
+#define DefaultSerialSignalCheckInterval 50
+#define DefaultPrePostXCompRun 0
+#define DefaultPrePostXCompFail 0
+#define DefaultPrePostXCompMode 0
+#define DefaultPrePostXCompPath ""
+#define DefaultOnlineXComp 1
+#define DefaultTextUpdateInterval 80
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions

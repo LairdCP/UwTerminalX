@@ -311,9 +311,9 @@
                    <colorrole role="Base">
                     <brush brushstyle="SolidPattern">
                      <color alpha="255">
-                      <red>74</red>
-                      <green>74</green>
-                      <blue>74</blue>
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -340,9 +340,9 @@
                    <colorrole role="Base">
                     <brush brushstyle="SolidPattern">
                      <color alpha="255">
-                      <red>74</red>
-                      <green>74</green>
-                      <blue>74</blue>
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -1002,12 +1002,12 @@
                 </item>
                 <item>
                  <property name="text">
-                  <string>Xon/Xoff</string>
+                  <string>CTS/RTS</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>CTS/RTS</string>
+                  <string>Xon/Xoff</string>
                  </property>
                 </item>
                </widget>
