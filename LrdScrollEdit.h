@@ -18,6 +18,9 @@
 #include <QKeyEvent>
 #include <QString>
 #include <QTimer>
+#include <QScrollBar>
+#include <QMimeData>
+#include <QTextCursor>
 
 /******************************************************************************/
 // Defines

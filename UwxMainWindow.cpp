@@ -9,11 +9,6 @@
 **
 *******************************************************************************/
 
-//When line mode is on, can delete parts of edit, can input anywhere, etc.
-#pragma warning("if something goes wrong with XCompile (like has #include) then cancel button is not disabled")
-#pragma warning("codes.csv forgot to add - add server side downloading of latest version?")
-#pragma warning("add something to output when online XComp is finished (and download is starting)")
-
 /******************************************************************************/
 // Include Files
 /******************************************************************************/
@@ -367,6 +362,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Setup QNetwork for Online XCompiler
     gnmManager = new QNetworkAccessManager();
     connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+#ifdef UseSSL
+    connect(gnmManager, SIGNAL(sslErrors(QNetworkReply*, QList<QSslError>)), this, SLOT(sslErrors(QNetworkReply*, QList<QSslError>)));
+#endif
 
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
@@ -611,6 +609,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         //Enough information to connect!
         MainWindow::OpenSerial();
     }
+
+#ifdef UseSSL
+    //Load SSL certificate
+    QFile certFile(":/certificates/UwTerminalX.crt");
+    if (certFile.open(QIODevice::ReadOnly))
+    {
+        //Load certificate data
+        sslcLairdSSL = new QSslCertificate(certFile.readAll());
+        QSslSocket::addDefaultCaCertificate(*sslcLairdSSL);
+        certFile.close();
+    }
+#endif
 }
 
 //=============================================================================
@@ -679,6 +689,13 @@ MainWindow::~MainWindow()
         gpStreamFileHandle->close();
         delete gpStreamFileHandle;
     }
+
+#ifdef UseSSL
+    if (sslcLairdSSL != NULL)
+    {
+        delete sslcLairdSSL;
+    }
+#endif
 
     //Delete variables
     delete gpTermSettings;
@@ -1060,11 +1077,7 @@ MainWindow::readData
                     if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //Check if online XCompiler supports this device
-                        gnmManager->get(QNetworkRequest(QUrl(QString("http")
-#ifdef UseSSL
-                        .append("s")
-#endif
-                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                     }
                     else
                     {
@@ -1128,11 +1141,7 @@ MainWindow::readData
                     else if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //XCompiler not found, try Online XCompiler
-                        gnmManager->get(QNetworkRequest(QUrl(QString("http")
-#ifdef UseSSL
-                        .append("s")
-#endif
-                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                         ui->statusBar->showMessage("Device support request sent...", 2000);
 
                         if (gchTermMode == MODE_COMPILE)
@@ -2662,7 +2671,7 @@ MainWindow::LookupErrorCode
     )
 {
     //Looks up an error code and outputs it in the edit (does NOT store it to the log)
-    gbaDisplayBuffer.append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString().append("\n"));
+    gbaDisplayBuffer.append(QString("\nError code 0x").append(QString::number(intErrorCode, 16)).append(": ").append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString()).append("\n"));
     if (!gtmrTextUpdateTimer.isActive())
     {
         gtmrTextUpdateTimer.start();
@@ -2761,44 +2770,67 @@ MainWindow::on_btn_Cancel_clicked
     )
 {
     //Cancel current stream or file download
-    if (gbTermBusy == true && gchTermMode > 0 && gchTermMode < 8)
+    if (gbTermBusy == true)
     {
-        //Cancel download
-        gtmrDownloadTimeoutTimer.stop();
-        gstrHexData = "";
-        gbaDisplayBuffer.append("\n-- File download cancelled --\n");
-        gspSerialPort.write("AT+FCL");
-        gintQueuedTXBytes += 6;
-        MainWindow::DoLineEnd();
-        gpMainLog->WriteLogData("AT+FCL\n");
-        if (ui->check_SkipDL->isChecked() == false)
+        if (gchTermMode >= MODE_COMPILE && gchTermMode < MODE_SERVER_COMPILE)
         {
-            //Output download details
-            gbaDisplayBuffer.append("AT+FCL\n");
+            //Cancel download
+            gtmrDownloadTimeoutTimer.stop();
+            gstrHexData = "";
+            gbaDisplayBuffer.append("\n-- File download cancelled --\n");
+            gspSerialPort.write("AT+FCL");
+            gintQueuedTXBytes += 6;
+            MainWindow::DoLineEnd();
+            gpMainLog->WriteLogData("AT+FCL\n");
+            if (ui->check_SkipDL->isChecked() == false)
+            {
+                //Output download details
+                gbaDisplayBuffer.append("AT+FCL\n");
+            }
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+            QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+            if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+            {
+                //Remove UWC
+                QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
+            }
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
         }
-        if (!gtmrTextUpdateTimer.isActive())
+        else if (gbStreamingFile == true)
         {
-            gtmrTextUpdateTimer.start();
+            //Cancel stream
+            FinishStream(true);
         }
-        QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-        if (gpTermSettings->value("DelUWCAfterDownload", DefaultDelUWCAfterDownload).toBool() == true && gbIsUWCDownload == true && QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
+        else if (gbStreamingBatch == true)
         {
-            //Remove UWC
-            QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
+            //Cancel batch streaming
+            FinishBatch(true);
         }
-        gchTermMode = 0;
-        gchTermMode2 = 0;
-        gbTermBusy = false;
-    }
-    else if (gbTermBusy == true && gbStreamingFile == true)
-    {
-        //Cancel stream
-        FinishStream(true);
-    }
-    else if (gbTermBusy == true && gbStreamingBatch == true)
-    {
-        //Cancel batch streaming
-        FinishBatch(true);
+        else if (gchTermMode >= MODE_SERVER_COMPILE || gchTermMode <= MODE_SERVER_COMPILE_LOAD_RUN)
+        {
+            //Cancel network request and download
+#pragma warning("Cannot currently cancel network request")
+
+            //Change to just a compile
+            if (gchTermMode != MODE_SERVER_COMPILE)
+            {
+                gchTermMode = MODE_SERVER_COMPILE;
+                gchTermMode2 = MODE_SERVER_COMPILE;
+            }
+            return;
+
+        }
+        else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
+        {
+            //Cancel network request
+#pragma warning("Cannot currently cancel network request")
+            return;
+        }
     }
 
     //Disable button
@@ -3314,11 +3346,9 @@ MainWindow::replyFinished
     if (nrReply->error() != QNetworkReply::NoError && nrReply->error() != QNetworkReply::ServiceUnavailableError)
     {
         //An error occured
-        if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
-        {
-            ui->btn_ErrorCodeUpdate->setEnabled(true);
-            ui->btn_UwTerminalXUpdate->setEnabled(true);
-        }
+        ui->btn_Cancel->setEnabled(false);
+        ui->btn_ErrorCodeUpdate->setEnabled(true);
+        ui->btn_UwTerminalXUpdate->setEnabled(true);
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
         if (!gtmrTextUpdateTimer.isActive())
@@ -3373,11 +3403,7 @@ MainWindow::replyFinished
                         gchTermMode2 = MODE_SERVER_COMPILE;
 
                         //Compile application
-                        QNetworkRequest nrThisReq(QUrl(QString("http")
-#ifdef UseSSL
-                        .append("s")
-#endif
-                        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/xcompile.php?JSON=1")));
+                        QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/xcompile.php?JSON=1")));
                         QByteArray baPostData;
                         baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
                         baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
@@ -3388,6 +3414,7 @@ MainWindow::replyFinished
                         if (!file.open(QIODevice::ReadOnly))
                         {
                             //Failed to open file selected for download
+                            nrReply->deleteLater();
                             return;
                         }
 
@@ -3416,6 +3443,7 @@ MainWindow::replyFinished
                                 if (!file.open(QIODevice::ReadOnly))
                                 {
                                     //Failed to open include file
+                                    nrReply->deleteLater();
                                     return;
                                 }
 
@@ -3665,12 +3693,29 @@ MainWindow::replyFinished
                 QJsonObject joJsonObject = jdJsonData.object();
 
                 //Server responded with error
-                if (joJsonObject["Result"].toString() == "-9")
+                if (joJsonObject["Result"].toString() == "-1")
                 {
-                    //Error whilst compiling, show results
-                    QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
+                    //Outdated version
+                    ui->label_ErrorCodeUpdate->setText("Update is available!");
+                    QPalette palBGColour = QPalette();
+                    palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Disabled, QPalette::WindowText, Qt::darkGreen);
+                    ui->label_ErrorCodeUpdate->setPalette(palBGColour);
+                }
+                else if (joJsonObject["Result"].toString() == "-2")
+                {
+                    //Server error
+                    QString strMessage = QString("A server error was encountered whilst checking for an updated error code file.");
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
+                }
+                else if (joJsonObject["Result"].toString() == "1")
+                {
+                    //Version is OK
+                    ui->label_ErrorCodeUpdate->setText("No updates avialable.");
+                    QPalette palBGColour = QPalette();
+                    ui->label_ErrorCodeUpdate->setPalette(palBGColour);
                 }
                 else
                 {
@@ -3687,15 +3732,162 @@ MainWindow::replyFinished
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
+
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
+            ui->btn_Cancel->setEnabled(false);
+            ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_UwTerminalXUpdate->setEnabled(true);
         }
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {
             //UwTerminalX update response
+            QByteArray tmpBA = nrReply->readAll();
+            QJsonParseError jpeJsonError;
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+
+            if (jpeJsonError.error == QJsonParseError::NoError)
+            {
+                //Decoded JSON
+                QJsonObject joJsonObject = jdJsonData.object();
+
+                //Server responded with error
+                if (joJsonObject["Result"].toString() == "-1")
+                {
+                    //Outdated version
+                    ui->label_UwTerminalXUpdate->setText("Update is available!");
+                    QPalette palBGColour = QPalette();
+                    palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Disabled, QPalette::WindowText, Qt::darkGreen);
+                    ui->label_UwTerminalXUpdate->setPalette(palBGColour);
+                }
+                else if (joJsonObject["Result"].toString() == "-2")
+                {
+                    //Server error
+                    QString strMessage = QString("A server error was encountered whilst checking for an updated error code file.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+                else if (joJsonObject["Result"].toString() == "1")
+                {
+                    //Version is OK
+                    ui->label_UwTerminalXUpdate->setText("No updates avialable.");
+                    QPalette palBGColour = QPalette();
+                    ui->label_UwTerminalXUpdate->setPalette(palBGColour);
+                }
+                else
+                {
+                    //Server responded with error
+                    QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
+            else
+            {
+                //Error whilst decoding JSON
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
+            ui->btn_Cancel->setEnabled(false);
+            ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_UwTerminalXUpdate->setEnabled(true);
+        }
+        else if (gchTermMode == MODE_UPDATE_ERROR_CODE)
+        {
+            //Error code update
+            if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
+            {
+                //Got updated error code file
+                delete gpErrorMessages;
+#if TARGET_OS_MAC
+                if (!QFile::exists(QString(gstrMacBundlePath).append("codes.csv")))
+                {
+                    //Remove file
+                    QFile::remove(QString(gstrMacBundlePath).append("codes.csv"));
+                }
+#else
+                if (!QFile::exists("codes.csv"))
+                {
+                    //Remove file
+                    QFile::remove("codes.csv");
+                }
+#endif
+
+#if TARGET_OS_MAC
+                QFile file(QString(gstrMacBundlePath).append("codes.csv"));
+#else
+                QFile file("codes.csv");
+#endif
+                if (file.open(QIODevice::WriteOnly))
+                {
+                    file.write(nrReply->readAll());
+                    file.flush();
+                    file.close();
+
+                    //Reopen error code file and update status
+#if TARGET_OS_MAC
+                    gpErrorMessages = new QSettings(QString(gstrMacBundlePath).append("codes.csv"), QSettings::IniFormat);
+#else
+                    gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat);
+#endif
+                    ui->label_ErrorCodeUpdate->setText("Error code file updated!");
+                }
+                else
+                {
+                    //Failed to open error code file
+                    QString strMessage = tr("Failed to open error code file for writing (codes.csv), ensure relevant permissions exist for this file and try again.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
+            else
+            {
+                //Unknown response
+                QString strMessage = tr("Unknown response from server.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+
+            //Reset everything
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
+            ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
         }
     }
+
+    //Queue the network reply object to be deleted
+    nrReply->deleteLater();
 }
+
+//=============================================================================
+//=============================================================================
+#ifdef UseSSL
+void
+MainWindow::sslErrors
+    (
+    QNetworkReply* nrReply,
+    QList<QSslError> lstSSLErrors
+    )
+{
+    //Error detected with SSL
+    if (sslcLairdSSL != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSL)
+    {
+        //Server certificate matches
+        nrReply->ignoreSslErrors(lstSSLErrors);
+    }
+}
+#endif
 
 //=============================================================================
 //=============================================================================
@@ -3776,21 +3968,16 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked
     )
 {
     //Check for updates to error codes
-    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+    if (gbTermBusy == false)
     {
         //Send request
         gbTermBusy = true;
         gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
         gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
-        gbaBatchReceive.clear();
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString("http")
-#ifdef UseSSL
-        .append("s")
-#endif
-        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
     }
 }
 
@@ -3802,21 +3989,16 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
     )
 {
     //Check for updates to UwTerminalX
-    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+    if (gbTermBusy == false)
     {
         //Send request
         gbTermBusy = true;
         gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
         gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
-        gbaBatchReceive.clear();
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString("http")
-#ifdef UseSSL
-        .append("s")
-#endif
-        .append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/uwterminalx.php?Ver=").append(UwVersion))));
+        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
     }
 }
 
@@ -3825,10 +4007,32 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
 void
 MainWindow::on_check_Echo_stateChanged
     (
-    int arg1
+    int bChecked
     )
 {
+    //Local echo checkbox state changed
     ui->text_TermEditData->mbLocalEcho = ui->check_Echo->isChecked();
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_ErrorCodeDownload_clicked
+    (
+    )
+{
+    //Download latest error code file button clicked
+    if (gbTermBusy == false)
+    {
+        //Send request
+        gbTermBusy = true;
+        gchTermMode = MODE_UPDATE_ERROR_CODE;
+        gchTermMode2 = MODE_UPDATE_ERROR_CODE;
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
+    }
 }
 
 /******************************************************************************/

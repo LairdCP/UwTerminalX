@@ -13,10 +13,6 @@
 // Include Files
 /******************************************************************************/
 #include "LrdScrollEdit.h"
-#include <QScrollBar>
-#include <QMimeData>
-#include <QTextCursor>
-#include <QDebug>
 
 /******************************************************************************/
 // Local Functions or Private Members
@@ -48,7 +44,6 @@ LrdScrollEdit::eventFilter
     if (event->type() == QEvent::KeyPress)
     {
         //Key has been pressed...
-        this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         if (mbLineMode == true)
         {
@@ -106,10 +101,12 @@ LrdScrollEdit::eventFilter
                     //Send message to main window
                     emit EnterPressed();
                 }
+                this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 return true;
             }
             else if (keyEvent->key() == Qt::Key_Backspace)
             {
+                this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 if ((keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Delete word
@@ -170,9 +167,20 @@ LrdScrollEdit::eventFilter
             else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
             {
                 //Add character
-                if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
+                this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+                /*if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
                 {
                     mstrDatOut += (keyEvent->key()+32);
+                }
+                else
+                {
+                    mstrDatOut += keyEvent->key();
+                }*/
+
+                //Possible work-around for caps lock issue
+                if (keyEvent->key() > 64 && keyEvent->key() < 91)
+                {
+                    mstrDatOut += keyEvent->text();
                 }
                 else
                 {
@@ -188,13 +196,24 @@ LrdScrollEdit::eventFilter
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Control key not held down
+                    this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                     if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && /*keyEvent->key() != Qt::Key_Backspace &&*/ keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
                     {
                         //Not a special character
-                        if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
+                        /*if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
                         {
                             //Shift isn't down, lowercase it
                             emit KeyPressed(keyEvent->key()+32);
+                        }
+                        else
+                        {
+                            emit KeyPressed(keyEvent->key());
+                        }*/
+
+                        //Possible work-around for caps lock issue
+                        if (keyEvent->key() > 64 && keyEvent->key() < 91)
+                        {
+                            emit KeyPressed(keyEvent->text().toUtf8()[0]);
                         }
                         else
                         {

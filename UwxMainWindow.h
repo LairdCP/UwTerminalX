@@ -64,8 +64,9 @@
 #define MODE_SERVER_COMPILE_LOAD_RUN 11
 #define MODE_CHECK_ERROR_CODE_VERSIONS 14
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
+#define MODE_UPDATE_ERROR_CODE 16
 //Defines for version and functions
-#define UwVersion "0.91" //Version string
+#define UwVersion "0.92" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -86,6 +87,14 @@
 #define DefaultPrePostXCompPath ""
 #define DefaultOnlineXComp 1
 #define DefaultTextUpdateInterval 80
+//Define the protocol
+#ifdef UseSSL
+    //HTTPS
+    #define WebProtocol "https"
+#else
+    //HTTP
+    #define WebProtocol "http"
+#endif
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -255,6 +264,14 @@ private slots:
         (
         QNetworkReply* nrReply
         );
+#ifdef UseSSL
+    void
+    sslErrors
+        (
+        QNetworkReply*,
+        QList<QSslError>
+        );
+#endif
     void
     on_check_PreXCompRun_stateChanged
         (
@@ -322,8 +339,15 @@ private slots:
     on_btn_UwTerminalXUpdate_clicked
         (
         );
-
-    void on_check_Echo_stateChanged(int arg1);
+    void
+    on_check_Echo_stateChanged
+        (
+        int bChecked
+        );
+    void
+    on_btn_ErrorCodeDownload_clicked
+        (
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -435,6 +459,9 @@ private:
     QSettings *gpErrorMessages; //Handle to error codes
     QNetworkAccessManager *gnmManager; //Network access manager
     QString gstrDeviceID; //What the server compiler ID is
+#ifdef UseSSL
+    QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
+#endif
 
 protected:
     void dragEnterEvent

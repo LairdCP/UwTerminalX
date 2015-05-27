@@ -56,6 +56,9 @@
     </property>
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout_5">
+      <property name="spacing">
+       <number>3</number>
+      </property>
       <item row="0" column="0">
        <widget class="QTabWidget" name="selector_Tab">
         <property name="enabled">
@@ -99,15 +102,36 @@
           <string>&amp;Terminal</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_11">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <property name="spacing">
+           <number>3</number>
+          </property>
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_4">
+            <property name="spacing">
+             <number>3</number>
+            </property>
             <item row="5" column="0">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="spacing">
+               <number>4</number>
+              </property>
               <property name="topMargin">
-               <number>5</number>
+               <number>1</number>
               </property>
               <property name="bottomMargin">
-               <number>5</number>
+               <number>1</number>
               </property>
               <item>
                <widget class="QLabel" name="label_TermConn">
@@ -753,6 +777,21 @@
           <string>Conf&amp;ig</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_8">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <property name="spacing">
+           <number>3</number>
+          </property>
           <item row="1" column="0">
            <spacer name="verticalSpacer">
             <property name="orientation">
@@ -768,8 +807,14 @@
           </item>
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_6">
+            <property name="spacing">
+             <number>3</number>
+            </property>
             <item row="1" column="1" colspan="2">
              <layout class="QGridLayout" name="gridLayout_7">
+              <property name="spacing">
+               <number>3</number>
+              </property>
               <item row="5" column="0">
                <widget class="QLabel" name="label_6">
                 <property name="font">
@@ -1073,8 +1118,11 @@
             </item>
             <item row="1" column="0" rowspan="2">
              <layout class="QVBoxLayout" name="verticalLayout_3">
+              <property name="spacing">
+               <number>3</number>
+              </property>
               <property name="rightMargin">
-               <number>5</number>
+               <number>3</number>
               </property>
               <item>
                <widget class="QGroupBox" name="groupBox_2">
@@ -1100,6 +1148,21 @@
                  <string>Lines</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <property name="spacing">
+                  <number>3</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>3</number>
+                 </property>
                  <item>
                   <widget class="QRadioButton" name="radio_LCR">
                    <property name="text">
@@ -1151,10 +1214,28 @@
             </item>
             <item row="1" column="4">
              <layout class="QVBoxLayout" name="verticalLayout_7">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>2</number>
+              </property>
+              <property name="topMargin">
+               <number>2</number>
+              </property>
+              <property name="rightMargin">
+               <number>2</number>
+              </property>
+              <property name="bottomMargin">
+               <number>2</number>
+              </property>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <property name="spacing">
+                 <number>3</number>
+                </property>
                 <property name="topMargin">
-                 <number>5</number>
+                 <number>3</number>
                 </property>
                 <item>
                  <widget class="QCheckBox" name="check_PreXCompRun">
@@ -1232,6 +1313,9 @@
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout">
+                <property name="spacing">
+                 <number>3</number>
+                </property>
                 <item>
                  <widget class="QLineEdit" name="edit_PreXCompFilename">
                   <property name="inputMask">
@@ -1283,6 +1367,9 @@
             </item>
             <item row="2" column="1" colspan="2">
              <layout class="QVBoxLayout" name="verticalLayout_5">
+              <property name="spacing">
+               <number>3</number>
+              </property>
               <item>
                <widget class="QLabel" name="label_SerialInfo">
                 <property name="sizePolicy">
@@ -1309,6 +1396,9 @@
               </item>
               <item>
                <layout class="QGridLayout" name="gridLayout_16">
+                <property name="spacing">
+                 <number>3</number>
+                </property>
                 <item row="3" column="0">
                  <widget class="QCheckBox" name="check_ShowCLRF">
                   <property name="text">
@@ -1442,6 +1532,21 @@
             </item>
             <item row="2" column="4">
              <layout class="QVBoxLayout" name="verticalLayout_10">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>2</number>
+              </property>
+              <property name="topMargin">
+               <number>2</number>
+              </property>
+              <property name="rightMargin">
+               <number>2</number>
+              </property>
+              <property name="bottomMargin">
+               <number>2</number>
+              </property>
               <item>
                <spacer name="verticalSpacer_7">
                 <property name="orientation">
@@ -1534,7 +1639,7 @@
                  <item>
                   <widget class="QPushButton" name="btn_ErrorCodeUpdate">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="text">
                     <string>Check for Updates</string>
@@ -1542,7 +1647,17 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="labrl_ErorrCodeUpdate">
+                  <widget class="QPushButton" name="btn_ErrorCodeDownload">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="text">
+                    <string>Update error codes</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_ErrorCodeUpdate">
                    <property name="text">
                     <string>[Status]</string>
                    </property>
@@ -1599,7 +1714,7 @@
                  <item>
                   <widget class="QPushButton" name="btn_UwTerminalXUpdate">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="text">
                     <string>Check for Updates</string>
@@ -1735,8 +1850,26 @@
           <string>Abo&amp;ut</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_3">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <property name="spacing">
+           <number>3</number>
+          </property>
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_2">
+            <property name="spacing">
+             <number>3</number>
+            </property>
             <item row="0" column="1">
              <widget class="QPushButton" name="btn_Decline">
               <property name="text">
@@ -1774,6 +1907,9 @@
           </item>
           <item row="1" column="0">
            <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="spacing">
+             <number>3</number>
+            </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -1855,6 +1991,9 @@ For updates, check https://github.com/LairdCP/UwTerminalX</string>
             </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout">
+              <property name="spacing">
+               <number>3</number>
+              </property>
               <property name="leftMargin">
                <number>0</number>
               </property>
@@ -1874,6 +2013,9 @@ For updates, check https://github.com/LairdCP/UwTerminalX</string>
                 </property>
                 <property name="topMargin">
                  <number>0</number>
+                </property>
+                <property name="spacing">
+                 <number>3</number>
                 </property>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_AboutI1">
