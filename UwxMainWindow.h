@@ -52,7 +52,7 @@
 // Defines
 /******************************************************************************/
 #define ServerHost "uwterminalx.no-ip.org" //Hostname/IP of online xcompile server
-//#define UseSSL //Define to use https/SSL
+//#define UseSSL //Define to use https/SSL (requires OpenSSL support in Qt and runtime libraries)
 //Defines for various file download functions
 #define MODE_COMPILE 1
 #define MODE_COMPILE_LOAD 2
@@ -66,7 +66,7 @@
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
 #define MODE_UPDATE_ERROR_CODE 16
 //Defines for version and functions
-#define UwVersion "0.92b" //Version string
+#define UwVersion "0.92c" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for

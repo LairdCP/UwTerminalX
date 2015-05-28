@@ -287,7 +287,13 @@ LrdScrollEdit::AddDatOutText
     else
     {
         //Character mode
-#pragma warning("TODO: Add support for pasting in character mode")
+        QByteArray baTmpBA = strDat.toUtf8();
+        unsigned char ucTmpUC;
+        foreach (ucTmpUC, baTmpBA)
+        {
+            //Emit a keypressed event for each character
+            emit KeyPressed(ucTmpUC);
+        }
     }
 }
 
@@ -345,7 +351,13 @@ LrdScrollEdit::insertFromMimeData
         else
         {
             //Character mode
-#pragma warning("TODO: Add support for pasting in character mode")
+            QByteArray baTmpBA = mdSrc->text().toUtf8();
+            unsigned char ucTmpUC;
+            foreach (ucTmpUC, baTmpBA)
+            {
+                //Emit a keypressed event for each character
+                emit KeyPressed(ucTmpUC);
+            }
         }
     }
 }
