@@ -265,6 +265,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMenu->addSeparator();
     gpMenu->addAction(new QAction("Copy", this));
     gpMenu->addAction(new QAction("Copy All", this));
+    gpMenu->addAction(new QAction("Paste", this));
     gpMenu->addAction(new QAction("Select All", this));
 
     //Create balloon menu items
@@ -1738,6 +1739,11 @@ MainWindow::triggered
     {
         //Copy all data
         QApplication::clipboard()->setText(ui->text_TermEditData->toPlainText());
+    }
+    else if (qaAction->text() == "Paste")
+    {
+        //Paste data from clipboard
+        ui->text_TermEditData->AddDatOutText(QApplication::clipboard()->text());
     }
     else if (qaAction->text() == "Select All")
     {

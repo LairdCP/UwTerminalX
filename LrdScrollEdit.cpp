@@ -257,11 +257,12 @@ LrdScrollEdit::SetLineMode
 void
 LrdScrollEdit::AddDatInText
     (
-    QByteArray *bDat
+    QByteArray *baDat
     )
 {
-    mstrDatIn += QString(*bDat);
-    if (mstrDatIn.length() == bDat->length() && (bDat[0] == "\r" || bDat[0] == "\n"))
+    //Adds data to the DatIn buffer
+    mstrDatIn += QString(*baDat);
+    if (mstrDatIn.length() == baDat->length() && (baDat[0] == "\r" || baDat[0] == "\n"))
     {
         mstrDatIn.remove(0, 1);
     }
@@ -271,10 +272,33 @@ LrdScrollEdit::AddDatInText
 //=============================================================================
 //=============================================================================
 void
+LrdScrollEdit::AddDatOutText
+    (
+    QString strDat
+    )
+{
+    //Adds data to the DatOut buffer
+    if (mbLineMode == true)
+    {
+        //Line mode
+        mstrDatOut += strDat;
+        this->UpdateDisplay();
+    }
+    else
+    {
+        //Character mode
+#pragma warning("TODO: Add support for pasting in character mode")
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
 LrdScrollEdit::ClearDatIn
     (
     )
 {
+    //Clears the DatIn buffer
     mstrDatIn.clear();
     this->UpdateDisplay();
 }
@@ -286,6 +310,7 @@ LrdScrollEdit::ClearDatOut
     (
     )
 {
+    //Clears the DatOut buffer
     mstrDatOut.clear();
     this->UpdateDisplay();
 }
@@ -297,6 +322,7 @@ LrdScrollEdit::GetDatOut
     (
     )
 {
+    //Returns the DatOut buffer
     return &mstrDatOut;
 }
 
@@ -308,10 +334,19 @@ LrdScrollEdit::insertFromMimeData
     const QMimeData *mdSrc
     )
 {
-    if (mbLineMode == true && mdSrc->hasText() == true)
+    if (mdSrc->hasText() == true)
     {
-        mstrDatOut += mdSrc->text();
-        this->UpdateDisplay();
+        if (mbLineMode == true)
+        {
+            //Line mode
+            mstrDatOut += mdSrc->text();
+            this->UpdateDisplay();
+        }
+        else
+        {
+            //Character mode
+#pragma warning("TODO: Add support for pasting in character mode")
+        }
     }
 }
 

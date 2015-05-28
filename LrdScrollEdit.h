@@ -53,6 +53,10 @@ public:
     (
     QByteArray *baDat
     );
+    void AddDatOutText
+    (
+    QString strDat
+    );
     void ClearDatIn
     (
     );
