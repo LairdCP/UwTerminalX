@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gstrMacBundlePath = BundleDir.path().append("/");
     gpTermSettings = new QSettings(QString(gstrMacBundlePath).append("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
     gpErrorMessages = new QSettings(QString(gstrMacBundlePath).append("codes.csv"), QSettings::IniFormat); //Handle to error codes
+    gpPredefinedDevice = new QSettings(QString(gstrMacBundlePath).append("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 
     //Fix mac's resize
     resize(660, 360);
@@ -68,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Open files in same directory
     gpTermSettings = new QSettings(QString("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat); //Handle to error codes
+    gpPredefinedDevice = new QSettings(QString("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 #endif
 
     //Define default variable values
@@ -216,7 +218,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Connect key-press signals
     connect(ui->text_TermEditData, SIGNAL(EnterPressed()), this, SLOT(EnterPressed()));
-    connect(ui->text_TermEditData, SIGNAL(KeyPressed(int)), this, SLOT(KeyPressed(int)));
+    connect(ui->text_TermEditData, SIGNAL(KeyPressed(QChar)), this, SLOT(KeyPressed(QChar)));
+
+    //Connect file drag/drop signal
+    connect(ui->text_TermEditData, SIGNAL(FileDropped(QString)), this, SLOT(DroppedFile(QString)));
 
     //Initialise popup message
     gpmErrorForm = new PopupMessage;
@@ -307,12 +312,56 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrBatchTimeoutTimer.setSingleShot(true);
     connect(&gtmrBatchTimeoutTimer, SIGNAL(timeout()), this, SLOT(BatchTimeoutSlot()));
 
-    //Setup poll timer
-    gtmrPollTimer.setInterval(500);
-    connect(&gtmrPollTimer, SIGNAL(timeout()), this, SLOT(PollUSB()));
+    //Check if default devices were created
+    if (gpPredefinedDevice->value("DoneSetup").isNull())
+    {
+        //Create default device configurations... BT900
+        gpPredefinedDevice->setValue(QString("Port1Name"), "BT900");
+        gpPredefinedDevice->setValue(QString("Port1Baud"), "115200");
+        gpPredefinedDevice->setValue(QString("Port1Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port1Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port1Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port1Flow"), "1");
+
+        //BL600/BL620
+        gpPredefinedDevice->setValue(QString("Port2Name"), "BL600/BL620");
+        gpPredefinedDevice->setValue(QString("Port2Baud"), "9600");
+        gpPredefinedDevice->setValue(QString("Port2Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port2Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port2Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port2Flow"), "1");
+
+        //BL620-US
+        gpPredefinedDevice->setValue(QString("Port3Name"), "BL620-US");
+        gpPredefinedDevice->setValue(QString("Port3Baud"), "9600");
+        gpPredefinedDevice->setValue(QString("Port3Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port3Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port3Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port3Flow"), "0");
+
+        //Mark as completed
+        gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
+    }
+
+    //Add predefined devices
+    unsigned char i = 1;
+    while (i < 255)
+    {
+        if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+        {
+            break;
+        }
+        ui->combo_PredefinedDevice->addItem(gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).toString());
+        ++i;
+    }
+
+    //Load settings from first device
+    if (ui->combo_PredefinedDevice->count() > 0)
+    {
+        on_combo_PredefinedDevice_currentIndexChanged(ui->combo_PredefinedDevice->currentIndex());
+    }
 
     //Add tooltips
-    ui->check_Poll->setToolTip("Enable this to poll the device if it disconnects and automatically re-establish a connection.");
     ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
 
     //Give focus to accept button
@@ -475,11 +524,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 ui->radio_LLFCR->setChecked(true);
             }
         }
-        else if (slArgs[chi].toUpper() == "POLL")
-        {
-            //Enables poll mode
-            ui->check_Poll->setChecked(true);
-        }
         else if (slArgs[chi].left(10).toUpper() == "LOCALECHO=")
         {
             //Enable or disable local echo
@@ -603,7 +647,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     //Change terminal font to a monospaced font
-    ui->text_TermEditData->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+//      fntTmpFnt.setPointSize(10);
+    QFontMetrics tmTmpFM(fntTmpFnt);
+    ui->text_TermEditData->setFont(fntTmpFnt);
+    ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
 
     if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
     {
@@ -632,7 +680,8 @@ MainWindow::~MainWindow()
     disconnect(this, SLOT(process_finished(int, QProcess::ExitStatus)));
     disconnect(this, SLOT(close()));
     disconnect(this, SLOT(EnterPressed()));
-    disconnect(this, SLOT(KeyPressed(int)));
+    disconnect(this, SLOT(KeyPressed(QChar)));
+    disconnect(this, SLOT(DroppedFile(QString)));
     disconnect(this, SLOT(triggered(QAction*)));
     disconnect(this, SLOT(balloontriggered(QAction*)));
     disconnect(this, SLOT(DevRespTimeout()));
@@ -642,7 +691,6 @@ MainWindow::~MainWindow()
     disconnect(this, SLOT(SerialBytesWritten(qint64)));
     disconnect(this, SLOT(UpdateReceiveText()));
     disconnect(this, SLOT(BatchTimeoutSlot()));
-    disconnect(this, SLOT(PollUSB()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
 
     if (gspSerialPort.isOpen() == true)
@@ -699,6 +747,7 @@ MainWindow::~MainWindow()
 #endif
 
     //Delete variables
+    delete gpPredefinedDevice;
     delete gpTermSettings;
     delete gpErrorMessages;
     delete gpSignalTimer;
@@ -781,11 +830,6 @@ MainWindow::on_btn_Connect_clicked
     )
 {
     //Connect to COM port button clicked.
-    if (gtmrPollTimer.isActive())
-    {
-        //Stop polling USB
-        gtmrPollTimer.stop();
-    }
     MainWindow::OpenSerial();
 }
 
@@ -799,11 +843,6 @@ MainWindow::on_btn_TermClose_clicked
     if (ui->btn_TermClose->text() == "&Open Port")
     {
         //Open connection
-        if (gtmrPollTimer.isActive())
-        {
-            //Stop polling USB
-            gtmrPollTimer.stop();
-        }
         MainWindow::OpenSerial();
     }
     else if (ui->btn_TermClose->text() == "C&lose Port")
@@ -889,8 +928,7 @@ MainWindow::RefreshSerialDevices
     )
 {
     //Clears and refreshes the list of serial devices
-    QString strPrev;
-    unsigned int bPrevAt = 0;
+    QString strPrev = "";
     QRegularExpression reTempRE("^(\\D*?)(\\d+)$");
     QList<unsigned int> Entries;
     Entries.clear();
@@ -932,14 +970,29 @@ MainWindow::RefreshSerialDevices
             //Cannot sort this item
             ui->combo_COM->insertItem(ui->combo_COM->count(), info.portName());
         }
-        if (info.portName() == strPrev)
-        {
-            bPrevAt = ui->combo_COM->count()-1;
-        }
     }
 
-    //Set index back to previous
-    ui->combo_COM->setCurrentIndex(bPrevAt);
+    //Search for previous item if one was selected
+    if (strPrev == "")
+    {
+        //Select first item
+        ui->combo_COM->setCurrentIndex(0);
+    }
+    else
+    {
+        //Search for previos
+        unsigned int i = 0;
+        while (i < ui->combo_COM->count())
+        {
+            if (ui->combo_COM->itemText(i) == strPrev)
+            {
+                //Found previous item
+                ui->combo_COM->setCurrentIndex(i);
+                break;
+            }
+            ++i;
+        }
+    }
 
     //Update serial port info
     on_combo_COM_currentIndexChanged(0);
@@ -1303,7 +1356,6 @@ MainWindow::readData
                             //Remove UWC
                             QFile::remove(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
                         }
-                        ++gchTermMode2;
                     }
                 }
                 else
@@ -1614,10 +1666,13 @@ MainWindow::triggered
     {
         //Change font
         bool bTmpBool;
-        QFont fTmpFont = QFontDialog::getFont(&bTmpBool, ui->text_TermEditData->font(), this);
+        QFont fntTmpFnt = QFontDialog::getFont(&bTmpBool, ui->text_TermEditData->font(), this);
         if (bTmpBool == true)
         {
-            ui->text_TermEditData->setFont(fTmpFont);
+            //Set font and re-adjust tab spacing
+            QFontMetrics tmTmpFM(fntTmpFnt);
+            ui->text_TermEditData->setFont(fntTmpFnt);
+            ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
         }
     }
     else if (qaAction->text() == "Run")
@@ -1784,7 +1839,7 @@ MainWindow::EnterPressed
     //Enter pressed in line mode
     if (gspSerialPort.isOpen() == true && gbTermBusy == false && gbLoopbackMode == false)
     {
-        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n", "").replace("\r", "").toUtf8();
+        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
         /*if (ui->check_Echo->isChecked() == true)
@@ -1967,7 +2022,7 @@ MainWindow::UpdateImages
 void
 MainWindow::KeyPressed
     (
-    int intKeyValue
+    QChar intKeyValue
     )
 {
     //Key pressed, send it out
@@ -1999,37 +2054,45 @@ MainWindow::KeyPressed
             }
         }
 
+        //Convert character to a byte array (in case it's UTF-8 and more than 1 byte)
+        QByteArray baTmpBA = QString(intKeyValue).toUtf8();
+
         //Character mode, send right on
-        if (intKeyValue == Qt::Key_Enter || intKeyValue == Qt::Key_Return)
+        if (intKeyValue == Qt::Key_Enter || intKeyValue == Qt::Key_Return || intKeyValue == '\r' || intKeyValue == '\n')
         {
-            //Return key
+            //Return key or newline
             gpMainLog->WriteLogData("\n");
             MainWindow::DoLineEnd();
         }
         else
         {
             //Not return
-            QByteArray baTmpBA = QString(QChar(intKeyValue)).toUtf8();
             gspSerialPort.write(baTmpBA);
             gintQueuedTXBytes += baTmpBA.size();
-            if (ui->check_Echo->isChecked())
+        }
+
+        //Output back to screen buffer if echo mode is enabled
+        if (ui->check_Echo->isChecked())
+        {
+            if (ui->check_ShowCLRF->isChecked() == true)
             {
-                if (ui->check_ShowCLRF->isChecked() == true)
-                {
-                    //Escape \t, \r and \n in addition to normal escaping
-                    gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                }
-                else
-                {
-                    //Normal escaping
-                    gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                }
+                //Escape \t, \r and \n in addition to normal escaping
+                gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
             }
+            else
+            {
+                //Normal escaping
+                gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+            }
+
+            //Run display update timer
             if (!gtmrTextUpdateTimer.isActive())
             {
                 gtmrTextUpdateTimer.start();
             }
-            gpMainLog->WriteLogData(QString(QChar(intKeyValue)).toUtf8());
+
+            //Output to log file
+            gpMainLog->WriteLogData(QString(intKeyValue).toUtf8());
         }
     }
     else if (gbLoopbackMode == true)
@@ -2581,12 +2644,6 @@ MainWindow::SerialError
             gpSysTray->showMessage(ui->combo_COM->currentText().append(" Removed"), QString("Connection to device ").append(ui->combo_COM->currentText()).append(" has been lost due to disconnection."), QSystemTrayIcon::Critical);
         }
 
-        if (ui->check_Poll->isChecked())
-        {
-            //Poll mode is enabled, start timer
-            gtmrPollTimer.start();
-        }
-
         //Disallow file drops
         setAcceptDrops(false);
     }
@@ -2683,51 +2740,6 @@ MainWindow::LookupErrorCode
         gtmrTextUpdateTimer.start();
     }
     ui->text_TermEditData->moveCursor(QTextCursor::End);
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_Default600_clicked
-    (
-    )
-{
-    //Load defaults for BL600/BL620
-    ui->combo_Baud->setCurrentIndex(3);
-    ui->combo_Parity->setCurrentIndex(0);
-    ui->combo_Stop->setCurrentIndex(0);
-    ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(1);
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_Default620US_clicked
-    (
-    )
-{
-    //Load defaults for BL620-US
-    ui->combo_Baud->setCurrentIndex(3);
-    ui->combo_Parity->setCurrentIndex(0);
-    ui->combo_Stop->setCurrentIndex(0);
-    ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(0);
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_Default900_clicked
-    (
-    )
-{
-    //Load defaults for BT900
-    ui->combo_Baud->setCurrentIndex(8);
-    ui->combo_Parity->setCurrentIndex(0);
-    ui->combo_Stop->setCurrentIndex(0);
-    ui->combo_Data->setCurrentIndex(1);
-    ui->combo_Handshake->setCurrentIndex(1);
 }
 
 //=============================================================================
@@ -2984,23 +2996,6 @@ void MainWindow::on_combo_COM_currentIndexChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::PollUSB
-    (
-    )
-{
-    //Polls if USB device exists and reopens it if it does
-    QSerialPortInfo SerialInfo(ui->combo_COM->currentText());
-    if (SerialInfo.isValid())
-    {
-        //Exists - cancel timer and reopen port
-        gtmrPollTimer.stop();
-        OpenSerial();
-    }
-}
-
-//=============================================================================
-//=============================================================================
-void
 MainWindow::dragEnterEvent
     (
     QDragEnterEvent *event
@@ -3042,44 +3037,8 @@ MainWindow::dropEvent
         return;
     }
 
-    //Send file to device
-    gchTermMode = 4;
-    gstrTermFilename = strFileName;
-    gbTermBusy = true;
-    MainWindow::LoadFile(false);
-
-    //Download to the device
-    gchTermMode2 = 1;
-    QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
-    gspSerialPort.write(baTmpBA);
-    gintQueuedTXBytes += baTmpBA.size();
-    MainWindow::DoLineEnd();
-    gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
-    if (ui->check_SkipDL->isChecked() == false)
-    {
-        //Output download details
-        if (ui->check_ShowCLRF->isChecked() == true)
-        {
-            //Escape \t, \r and \n
-            baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
-        }
-
-        //Replace unprintable characters
-        baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
-
-        //Update display buffer
-        gbaDisplayBuffer.append(baTmpBA);
-        if (!gtmrTextUpdateTimer.isActive())
-        {
-            gtmrTextUpdateTimer.start();
-        }
-    }
-
-    //Start the timeout timer
-    gtmrDownloadTimeoutTimer.start();
-
-    //Enable cancel button
-    ui->btn_Cancel->setEnabled(true);
+    //Pass to other function call
+    DroppedFile(strFileName);
 }
 
 //=============================================================================
@@ -4039,6 +3998,205 @@ MainWindow::on_btn_ErrorCodeDownload_clicked
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_combo_PredefinedDevice_currentIndexChanged
+    (
+    int iIndex
+    )
+{
+    //Load settings for current device
+    ui->combo_Baud->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Baud")), "115200").toString());
+    ui->combo_Parity->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Parity")), "0").toInt());
+    ui->combo_Stop->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Stop")), "1").toString());
+    ui->combo_Data->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Data")), "8").toString());
+    ui->combo_Handshake->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Flow")), "1").toInt());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_PredefinedAdd_clicked
+    (
+    )
+{
+    //Adds a new predefined device entry
+    ui->combo_PredefinedDevice->addItem("New");
+    ui->combo_PredefinedDevice->setCurrentIndex(ui->combo_PredefinedDevice->count()-1);
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Name"), "New");
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Baud"), ui->combo_Baud->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Parity"), ui->combo_Parity->currentIndex());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Stop"), ui->combo_Stop->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Data"), ui->combo_Data->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number((ui->combo_PredefinedDevice->count()))).append("Flow"), ui->combo_Handshake->currentIndex());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_PredefinedDelete_clicked
+    (
+    )
+{
+    //Remove current device configuration
+    if (ui->combo_PredefinedDevice->count() > 0)
+    {
+        //
+        unsigned int uiDeviceNumber = ui->combo_PredefinedDevice->currentIndex();
+        unsigned int i = uiDeviceNumber+2;
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Name"));
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Baud"));
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Parity"));
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Stop"));
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Data"));
+        gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Flow"));
+        while (!gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+        {
+            //Shift element up
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Name"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).toString());
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Baud"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Baud")).toInt());
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Parity"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Parity")).toInt());
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Stop"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Stop")).toInt());
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Data"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Data")).toInt());
+            gpPredefinedDevice->setValue(QString("Port").append(QString::number(i-1)).append("Flow"), gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Flow")).toInt());
+            ++i;
+        }
+        if (!gpPredefinedDevice->value(QString("Port").append(QString::number(i-1)).append("Name")).isNull())
+        {
+            //Remove last element
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Name"));
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Baud"));
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Parity"));
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Stop"));
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Data"));
+            gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Flow"));
+        }
+        ui->combo_PredefinedDevice->removeItem(uiDeviceNumber);
+
+        //Load configuration options from new item (if one exists)
+        if (ui->combo_PredefinedDevice->count() > 0)
+        {
+//TODO
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::DroppedFile
+    (
+    QString strFilename
+    )
+{
+    //Check file extension
+    if (strFilename.right(3).toLower() == ".sb")
+    {
+        //smartBASIC source file - compile
+        gchTermMode = MODE_COMPILE_LOAD;
+        gstrTermFilename = strFilename;
+
+        //Get the version number
+        gbTermBusy = true;
+        gchTermMode2 = 0;
+        gchTermBusyLines = 0;
+        gstrTermBusyData = tr("");
+        gspSerialPort.write("at i 0");
+        gintQueuedTXBytes += 6;
+        MainWindow::DoLineEnd();
+        gpMainLog->WriteLogData("at i 0\n");
+        gspSerialPort.write("at i 13");
+        gintQueuedTXBytes += 7;
+        MainWindow::DoLineEnd();
+        gpMainLog->WriteLogData("at i 13\n");
+    }
+    else
+    {
+        //Normal download
+        gchTermMode = MODE_LOAD;
+        gstrTermFilename = strFilename;
+        gbTermBusy = true;
+        MainWindow::LoadFile(false);
+
+        //Download to the device
+        gchTermMode2 = 1;
+        QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
+        gspSerialPort.write(baTmpBA);
+        gintQueuedTXBytes += baTmpBA.size();
+        MainWindow::DoLineEnd();
+        gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+        if (ui->check_SkipDL->isChecked() == false)
+        {
+            //Output download details
+            if (ui->check_ShowCLRF->isChecked() == true)
+            {
+                //Escape \t, \r and \n
+                baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+            }
+
+            //Replace unprintable characters
+            baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+            //Update display buffer
+            gbaDisplayBuffer.append(baTmpBA);
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+        }
+    }
+
+    //Start the timeout timer
+    gtmrDownloadTimeoutTimer.start();
+
+    //Enable cancel button
+    ui->btn_Cancel->setEnabled(true);
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_SaveDevice_clicked
+    (
+    )
+{
+    //Saves changes to a configuration
+    ui->combo_PredefinedDevice->setItemText(ui->combo_PredefinedDevice->currentIndex(), ui->combo_PredefinedDevice->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Name"), ui->combo_PredefinedDevice->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Baud"), ui->combo_Baud->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Parity"), ui->combo_Parity->currentIndex());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Stop"), ui->combo_Stop->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Data"), ui->combo_Data->currentText());
+    gpPredefinedDevice->setValue(QString("Port").append(QString::number(((ui->combo_PredefinedDevice->currentIndex()+1)))).append("Flow"), ui->combo_Handshake->currentIndex());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_OpenLog_clicked
+    (
+    )
+{
+    //Opens the UwTerminalX log file
+    QDesktopServices::openUrl(QUrl::fromLocalFile(gpMainLog->GetLogName()));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_OpenConfig_clicked
+    (
+    )
+{
+    //Opens the UwTerminalX configuration file
+#if TARGET_OS_MAC
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("UwTerminalX.ini"));
+#else
+    QDesktopServices::openUrl(QUrl::fromLocalFile("UwTerminalX.ini"));
+#endif
 }
 
 /******************************************************************************/

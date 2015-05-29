@@ -178,14 +178,7 @@ LrdScrollEdit::eventFilter
                 }*/
 
                 //Possible work-around for caps lock issue
-                if (keyEvent->key() > 64 && keyEvent->key() < 91)
-                {
-                    mstrDatOut += keyEvent->text();
-                }
-                else
-                {
-                    mstrDatOut += keyEvent->key();
-                }
+                mstrDatOut += keyEvent->text();
             }
         }
         else
@@ -200,25 +193,7 @@ LrdScrollEdit::eventFilter
                     if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && /*keyEvent->key() != Qt::Key_Backspace &&*/ keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
                     {
                         //Not a special character
-                        /*if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
-                        {
-                            //Shift isn't down, lowercase it
-                            emit KeyPressed(keyEvent->key()+32);
-                        }
-                        else
-                        {
-                            emit KeyPressed(keyEvent->key());
-                        }*/
-
-                        //Possible work-around for caps lock issue
-                        if (keyEvent->key() > 64 && keyEvent->key() < 91)
-                        {
-                            emit KeyPressed(keyEvent->text().toUtf8()[0]);
-                        }
-                        else
-                        {
-                            emit KeyPressed(keyEvent->key());
-                        }
+                        emit KeyPressed(*keyEvent->text().unicode());
                         this->UpdateDisplay();
                     }
                     return true;
@@ -250,6 +225,7 @@ LrdScrollEdit::SetLineMode
 {
     //Enables or disables line mode
     mbLineMode = bNewLineMode;
+    this->UpdateDisplay();
 }
 
 //=============================================================================
@@ -287,12 +263,10 @@ LrdScrollEdit::AddDatOutText
     else
     {
         //Character mode
-        QByteArray baTmpBA = strDat.toUtf8();
-        unsigned char ucTmpUC;
-        foreach (ucTmpUC, baTmpBA)
+        QChar qcTmpQC;
+        foreach (qcTmpQC, strDat)
         {
-            //Emit a keypressed event for each character
-            emit KeyPressed(ucTmpUC);
+            emit KeyPressed(qcTmpQC);
         }
     }
 }
@@ -340,8 +314,33 @@ LrdScrollEdit::insertFromMimeData
     const QMimeData *mdSrc
     )
 {
-    if (mdSrc->hasText() == true)
+    if (mdSrc->hasUrls() == true)
     {
+        //File has been dropped
+        QList<QUrl> urls = mdSrc->urls();
+        if (urls.isEmpty())
+        {
+            //No files
+            return;
+        }
+        else if (urls.length() > 1)
+        {
+            //More than 1 file - ignore
+            return;
+        }
+
+        if (urls.first().toLocalFile().isEmpty())
+        {
+            //Invalid filename
+            return;
+        }
+
+        //Send back to main application
+        emit FileDropped(urls.first().toLocalFile());
+    }
+    else if (mdSrc->hasText() == true)
+    {
+        //Text has been pasted
         if (mbLineMode == true)
         {
             //Line mode
@@ -351,12 +350,11 @@ LrdScrollEdit::insertFromMimeData
         else
         {
             //Character mode
-            QByteArray baTmpBA = mdSrc->text().toUtf8();
-            unsigned char ucTmpUC;
-            foreach (ucTmpUC, baTmpBA)
+            QString strTmpStr = mdSrc->text();
+            QChar qcTmpQC;
+            foreach (qcTmpQC, strTmpStr)
             {
-                //Emit a keypressed event for each character
-                emit KeyPressed(ucTmpUC);
+                emit KeyPressed(qcTmpQC);
             }
         }
     }
@@ -384,9 +382,9 @@ LrdScrollEdit::UpdateDisplay
     this->setUpdatesEnabled(false);
     if (mstrDatIn.length() > 0)
     {
-        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true ? mstrDatOut : "")));
+        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
     }
-    else
+    else if (mbLineMode == true)
     {
         this->setPlainText(mstrDatOut);
     }

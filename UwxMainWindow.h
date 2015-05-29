@@ -66,12 +66,12 @@
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
 #define MODE_UPDATE_ERROR_CODE 16
 //Defines for version and functions
-#define UwVersion "0.92d" //Version string
+#define UwVersion "0.93" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
 #define PrePostXCompTimeout 15000 //Time (in mS) to allow a pre/post XCompilation process to execute for
-#define ModuleTimeout 8000 //Time (in mS) that a download stage command/process times out (includes module timeout and online XCompiler timeout)
+#define ModuleTimeout 10000 //Time (in mS) that a download stage command/process times out (includes module timeout and online XCompiler timeout)
 //Defines for default config values
 #define DefaultLogFile "UwTerminalX.log"
 #define DefaultLogMode 0
@@ -162,7 +162,7 @@ public slots:
     void
     KeyPressed
         (
-        int intKeyValue
+        QChar intKeyValue
         );
     void
     SerialBytesWritten
@@ -227,18 +227,6 @@ private slots:
         QCloseEvent *event
         );
     void
-    on_btn_Default600_clicked
-        (
-        );
-    void
-    on_btn_Default620US_clicked
-        (
-        );
-    void
-    on_btn_Default900_clicked
-        (
-        );
-    void
     on_btn_Cancel_clicked
         (
         );
@@ -254,10 +242,6 @@ private slots:
     on_combo_COM_currentIndexChanged
         (
         int index
-        );
-    void
-    PollUSB
-        (
         );
     void
     replyFinished
@@ -346,6 +330,36 @@ private slots:
         );
     void
     on_btn_ErrorCodeDownload_clicked
+        (
+        );
+    void
+    on_combo_PredefinedDevice_currentIndexChanged
+        (
+        int index
+        );
+    void
+    on_btn_PredefinedAdd_clicked
+        (
+        );
+    void
+    on_btn_PredefinedDelete_clicked
+        (
+        );
+    void
+    DroppedFile
+        (
+        QString strFilename
+        );
+    void
+    on_btn_SaveDevice_clicked
+        (
+        );
+    void
+    on_btn_OpenLog_clicked
+        (
+        );
+    void
+    on_btn_OpenConfig_clicked
         (
         );
 
@@ -454,9 +468,9 @@ private:
     bool gbStreamingBatch; //True if batch file is being streamed
     QTimer gtmrBatchTimeoutTimer; //Timer for a batch command timeout
     QByteArray gbaBatchReceive; //Storage for batch data coming in
-    QTimer gtmrPollTimer; //Timer for polling USB device to reopen it
     QSettings *gpTermSettings; //Handle to settings
     QSettings *gpErrorMessages; //Handle to error codes
+    QSettings *gpPredefinedDevice; //Handle to predefined devices
     QNetworkAccessManager *gnmManager; //Network access manager
     QString gstrDeviceID; //What the server compiler ID is
 #ifdef UseSSL

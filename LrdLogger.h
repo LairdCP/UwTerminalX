@@ -24,6 +24,7 @@
 #define LOG_OK 0                //Success
 #define LOG_ERR_OPEN_ALREADY 1  //Log already open
 #define LOG_ERR_ACCESS 2        //Access denied to log file
+#define LOG_NOT_OPEN 3          //Log file not open
 #define FLUSHDATAONWRITE        //Set to flush data when it's written
 
 /******************************************************************************/
@@ -34,33 +35,43 @@ class LrdLogger : public QWidget
     Q_OBJECT
 public:
     explicit LrdLogger
-    (
-    QWidget *parent = 0
-    );
+        (
+        QWidget *parent = 0
+        );
     ~LrdLogger
-    (
-    );
-    unsigned char OpenLogFile
-    (
-    QString strFilename
-    );
-    void CloseLogFile
-    (
-    );
-    unsigned char WriteLogData
-    (
-    QString strData
-    );
-    unsigned char WriteRawLogData
-    (
-    QByteArray baData
-    );
-    unsigned short GetLogSize
-    (
-    );
-    void ClearLog
-    (
-    );
+        (
+        );
+    unsigned char
+    OpenLogFile
+        (
+        QString strFilename
+        );
+    void
+    CloseLogFile
+        (
+        );
+    unsigned char
+    WriteLogData
+        (
+        QString strData
+        );
+    unsigned char
+    WriteRawLogData
+        (
+        QByteArray baData
+        );
+    unsigned short
+    GetLogSize
+        (
+        );
+    void
+    ClearLog
+        (
+        );
+    QString
+    GetLogName
+        (
+        );
 
 private:
     bool mbLogOpen; //True when log file is open
