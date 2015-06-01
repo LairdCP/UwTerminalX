@@ -17,7 +17,6 @@
 #include <QPlainTextEdit>
 #include <QKeyEvent>
 #include <QString>
-#include <QTimer>
 #include <QScrollBar>
 #include <QMimeData>
 #include <QTextCursor>
@@ -106,9 +105,11 @@ private:
     QString mstrDatIn; //Incoming data (previous commands/received data)
     QString mstrDatOut; //Outgoing data (user typed keyboard data)
     unsigned int muintCurPos; //Current cursor position
+    unsigned int mbPrevTextSize; //Holds a count of the previous text size
 
 public:
     bool mbLocalEcho; //True if local echo is enabled
+    bool mbContextMenuOpen; //True when context menu is open
 };
 
 #endif // LRDSCROLLEDIT_H

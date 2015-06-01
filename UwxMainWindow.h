@@ -65,8 +65,9 @@
 #define MODE_CHECK_ERROR_CODE_VERSIONS 14
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
 #define MODE_UPDATE_ERROR_CODE 16
+#define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.93" //Version string
+#define UwVersion "0.93a" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -362,6 +363,18 @@ private slots:
     on_btn_OpenConfig_clicked
         (
         );
+    void
+    on_btn_ModuleFirmware_clicked
+        (
+        );
+    void
+    on_btn_LairdModules_clicked
+        (
+        );
+    void
+    ContextMenuClosed
+        (
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -473,6 +486,7 @@ private:
     QSettings *gpPredefinedDevice; //Handle to predefined devices
     QNetworkAccessManager *gnmManager; //Network access manager
     QString gstrDeviceID; //What the server compiler ID is
+    bool gbFileOpened; //True when a file on the module has been opened
 #ifdef UseSSL
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif

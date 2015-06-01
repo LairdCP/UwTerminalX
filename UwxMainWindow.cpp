@@ -91,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbRIStatus = 0;
     gbStreamingBatch = false;
     gbaBatchReceive.clear();
+    gbFileOpened = false;
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -283,6 +284,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Connect the menu actions
     connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(triggered(QAction*)), Qt::AutoConnection);
+    connect(gpMenu, SIGNAL(aboutToHide()), this, SLOT(ContextMenuClosed()), Qt::AutoConnection);
     connect(gpBalloonMenu, SIGNAL(triggered(QAction*)), this, SLOT(balloontriggered(QAction*)), Qt::AutoConnection);
 
     //Configure the timeout timer
@@ -1079,6 +1081,7 @@ MainWindow::readData
                 gpMainLog->WriteLogData(QString(baFileData).append("\n"));
 //        gintStreamBytesRead += FileData.length();
                 gtmrBatchTimeoutTimer.start(BatchTimeout);
+                ++gintStreamBytesRead;
             }
             gbaBatchReceive.clear();
         }
@@ -1238,6 +1241,7 @@ MainWindow::readData
             {
                 QByteArray baTmpBA = QString("AT+FOW \"").append(gstrDownloadFilename).append("\"").toUtf8();
                 gspSerialPort.write(baTmpBA);
+                gbFileOpened = true;
                 gintQueuedTXBytes += baTmpBA.size();
                 MainWindow::DoLineEnd();
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
@@ -1416,6 +1420,7 @@ void
 {
     //Creates the custom context menu
     gpMenu->popup(ui->text_TermEditData->viewport()->mapToGlobal(pos));
+    ui->text_TermEditData->mbContextMenuOpen = true;
 }
 
 void
@@ -1766,6 +1771,7 @@ MainWindow::triggered
                 gintQueuedTXBytes += baFileData.size();
                 MainWindow::DoLineEnd();
                 gpMainLog->WriteLogData(QString(baFileData).append("\n"));
+                gintStreamBytesRead = 0;
 
                 //Start a timeout timer
                 gtmrBatchTimeoutTimer.start(BatchTimeout);
@@ -2294,7 +2300,14 @@ MainWindow::OpenSerial
     //Function to open serial port
     if (gspSerialPort.isOpen() == true)
     {
-        //Serial port is already open - close
+        //Serial port is already open - cancel any pending operations
+        if (gbTermBusy == true && gbFileOpened == true)
+        {
+            //Run cancel operation
+            on_btn_Cancel_clicked();
+        }
+
+        //Close serial port
         while (gspSerialPort.isOpen() == true)
         {
             gspSerialPort.clear();
@@ -2777,6 +2790,14 @@ MainWindow::SerialBytesWritten
             }
             gintStreamBytesProgress = gintStreamBytesProgress + StreamProgress;
         }
+
+        //
+        ui->statusBar->showMessage(QString("Streamed ").append(QString::number(gintStreamBytesRead).append(" bytes of ").append(QString::number(gintStreamBytesSize))));
+    }
+    else if (gbStreamingBatch == true)
+    {
+        //Batch file command
+        ui->statusBar->showMessage(QString("Batch command number ").append(QString::number(gintStreamBytesRead)));
     }
 }
 
@@ -2796,14 +2817,17 @@ MainWindow::on_btn_Cancel_clicked
             gtmrDownloadTimeoutTimer.stop();
             gstrHexData = "";
             gbaDisplayBuffer.append("\n-- File download cancelled --\n");
-            gspSerialPort.write("AT+FCL");
-            gintQueuedTXBytes += 6;
-            MainWindow::DoLineEnd();
-            gpMainLog->WriteLogData("AT+FCL\n");
-            if (ui->check_SkipDL->isChecked() == false)
+            if (gbFileOpened == true)
             {
-                //Output download details
-                gbaDisplayBuffer.append("AT+FCL\n");
+                gspSerialPort.write("AT+FCL");
+                gintQueuedTXBytes += 6;
+                MainWindow::DoLineEnd();
+                gpMainLog->WriteLogData("AT+FCL\n");
+                if (ui->check_SkipDL->isChecked() == false)
+                {
+                    //Output download details
+                    gbaDisplayBuffer.append("AT+FCL\n");
+                }
             }
             if (!gtmrTextUpdateTimer.isActive())
             {
@@ -3314,6 +3338,7 @@ MainWindow::replyFinished
         ui->btn_Cancel->setEnabled(false);
         ui->btn_ErrorCodeUpdate->setEnabled(true);
         ui->btn_UwTerminalXUpdate->setEnabled(true);
+        ui->btn_ModuleFirmware->setEnabled(true);
         gtmrDownloadTimeoutTimer.stop();
         gstrHexData = "";
         if (!gtmrTextUpdateTimer.isActive())
@@ -3704,6 +3729,7 @@ MainWindow::replyFinished
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
+            ui->btn_ModuleFirmware->setEnabled(true);
         }
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {
@@ -3721,7 +3747,7 @@ MainWindow::replyFinished
                 if (joJsonObject["Result"].toString() == "-1")
                 {
                     //Outdated version
-                    ui->label_UwTerminalXUpdate->setText("Update is available!");
+                    ui->label_UwTerminalXUpdate->setText(QString("Update available: ").append(joJsonObject["Version"].toString()));
                     QPalette palBGColour = QPalette();
                     palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
                     palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
@@ -3764,6 +3790,7 @@ MainWindow::replyFinished
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
+            ui->btn_ModuleFirmware->setEnabled(true);
         }
         else if (gchTermMode == MODE_UPDATE_ERROR_CODE)
         {
@@ -3828,6 +3855,59 @@ MainWindow::replyFinished
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
+            ui->btn_ModuleFirmware->setEnabled(true);
+        }
+        else if (gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS)
+        {
+            //
+            QByteArray tmpBA = nrReply->readAll();
+            QJsonParseError jpeJsonError;
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+            qDebug() << tmpBA;
+
+            if (jpeJsonError.error == QJsonParseError::NoError)
+            {
+                //Decoded JSON
+                QJsonObject joJsonObject = jdJsonData.object();
+
+                //Server responded with error
+                if (joJsonObject["Result"].toString() == "1")
+                {
+                    //Outdated version
+                    ui->label_BL600Firmware->setText(QString("Latest BL600 firmware: ").append(joJsonObject["BL600r2"].toString()));
+                    ui->label_BL620Firmware->setText(QString("Latest BL620 firmware: ").append(joJsonObject["BL620"].toString()));
+                    ui->label_BT900Firmware->setText(QString("Latest BT900 firmware: ").append(joJsonObject["BT900"].toString()));
+                    QPalette palBGColour = QPalette();
+                    palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
+                    palBGColour.setColor(QPalette::Disabled, QPalette::WindowText, Qt::darkGreen);
+                    ui->label_BL600Firmware->setPalette(palBGColour);
+                    ui->label_BL620Firmware->setPalette(palBGColour);
+                    ui->label_BT900Firmware->setPalette(palBGColour);
+                }
+                else
+                {
+                    //Server responded with error
+                    QString strMessage = QString("Server responded with error code ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString());
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
+            else
+            {
+                //Error whilst decoding JSON
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
+            ui->btn_Cancel->setEnabled(false);
+            ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_UwTerminalXUpdate->setEnabled(true);
+            ui->btn_ModuleFirmware->setEnabled(true);
         }
     }
 
@@ -3942,6 +4022,7 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
     }
 }
@@ -3963,6 +4044,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
     }
 }
@@ -3996,6 +4078,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
     }
 }
@@ -4197,6 +4280,51 @@ MainWindow::on_btn_OpenConfig_clicked
 #else
     QDesktopServices::openUrl(QUrl::fromLocalFile("UwTerminalX.ini"));
 #endif
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_ModuleFirmware_clicked
+    (
+    )
+{
+    //Checks what the latest module firmware versions are
+    if (gbTermBusy == false)
+    {
+        //Send request
+        gbTermBusy = true;
+        gchTermMode = MODE_CHECK_FIRMWARE_VERSIONS;
+        gchTermMode2 = MODE_CHECK_FIRMWARE_VERSIONS;
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
+        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/firmwares.php"))));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_LairdModules_clicked
+    (
+    )
+{
+    //Opens the Laird Bluetooh modules page
+    QDesktopServices::openUrl(QUrl("http://www.lairdtech.com/products/category/741"));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ContextMenuClosed
+    (
+    )
+{
+    //Right click context menu closed, send message to text edit object
+    ui->text_TermEditData->mbContextMenuOpen = false;
+    ui->text_TermEditData->UpdateDisplay();
 }
 
 /******************************************************************************/

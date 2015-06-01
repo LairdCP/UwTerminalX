@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>2</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1831,7 +1831,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                </size>
               </property>
               <property name="title">
-               <string>Applications</string>
+               <string>Applications &amp;&amp; Firmware</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_12">
                <item>
@@ -1839,7 +1839,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                  <item>
                   <widget class="QLabel" name="label_10">
                    <property name="text">
-                    <string>Laird provides sample applications and code for its Bluetooth modules, this code allows you to test functionality right away! All this sample code is freely available on Github, the buttons below will take you to the respective products Github page where a zip of the applications can be downloaded.</string>
+                    <string>Laird provides sample applications for its Bluetooth modules, this code allows you to test functionality right away! All this sample code is freely available on Github which can be opened below.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -1854,6 +1854,16 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
+                  <widget class="QLabel" name="label_BL600Firmware">
+                   <property name="text">
+                    <string>[Latest BL600 Firmware Version]</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QPushButton" name="btn_BL620Apps">
                    <property name="text">
                     <string>View BL620 Github Page</string>
@@ -1861,9 +1871,43 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
+                  <widget class="QLabel" name="label_BL620Firmware">
+                   <property name="text">
+                    <string>[Latest BL620 Firmware Version]</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QPushButton" name="btn_BT900Apps">
                    <property name="text">
                     <string>View BT900 Github Page</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_BT900Firmware">
+                   <property name="text">
+                    <string>[Latest BT900 Firmware Version]</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_ModuleFirmware">
+                   <property name="text">
+                    <string>Check latest firmware versions</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_LairdModules">
+                   <property name="text">
+                    <string>View Laird Bluetooth Modules Site</string>
                    </property>
                   </widget>
                  </item>

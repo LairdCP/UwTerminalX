@@ -21,6 +21,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
 {
     //Enable an event filter
     installEventFilter(this);
+    installEventFilter(this->verticalScrollBar());
     mchItems = 0; //Number of items is 0
     mchPosition = 0; //Current position is 0
     mbLineMode = true; //Line mode is on by default
@@ -29,6 +30,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
     mstrDatIn = ""; //Data in is an empty string
     mstrDatOut = ""; //Data out is empty string
     muintCurPos = 0; //Current cursor position is 0
+    mbContextMenuOpen = false; //Context menu not currently open
 }
 
 //=============================================================================
@@ -40,8 +42,16 @@ LrdScrollEdit::eventFilter
     QEvent *event
     )
 {
-    //Line mode
-    if (event->type() == QEvent::KeyPress)
+    if (target == this->verticalScrollBar())
+    {
+        //Vertical scroll bar event
+        if (event->type() == QEvent::MouseButtonRelease)
+        {
+            //Button was released, update display buffer
+            this->UpdateDisplay();
+        }
+    }
+    else if (event->type() == QEvent::KeyPress)
     {
         //Key has been pressed...
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
@@ -164,7 +174,11 @@ LrdScrollEdit::eventFilter
             {
                 return true;
             }
-            else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
+            else if (keyEvent->key() == Qt::Key_Delete)
+            {
+                return true;
+            }
+            else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
             {
                 //Add character
                 this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
@@ -204,12 +218,12 @@ LrdScrollEdit::eventFilter
                 return true;
             }
         }
-    }
 
-    if (mbLocalEcho == false)
-    {
-        //Return true now if local echo is off
-        return true;
+        if (mbLocalEcho == false)
+        {
+            //Return true now if local echo is off
+            return true;
+        }
     }
 
     return QObject::eventFilter(target, event);
@@ -280,6 +294,7 @@ LrdScrollEdit::ClearDatIn
 {
     //Clears the DatIn buffer
     mstrDatIn.clear();
+    this->setTextCursor(QTextCursor());
     this->UpdateDisplay();
 }
 
@@ -368,44 +383,101 @@ LrdScrollEdit::UpdateDisplay
     )
 {
     //Updates the receive text buffer, faster
-    unsigned int Pos;
-    if (this->verticalScrollBar()->sliderPosition() == this->verticalScrollBar()->maximum())
+    if (this->verticalScrollBar()->isSliderDown() != true && mbContextMenuOpen == false)
     {
-        //Scroll to bottom
-        Pos = 65535;
-    }
-    else
-    {
-        //Stay here
-        Pos = this->verticalScrollBar()->sliderPosition();
-    }
-    this->setUpdatesEnabled(false);
-    if (mstrDatIn.length() > 0)
-    {
-        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
-    }
-    else if (mbLineMode == true)
-    {
-        this->setPlainText(mstrDatOut);
-    }
-    this->setUpdatesEnabled(true);
-    if (Pos == 65535)
-    {
-        //Bottom
-        this->verticalScrollBar()->setValue(this->verticalScrollBar()->maximum());
-        this->moveCursor(QTextCursor::End);
-    }
-    else
-    {
-        //Maintain
-        this->verticalScrollBar()->setValue(Pos);
-    }
+        //Variables for text selection storage
+        unsigned int uiAnchor = 0;
+        unsigned int uiPosition = 0;
+        QTextCursor tcTmpCur;
+        bool bShiftStart = false;
+        bool bShiftEnd = false;
+        unsigned int uiCurrentSize;
+        if (this->textCursor().anchor() != this->textCursor().position())
+        {
+            //Text is selected
+            uiAnchor = this->textCursor().anchor();
+            uiPosition = this->textCursor().position();
+            tcTmpCur = this->textCursor();
+            if (uiAnchor > mbPrevTextSize)
+            {
+                //Start of selected text is in the output buffer
+                bShiftStart = true;
+                uiCurrentSize = this->toPlainText().size();
+            }
+            if (uiPosition > mbPrevTextSize)
+            {
+                //End of selected text is in the output buffer
+                bShiftEnd = true;
+                uiCurrentSize = this->toPlainText().size();
+            }
+        }
 
-    if (muintCurPos == mstrDatOut.length()-1)
-    {
-        ++muintCurPos;
+        //Slider not held down, update
+        unsigned int Pos;
+        if (this->verticalScrollBar()->sliderPosition() == this->verticalScrollBar()->maximum())
+        {
+            //Scroll to bottom
+            Pos = 65535;
+        }
+        else
+        {
+            //Stay here
+            Pos = this->verticalScrollBar()->sliderPosition();
+        }
+        this->setUpdatesEnabled(false);
+        if (mstrDatIn.length() > 0)
+        {
+            this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
+        }
+        else if (mbLineMode == true)
+        {
+            this->setPlainText(mstrDatOut);
+        }
+        this->setUpdatesEnabled(true);
+
+        //Update previous text size variable
+        mbPrevTextSize = mstrDatIn.size();
+
+        if (muintCurPos == mstrDatOut.length()-1)
+        {
+            ++muintCurPos;
+        }
+        this->UpdateCursor();
+
+        if (uiAnchor != 0 || uiPosition != 0)
+        {
+            //Reselect previous text
+            if (bShiftStart == true)
+            {
+                //Adjust start position
+                uiAnchor = uiAnchor + (this->toPlainText().size() - uiCurrentSize);
+            }
+            if (bShiftEnd == true)
+            {
+                //Adjust end position
+                uiPosition = uiPosition + (this->toPlainText().size() - uiCurrentSize);
+            }
+            tcTmpCur.setPosition(uiAnchor);
+            tcTmpCur.setPosition(uiPosition, QTextCursor::KeepAnchor);
+            this->setTextCursor(tcTmpCur);
+        }
+
+        //Go back to previous position
+        if (Pos == 65535)
+        {
+            //Bottom
+            this->verticalScrollBar()->setValue(this->verticalScrollBar()->maximum());
+            if (uiAnchor == 0 && uiPosition == 0)
+            {
+                this->moveCursor(QTextCursor::End);
+            }
+        }
+        else
+        {
+            //Maintain
+            this->verticalScrollBar()->setValue(Pos);
+        }
     }
-    this->UpdateCursor();
 }
 
 //=============================================================================
@@ -428,6 +500,7 @@ LrdScrollEdit::UpdateCursor
         tcTmpCur.setPosition(muintCurPos);
     }
     this->setTextCursor(tcTmpCur);*/
+
     this->moveCursor(QTextCursor::End);
 }
 
