@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>712</width>
-    <height>391</height>
+    <height>386</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -871,13 +871,6 @@
               </item>
              </layout>
             </item>
-            <item row="0" column="1">
-             <widget class="QPushButton" name="btn_Duplicate">
-              <property name="text">
-               <string>&amp;Duplicate Session</string>
-              </property>
-             </widget>
-            </item>
             <item row="2" column="3">
              <widget class="QGroupBox" name="groupBox_5">
               <property name="sizePolicy">
@@ -1615,6 +1608,19 @@
               </layout>
              </widget>
             </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="btn_Duplicate">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>&amp;Duplicate Session</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item row="2" column="0">
@@ -1839,7 +1845,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                  <item>
                   <widget class="QLabel" name="label_10">
                    <property name="text">
-                    <string>Laird provides sample applications for its Bluetooth modules, this code allows you to test functionality right away! All this sample code is freely available on Github which can be opened below.</string>
+                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -1854,29 +1860,9 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_BL600Firmware">
-                   <property name="text">
-                    <string>[Latest BL600 Firmware Version]</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QPushButton" name="btn_BL620Apps">
                    <property name="text">
                     <string>View BL620 Github Page</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_BL620Firmware">
-                   <property name="text">
-                    <string>[Latest BL620 Firmware Version]</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
                    </property>
                   </widget>
                  </item>
@@ -1888,27 +1874,77 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_BT900Firmware">
-                   <property name="text">
-                    <string>[Latest BT900 Firmware Version]</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_ModuleFirmware">
-                   <property name="text">
-                    <string>Check latest firmware versions</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QPushButton" name="btn_LairdModules">
                    <property name="text">
                     <string>Laird Bluetooth Modules Site</string>
                    </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_7">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>96</height>
+                    </size>
+                   </property>
+                   <property name="title">
+                    <string>Latest Firmware</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_3">
+                    <property name="spacing">
+                     <number>2</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>2</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_BL600Firmware">
+                      <property name="text">
+                       <string>BL600:</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_BL620Firmware">
+                      <property name="text">
+                       <string>BL620:</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_BT900Firmware">
+                      <property name="text">
+                       <string>BT900:</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_ModuleFirmware">
+                      <property name="text">
+                       <string>Check latest firmware</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </widget>
                  </item>
                  <item>

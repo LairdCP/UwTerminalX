@@ -1202,6 +1202,7 @@ MainWindow::readData
 #endif
                         //gprocCompileProcess.waitForFinished(-1);
                     }
+#ifdef _WIN32
                     else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                     {
                         //XCompiler found in directory with sB file
@@ -1210,11 +1211,9 @@ MainWindow::readData
                             //Run Pre-XComp program
                             RunPrePostExecutable(gstrTermFilename);
                         }
-#ifdef _WIN32
-                        //Windows
                         gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
-#endif
                     }
+#endif
                     else if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //XCompiler not found, try Online XCompiler
@@ -2223,7 +2222,22 @@ MainWindow::process_finished
     else if (intExitCode == 0)
     {
         //Success
-        if (gchTermMode == MODE_COMPILE_LOAD || gchTermMode == MODE_COMPILE_LOAD_RUN)
+        if (gchTermMode == MODE_COMPILE)
+        {
+            //XCompile complete
+            gtmrDownloadTimeoutTimer.stop();
+            gstrHexData = "";
+            gbaDisplayBuffer.append("\n-- XCompile complete --\n");
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
+            ui->btn_Cancel->setEnabled(false);
+        }
+        else if (gchTermMode == MODE_COMPILE_LOAD || gchTermMode == MODE_COMPILE_LOAD_RUN)
         {
             //Load the file
             LoadFile(true);
@@ -3564,6 +3578,7 @@ MainWindow::replyFinished
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
+            ui->statusBar->showMessage("");
         }
         else if (gchTermMode2 == MODE_SERVER_COMPILE)
         {
@@ -3714,6 +3729,7 @@ MainWindow::replyFinished
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
+            ui->statusBar->showMessage("");
         }
         else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS)
         {
@@ -3775,6 +3791,7 @@ MainWindow::replyFinished
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
+            ui->statusBar->showMessage("");
         }
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {
@@ -3836,6 +3853,7 @@ MainWindow::replyFinished
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
+            ui->statusBar->showMessage("");
         }
         else if (gchTermMode == MODE_UPDATE_ERROR_CODE)
         {
@@ -3901,6 +3919,7 @@ MainWindow::replyFinished
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
+            ui->statusBar->showMessage("");
         }
         else if (gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS)
         {
@@ -3918,9 +3937,9 @@ MainWindow::replyFinished
                 if (joJsonObject["Result"].toString() == "1")
                 {
                     //Outdated version
-                    ui->label_BL600Firmware->setText(QString("Latest BL600 firmware: ").append(joJsonObject["BL600r2"].toString()));
-                    ui->label_BL620Firmware->setText(QString("Latest BL620 firmware: ").append(joJsonObject["BL620"].toString()));
-                    ui->label_BT900Firmware->setText(QString("Latest BT900 firmware: ").append(joJsonObject["BT900"].toString()));
+                    ui->label_BL600Firmware->setText(QString("BL600: ").append(joJsonObject["BL600r2"].toString()));
+                    ui->label_BL620Firmware->setText(QString("BL620: ").append(joJsonObject["BL620"].toString()));
+                    ui->label_BT900Firmware->setText(QString("BT900: ").append(joJsonObject["BT900"].toString()));
                     QPalette palBGColour = QPalette();
                     palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
                     palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
@@ -3952,6 +3971,7 @@ MainWindow::replyFinished
             ui->btn_ErrorCodeUpdate->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
+            ui->statusBar->showMessage("");
         }
     }
 
@@ -4068,6 +4088,7 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+        ui->statusBar->showMessage("Checking for Error Code file updates...");
     }
 }
 
@@ -4090,6 +4111,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
+        ui->statusBar->showMessage("Checking for UwTerminalX updates...");
     }
 }
 
@@ -4124,6 +4146,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
+        ui->statusBar->showMessage("Downloading Error Code file...");
     }
 }
 
@@ -4345,6 +4368,7 @@ MainWindow::on_btn_ModuleFirmware_clicked
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/firmwares.php"))));
+        ui->statusBar->showMessage("Checking for latest firmware versions...");
     }
 }
 
