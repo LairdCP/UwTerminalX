@@ -1022,7 +1022,7 @@ MainWindow::readData
     //Read the data into a buffer and copy it to edit for the display data
     QByteArray baOrigData = gspSerialPort.readAll();
 
-    if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6)))
+    if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6) || (gbTermBusy == true && (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS || gchTermMode == MODE_UPDATE_ERROR_CODE || gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS || gchTermMode == 50))))
     {
         //Update the display with the data
         QByteArray baDispData = baOrigData;
