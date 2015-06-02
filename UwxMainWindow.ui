@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>3</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1907,7 +1907,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                  <item>
                   <widget class="QPushButton" name="btn_LairdModules">
                    <property name="text">
-                    <string>View Laird Bluetooth Modules Site</string>
+                    <string>Laird Bluetooth Modules Site</string>
                    </property>
                   </widget>
                  </item>
@@ -2092,7 +2092,8 @@ SHOWCRLF
     When displaying a TX or RX text on screen, show \t,\r,\n as well
 
 Copyright © Laird Technologies 2011-2015
-For updates, check https://github.com/LairdCP/UwTerminalX</string>
+For updates, check https://github.com/LairdCP/UwTerminalX or check the 'Update' tab.
+Plus and Minus images obtained from http://www.clker.com</string>
               </property>
              </widget>
             </item>

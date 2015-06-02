@@ -67,12 +67,12 @@
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.93a" //Version string
+#define UwVersion "0.93b" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
 #define PrePostXCompTimeout 15000 //Time (in mS) to allow a pre/post XCompilation process to execute for
-#define ModuleTimeout 10000 //Time (in mS) that a download stage command/process times out (includes module timeout and online XCompiler timeout)
+#define ModuleTimeout 4000 //Time (in mS) that a download stage command/process times out (module)
 //Defines for default config values
 #define DefaultLogFile "UwTerminalX.log"
 #define DefaultLogMode 0
@@ -455,7 +455,7 @@ private:
     QString gstrHexData; //Holds the hex data to be sent to the device
     QString gstrDownloadFilename; //Holds the inter-function download filename
     QTimer *gpSignalTimer; //Handle for a timer to update COM port signals
-    QTimer gtmrDownloadTimeoutTimer; //Timer for timeout indication
+    QTimer gtmrDownloadTimeoutTimer; //Timer for module timeout indication
     LrdLogger *gpMainLog; //Handle to the main log file (if enabled/used)
     bool gbMainLogEnabled; //True if opened successfully (and enabled)
     QMenu *gpMenu; //Main menu

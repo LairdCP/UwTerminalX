@@ -231,7 +231,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     guaAutomationForm = new UwxAutomation;
 
     //Populate the list of devices
-    MainWindow::RefreshSerialDevices();
+    RefreshSerialDevices();
 
     //Display version
     ui->statusBar->showMessage(QString("UwTerminalX version ").append(UwVersion).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
@@ -239,7 +239,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     .append(" [DEBUG BUILD]")
 #endif
     );
-    MainWindow::setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
+    setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
 
     //Create menu items
     gpMenu = new QMenu(this);
@@ -287,7 +287,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(gpMenu, SIGNAL(aboutToHide()), this, SLOT(ContextMenuClosed()), Qt::AutoConnection);
     connect(gpBalloonMenu, SIGNAL(triggered(QAction*)), this, SLOT(balloontriggered(QAction*)), Qt::AutoConnection);
 
-    //Configure the timeout timer
+    //Configure the module timeout timer
     gtmrDownloadTimeoutTimer.setSingleShot(true);
     gtmrDownloadTimeoutTimer.setInterval(ModuleTimeout);
     connect(&gtmrDownloadTimeoutTimer, SIGNAL(timeout()), this, SLOT(DevRespTimeout()));
@@ -658,7 +658,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
     {
         //Enough information to connect!
-        MainWindow::OpenSerial();
+        OpenSerial();
     }
 
 #ifdef UseSSL
@@ -686,6 +686,7 @@ MainWindow::~MainWindow()
     disconnect(this, SLOT(DroppedFile(QString)));
     disconnect(this, SLOT(triggered(QAction*)));
     disconnect(this, SLOT(balloontriggered(QAction*)));
+    disconnect(this, SLOT(ContextMenuClosed()));
     disconnect(this, SLOT(DevRespTimeout()));
     disconnect(this, SLOT(SerialStatusSlot()));
     disconnect(this, SLOT(readData()));
@@ -832,7 +833,7 @@ MainWindow::on_btn_Connect_clicked
     )
 {
     //Connect to COM port button clicked.
-    MainWindow::OpenSerial();
+    OpenSerial();
 }
 
 //=============================================================================
@@ -845,7 +846,7 @@ MainWindow::on_btn_TermClose_clicked
     if (ui->btn_TermClose->text() == "&Open Port")
     {
         //Open connection
-        MainWindow::OpenSerial();
+        OpenSerial();
     }
     else if (ui->btn_TermClose->text() == "C&lose Port")
     {
@@ -908,7 +909,7 @@ MainWindow::on_btn_TermClose_clicked
     }
 
     //Update images
-    MainWindow::UpdateImages();
+    UpdateImages();
 }
 
 //=============================================================================
@@ -919,7 +920,7 @@ MainWindow::on_btn_Refresh_clicked
     )
 {
     //Refresh the list of serial ports
-    MainWindow::RefreshSerialDevices();
+    RefreshSerialDevices();
 }
 
 //=============================================================================
@@ -1077,23 +1078,39 @@ MainWindow::readData
                 QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
                 gspSerialPort.write(baFileData);
                 gintQueuedTXBytes += baFileData.length();
-                MainWindow::DoLineEnd();
+                DoLineEnd();
                 gpMainLog->WriteLogData(QString(baFileData).append("\n"));
 //        gintStreamBytesRead += FileData.length();
                 gtmrBatchTimeoutTimer.start(BatchTimeout);
                 ++gintStreamBytesRead;
+
+                //Update the display buffer
+                gbaDisplayBuffer.append(baFileData);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
             }
             gbaBatchReceive.clear();
         }
         else if (gbaBatchReceive.indexOf("\n01\t") != -1 && gbaBatchReceive.indexOf("\r", gbaBatchReceive.indexOf("\n01\t")+4) != -1)
         {
             //Failure code
-            QRegularExpression reTempRE("\t([a-zA-Z0-9]{1,9})\r");
+            QRegularExpression reTempRE("\t([a-zA-Z0-9]{1,9})(\t|\r)");
             QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
             if (remTempREM.hasMatch() == true)
             {
                 //Got the error code
                 gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
+
+                //Lookup error code
+                bool bTmpBool;
+                unsigned int ErrCode = QString("0x").append(remTempREM.captured(1)).toUInt(&bTmpBool, 16);
+                if (bTmpBool == true)
+                {
+                    //Converted
+                    LookupErrorCode(ErrCode);
+                }
             }
             else
             {
@@ -1104,6 +1121,9 @@ MainWindow::readData
             {
                 gtmrTextUpdateTimer.start();
             }
+
+            //Show status message
+            ui->statusBar->showMessage(QString("Failed sending batch file at line ").append(QString::number(gintStreamBytesRead)));
 
             //Clear up and cancel timer
             gtmrBatchTimeoutTimer.stop();
@@ -1243,7 +1263,7 @@ MainWindow::readData
                 gspSerialPort.write(baTmpBA);
                 gbFileOpened = true;
                 gintQueuedTXBytes += baTmpBA.size();
-                MainWindow::DoLineEnd();
+                DoLineEnd();
                 gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
                 if (ui->check_SkipDL->isChecked() == false)
                 {
@@ -1280,7 +1300,7 @@ MainWindow::readData
                         QByteArray baTmpBA = QString("AT+FWRH \"").append(gstrHexData.left(ui->edit_FWRH->toPlainText().toInt())).append("\"").toUtf8();
                         gspSerialPort.write(baTmpBA);
                         gintQueuedTXBytes += baTmpBA.size();
-                        MainWindow::DoLineEnd();
+                        DoLineEnd();
                         gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
                         if (ui->check_SkipDL->isChecked() == false)
                         {
@@ -1309,7 +1329,7 @@ MainWindow::readData
                             gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
                             gspSerialPort.write("AT+FCL");
                             gintQueuedTXBytes += 6;
-                            MainWindow::DoLineEnd();
+                            DoLineEnd();
                             gpMainLog->WriteLogData("AT+FCL\n");
                             if (ui->check_SkipDL->isChecked() == false)
                             {
@@ -1343,7 +1363,7 @@ MainWindow::readData
                         gbaDisplayBuffer.append("\n-- Finished downloading file --\n");
                         gspSerialPort.write("AT+FCL");
                         gintQueuedTXBytes += 6;
-                        MainWindow::DoLineEnd();
+                        DoLineEnd();
                         gpMainLog->WriteLogData("AT+FCL\n");
                         if (ui->check_SkipDL->isChecked() == false)
                         {
@@ -1369,7 +1389,7 @@ MainWindow::readData
                     gchTermBusyLines = 0;
                     gchTermMode = 0;
                     gchTermMode2 = 0;
-                    QString strMessage = tr("Error whilst downloading data to device. If filesystem is full, please restart device with 'atz' and clear the filesystem using 'at&f 1'.\nPlease note this will erase ALL FILES on the device.\n\nReceived: ").append(QString::fromUtf8(baOrigData));
+                    QString strMessage = tr("Error whilst downloading data to device. If filesystem is full, please restart device with 'atz' and clear the filesystem using 'at&f 1'.\nPlease note this will erase ALL FILES on the device, configuration keys and all bonding keys.\n\nReceived: ").append(QString::fromUtf8(baOrigData));
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                     QList<QString> lstFI = SplitFilePath(gstrTermFilename);
@@ -1386,7 +1406,7 @@ MainWindow::readData
                 if (gchTermMode == MODE_COMPILE_LOAD_RUN || gchTermMode == MODE_LOAD_RUN)
                 {
                     //Run!
-                    MainWindow::RunApplication();
+                    RunApplication();
                 }
             }
             ++gchTermMode2;
@@ -1413,7 +1433,7 @@ MainWindow::readData
 //=============================================================================
 //=============================================================================
 void
-    MainWindow::on_text_TermEditData_customContextMenuRequested
+MainWindow::on_text_TermEditData_customContextMenuRequested
     (
     const QPoint &pos
     )
@@ -1437,38 +1457,38 @@ MainWindow::triggered
         {
             //Compiles SB applet
 #ifdef _WIN32
-            MainWindow::CompileApp(MODE_COMPILE);
+            CompileApp(MODE_COMPILE);
 #else
-            MainWindow::CompileApp(MODE_SERVER_COMPILE);
+            CompileApp(MODE_SERVER_COMPILE);
 #endif
         }
         else if (qaAction->text() == "XCompile + Load")
         {
             //Compiles and loads a SB applet
 #ifdef _WIN32
-            MainWindow::CompileApp(MODE_COMPILE_LOAD);
+            CompileApp(MODE_COMPILE_LOAD);
 #else
-            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD);
+            CompileApp(MODE_SERVER_COMPILE_LOAD);
 #endif
         }
         else if (qaAction->text() == "XCompile + Load + Run")
         {
             //Compiles, loads and runs a SB applet
 #ifdef _WIN32
-            MainWindow::CompileApp(MODE_COMPILE_LOAD_RUN);
+            CompileApp(MODE_COMPILE_LOAD_RUN);
 #else
-            MainWindow::CompileApp(MODE_SERVER_COMPILE_LOAD_RUN);
+            CompileApp(MODE_SERVER_COMPILE_LOAD_RUN);
 #endif
         }
         else if (qaAction->text() == "Load" || qaAction->text() == "Load Precompiled BASIC" || qaAction->text() == "Data File +")
         {
             //Just load an application
-            MainWindow::CompileApp(MODE_LOAD);
+            CompileApp(MODE_LOAD);
         }
         else if (qaAction->text() == "Load + Run")
         {
             //Load and run an application
-            MainWindow::CompileApp(MODE_LOAD_RUN);
+            CompileApp(MODE_LOAD_RUN);
         }
     }
 
@@ -1480,13 +1500,13 @@ MainWindow::triggered
         if (bTmpBool == true)
         {
             //Converted
-            MainWindow::LookupErrorCode(ErrCode);
+            LookupErrorCode(ErrCode);
         }
     }
     else if (qaAction->text() == "Lookup Selected Error-Code (Int)")
     {
         //Shows a meaning for the error code selected (number as int)
-        MainWindow::LookupErrorCode(ui->text_TermEditData->textCursor().selection().toPlainText().toInt());
+        LookupErrorCode(ui->text_TermEditData->textCursor().selection().toPlainText().toInt());
     }
     else if (qaAction->text() == "Enable Loopback (Rx->Tx)" || qaAction->text() == "Disable Loopback (Rx->Tx)")
     {
@@ -1765,13 +1785,20 @@ MainWindow::triggered
                 //Start a timer
                 gtmrStreamTimer.start();
 
-                //Reads out each block
+                //Reads out first block
                 QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
                 gspSerialPort.write(baFileData);
                 gintQueuedTXBytes += baFileData.size();
-                MainWindow::DoLineEnd();
+                DoLineEnd();
                 gpMainLog->WriteLogData(QString(baFileData).append("\n"));
-                gintStreamBytesRead = 0;
+                gintStreamBytesRead = 1;
+
+                //Update the display buffer
+                gbaDisplayBuffer.append(baFileData);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
 
                 //Start a timeout timer
                 gtmrBatchTimeoutTimer.start(BatchTimeout);
@@ -1866,7 +1893,7 @@ MainWindow::EnterPressed
         }*/
         //gpMainLog->WriteLogData(ui->text_TermEditData->GetDatOut().append("\n"));
         //ui->text_TermEditData->setPlainText("");
-        MainWindow::DoLineEnd();
+        DoLineEnd();
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
     {
@@ -1908,14 +1935,14 @@ MainWindow::CompileApp
         {
             //Loading a compiled application
             gbTermBusy = true;
-            MainWindow::LoadFile(false);
+            LoadFile(false);
 
             //Download to the device
             gchTermMode2 = MODE_COMPILE;
             QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
             gspSerialPort.write(baTmpBA);
             gintQueuedTXBytes += baTmpBA.size();
-            MainWindow::DoLineEnd();
+            DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             if (ui->check_SkipDL->isChecked() == false)
             {
@@ -1944,14 +1971,14 @@ MainWindow::CompileApp
         {
             //Download any file to device
             gbTermBusy = true;
-            MainWindow::LoadFile(false);
+            LoadFile(false);
 
             //Download to the device
             gchTermMode2 = MODE_COMPILE;
             QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
             gspSerialPort.write(baTmpBA);
             gintQueuedTXBytes += baTmpBA.size();
-            MainWindow::DoLineEnd();
+            DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             if (ui->check_SkipDL->isChecked() == false)
             {
@@ -1985,11 +2012,11 @@ MainWindow::CompileApp
             gstrTermBusyData = tr("");
             gspSerialPort.write("at i 0");
             gintQueuedTXBytes += 6;
-            MainWindow::DoLineEnd();
+            DoLineEnd();
             gpMainLog->WriteLogData("at i 0\n");
             gspSerialPort.write("at i 13");
             gintQueuedTXBytes += 7;
-            MainWindow::DoLineEnd();
+            DoLineEnd();
             gpMainLog->WriteLogData("at i 13\n");
 
             //Start the timeout timer
@@ -2068,7 +2095,7 @@ MainWindow::KeyPressed
         {
             //Return key or newline
             gpMainLog->WriteLogData("\n");
-            MainWindow::DoLineEnd();
+            DoLineEnd();
         }
         else
         {
@@ -2154,7 +2181,7 @@ MainWindow::DevRespTimeout
     if (gbTermBusy == true)
     {
         //Update buffer
-        gbaDisplayBuffer.append("\nTimeout occured whilst attempting to XCompile application.\n");
+        gbaDisplayBuffer.append("\nTimeout occured whilst attempting to XCompile application or download to module.\n");
         if (!gtmrTextUpdateTimer.isActive())
         {
             gtmrTextUpdateTimer.start();
@@ -2199,14 +2226,14 @@ MainWindow::process_finished
         if (gchTermMode == MODE_COMPILE_LOAD || gchTermMode == MODE_COMPILE_LOAD_RUN)
         {
             //Load the file
-            MainWindow::LoadFile(true);
+            LoadFile(true);
             gchTermMode2 = MODE_COMPILE;
 
             //Download to the device
             QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
             gspSerialPort.write(baTmpBA);
             gintQueuedTXBytes += baTmpBA.size();
-            MainWindow::DoLineEnd();
+            DoLineEnd();
             gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
             gtmrDownloadTimeoutTimer.start();
             if (ui->check_SkipDL->isChecked() == false)
@@ -2287,7 +2314,7 @@ MainWindow::SerialStatusSlot
     )
 {
     //Slot function to update serial pinout status
-    MainWindow::SerialStatus(0);
+    SerialStatus(0);
 }
 
 //=============================================================================
@@ -2322,7 +2349,7 @@ MainWindow::OpenSerial
         guaAutomationForm->ConnectionChange(false);
 
         //Update images
-        MainWindow::UpdateImages();
+        UpdateImages();
     }
 
     gspSerialPort.setPortName(ui->combo_COM->currentText());
@@ -2372,7 +2399,7 @@ MainWindow::OpenSerial
         ui->btn_TermClose->setText("C&lose Port");
 
         //Signal checking
-        MainWindow::SerialStatus(1);
+        SerialStatus(1);
 
         //Enable timer
         gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval).toUInt());
@@ -2491,7 +2518,7 @@ MainWindow::RunApplication
     QByteArray baTmpBA = QString("AT+RUN \"").append(gstrDownloadFilename).append("\"").toUtf8();
     gspSerialPort.write(baTmpBA);
     gintQueuedTXBytes += baTmpBA.size();
-    MainWindow::DoLineEnd();
+    DoLineEnd();
     if (ui->check_SkipDL->isChecked() == false)
     {
         //Output download details
@@ -2556,7 +2583,7 @@ MainWindow::on_check_DTR_stateChanged
 //=============================================================================
 //=============================================================================
 void
-    MainWindow::on_check_Line_stateChanged
+MainWindow::on_check_Line_stateChanged
     (
     )
 {
@@ -2646,7 +2673,7 @@ MainWindow::SerialError
         ui->btn_TermClose->setText("&Open Port");
 
         //Update images
-        MainWindow::UpdateImages();
+        UpdateImages();
 
         //Notify automation form
         guaAutomationForm->ConnectionChange(false);
@@ -2724,7 +2751,7 @@ MainWindow::MessagePass
         if (bEscapeString == false)
         {
             //Not escaping sequences so send line end
-            MainWindow::DoLineEnd();
+            DoLineEnd();
         }
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
@@ -2791,13 +2818,22 @@ MainWindow::SerialBytesWritten
             gintStreamBytesProgress = gintStreamBytesProgress + StreamProgress;
         }
 
-        //
-        ui->statusBar->showMessage(QString("Streamed ").append(QString::number(gintStreamBytesRead).append(" bytes of ").append(QString::number(gintStreamBytesSize))));
+        //Update status bar
+        if (gintStreamBytesRead == gintStreamBytesSize)
+        {
+            //Finished streaming file
+            ui->statusBar->showMessage("File streaming complete!");
+        }
+        else
+        {
+            //Still streaming
+            ui->statusBar->showMessage(QString("Streamed ").append(QString::number(gintStreamBytesRead).append(" bytes of ").append(QString::number(gintStreamBytesSize))));
+        }
     }
     else if (gbStreamingBatch == true)
     {
         //Batch file command
-        ui->statusBar->showMessage(QString("Batch command number ").append(QString::number(gintStreamBytesRead)));
+        ui->statusBar->showMessage(QString("Sending Batch line number ").append(QString::number(gintStreamBytesRead)));
     }
 }
 
@@ -2821,7 +2857,7 @@ MainWindow::on_btn_Cancel_clicked
             {
                 gspSerialPort.write("AT+FCL");
                 gintQueuedTXBytes += 6;
-                MainWindow::DoLineEnd();
+                DoLineEnd();
                 gpMainLog->WriteLogData("AT+FCL\n");
                 if (ui->check_SkipDL->isChecked() == false)
                 {
@@ -2892,11 +2928,13 @@ MainWindow::FinishStream
     {
         //Stream cancelled
         gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        ui->statusBar->showMessage("File streaming cancelled.");
     }
     else
     {
         //Stream finished
         gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        ui->statusBar->showMessage("File streaming complete!");
     }
 
     //Initiate timer for buffer update
@@ -2917,7 +2955,8 @@ MainWindow::FinishStream
 
 //=============================================================================
 //=============================================================================
-void MainWindow::FinishBatch
+void
+MainWindow::FinishBatch
     (
     bool bType
     )
@@ -2927,11 +2966,13 @@ void MainWindow::FinishBatch
     {
         //Stream cancelled
         gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds)\n"));
+        ui->statusBar->showMessage("Batch file sending cancelled.");
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("\nFinished batch file, ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds\n"));
+        gbaDisplayBuffer.append(QString("\nFinished sending batch file, ").append(QString::number(gintStreamBytesRead)).append(" lines sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds\n"));
+        ui->statusBar->showMessage("Batch file sending complete!");
     }
 
     //Initiate timer for buffer update
@@ -2987,7 +3028,8 @@ MainWindow::BatchTimeoutSlot
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_combo_COM_currentIndexChanged
+void
+MainWindow::on_combo_COM_currentIndexChanged
     (
     int index
     )
@@ -3462,6 +3504,9 @@ MainWindow::replyFinished
                         nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
                         gnmManager->post(nrThisReq, baPostData);
                         ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
+
+                        //Stop the module timeout timer
+                        gtmrDownloadTimeoutTimer.stop();
                     }
                     else
                     {
@@ -3618,14 +3663,14 @@ MainWindow::replyFinished
                     }
 
                     //Loading a compiled application
-                    MainWindow::LoadFile(false);
+                    LoadFile(false);
 
                     //Download to the device
                     gchTermMode2 = MODE_COMPILE;
                     QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
                     gspSerialPort.write(baTmpBA);
                     gintQueuedTXBytes += baTmpBA.size();
-                    MainWindow::DoLineEnd();
+                    DoLineEnd();
                     gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
                     if (ui->check_SkipDL->isChecked() == false)
                     {
@@ -3859,11 +3904,10 @@ MainWindow::replyFinished
         }
         else if (gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS)
         {
-            //
+            //Response containing latest firmware versions for modules
             QByteArray tmpBA = nrReply->readAll();
             QJsonParseError jpeJsonError;
             QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
-            qDebug() << tmpBA;
 
             if (jpeJsonError.error == QJsonParseError::NoError)
             {
@@ -4189,11 +4233,11 @@ MainWindow::DroppedFile
         gstrTermBusyData = tr("");
         gspSerialPort.write("at i 0");
         gintQueuedTXBytes += 6;
-        MainWindow::DoLineEnd();
+        DoLineEnd();
         gpMainLog->WriteLogData("at i 0\n");
         gspSerialPort.write("at i 13");
         gintQueuedTXBytes += 7;
-        MainWindow::DoLineEnd();
+        DoLineEnd();
         gpMainLog->WriteLogData("at i 13\n");
     }
     else
@@ -4202,14 +4246,14 @@ MainWindow::DroppedFile
         gchTermMode = MODE_LOAD;
         gstrTermFilename = strFilename;
         gbTermBusy = true;
-        MainWindow::LoadFile(false);
+        LoadFile(false);
 
         //Download to the device
         gchTermMode2 = 1;
         QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
-        MainWindow::DoLineEnd();
+        DoLineEnd();
         gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
         if (ui->check_SkipDL->isChecked() == false)
         {
