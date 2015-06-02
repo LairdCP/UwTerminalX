@@ -4320,7 +4320,7 @@ MainWindow::on_btn_OpenConfig_clicked
 {
     //Opens the UwTerminalX configuration file
 #if TARGET_OS_MAC
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("UwTerminalX.ini"));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("UwTerminalX.ini")));
 #else
     QDesktopServices::openUrl(QUrl::fromLocalFile("UwTerminalX.ini"));
 #endif
