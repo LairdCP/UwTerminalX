@@ -2496,29 +2496,8 @@ MainWindow::LoadFile
     //Close the file handle
     file.close();
 
-//TODO: FIX THIS! Get the last slash and check for dot after
-    //Calculate the filename
-    if (gstrTermFilename.lastIndexOf(".") >= 0)
-    {
-        //Get up until the first dot
-        QRegularExpression reTempRE("^(.*)/(.*)$");
-        QRegularExpressionMatch remTempREM = reTempRE.match(gstrTermFilename);
-        if (remTempREM.hasMatch() == true)
-        {
-            //Got a match
-            gstrDownloadFilename = remTempREM.captured(2);
-            if (gstrDownloadFilename.count(".") > 0)
-            {
-                //Strip off after the dot
-                gstrDownloadFilename = gstrDownloadFilename.left(gstrDownloadFilename.indexOf("."));
-            }
-        }
-    }
-    else
-    {
-        //Use the whole name
-        gstrDownloadFilename = gstrTermFilename;
-    }
+    //Download filename is filename without a file extension
+    gstrDownloadFilename = lstFI[1];
 }
 
 //=============================================================================
@@ -4393,6 +4372,22 @@ MainWindow::ContextMenuClosed
     //Right click context menu closed, send message to text edit object
     ui->text_TermEditData->mbContextMenuOpen = false;
     ui->text_TermEditData->UpdateDisplay();
+}
+
+//=============================================================================
+//=============================================================================
+bool
+MainWindow::event
+    (
+    QEvent *event
+    )
+{
+    if (event->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == 0)
+    {
+        //Focus on the terminal
+        ui->text_TermEditData->setFocus();
+    }
+    return QMainWindow::event(event);
 }
 
 /******************************************************************************/

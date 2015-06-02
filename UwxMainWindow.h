@@ -375,6 +375,11 @@ private slots:
     ContextMenuClosed
         (
         );
+    bool
+    event
+        (
+        QEvent *event
+        );
 
 private:
     Ui::MainWindow *ui;

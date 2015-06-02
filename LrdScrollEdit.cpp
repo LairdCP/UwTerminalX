@@ -192,6 +192,10 @@ LrdScrollEdit::eventFilter
                 }*/
 
                 //Possible work-around for caps lock issue
+                /*if (mstrDatIn.length() == 0 && mstrDatIn.length() < 3)
+                {
+                    UpdateDisplay();
+                }*/
                 mstrDatOut += keyEvent->text();
             }
         }
@@ -294,7 +298,9 @@ LrdScrollEdit::ClearDatIn
 {
     //Clears the DatIn buffer
     mstrDatIn.clear();
-    this->setTextCursor(QTextCursor());
+    QTextCursor tcTmpTC(this->document());
+    tcTmpTC.setPosition(0);
+    this->setTextCursor(tcTmpTC);
     this->UpdateDisplay();
 }
 
@@ -425,14 +431,7 @@ LrdScrollEdit::UpdateDisplay
             Pos = this->verticalScrollBar()->sliderPosition();
         }
         this->setUpdatesEnabled(false);
-        if (mstrDatIn.length() > 0)
-        {
-            this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
-        }
-        else if (mbLineMode == true)
-        {
-            this->setPlainText(mstrDatOut);
-        }
+        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true && mstrDatIn.length() > 0 ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
         this->setUpdatesEnabled(true);
 
         //Update previous text size variable
