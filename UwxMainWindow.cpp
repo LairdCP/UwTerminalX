@@ -2497,7 +2497,7 @@ MainWindow::LoadFile
     file.close();
 
     //Download filename is filename without a file extension
-    gstrDownloadFilename = lstFI[1];
+    gstrDownloadFilename = (lstFI[1].indexOf(".") == -1 ? lstFI[1] : lstFI[1].left(lstFI[1].indexOf(".")));
 }
 
 //=============================================================================
