@@ -4390,6 +4390,21 @@ MainWindow::event
     return QMainWindow::event(event);
 }
 
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_OpenDeviceFile_clicked
+    (
+    )
+{
+    //Opens the predefined devices configuration file
+#if TARGET_OS_MAC
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("Devices.ini")));
+#else
+    QDesktopServices::openUrl(QUrl::fromLocalFile("Devices.ini"));
+#endif
+}
+
 /******************************************************************************/
 // END OF FILE
 /******************************************************************************/

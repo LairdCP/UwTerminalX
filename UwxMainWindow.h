@@ -380,6 +380,10 @@ private slots:
         (
         QEvent *event
         );
+    void
+    on_btn_OpenDeviceFile_clicked
+        (
+        );
 
 private:
     Ui::MainWindow *ui;

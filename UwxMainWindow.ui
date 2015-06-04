@@ -1681,6 +1681,21 @@
                <string>Error Codes</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_8">
+               <property name="spacing">
+                <number>3</number>
+               </property>
+               <property name="leftMargin">
+                <number>3</number>
+               </property>
+               <property name="topMargin">
+                <number>3</number>
+               </property>
+               <property name="rightMargin">
+                <number>3</number>
+               </property>
+               <property name="bottomMargin">
+                <number>3</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>
@@ -1755,6 +1770,21 @@ As more error codes get added, newer releases of the error code lookup file will
                <string>UwTerminalX</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_11">
+               <property name="spacing">
+                <number>3</number>
+               </property>
+               <property name="leftMargin">
+                <number>3</number>
+               </property>
+               <property name="topMargin">
+                <number>3</number>
+               </property>
+               <property name="rightMargin">
+                <number>3</number>
+               </property>
+               <property name="bottomMargin">
+                <number>3</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
                  <item>
@@ -1801,6 +1831,13 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
+                  <widget class="QPushButton" name="btn_OpenDeviceFile">
+                   <property name="text">
+                    <string>Open UwTerminalX Devices file</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QLabel" name="label_UwTerminalXUpdate">
                    <property name="text">
                     <string>[Status]</string>
@@ -1840,6 +1877,21 @@ You can also use the button below to check if there is a newer version of UwTerm
                <string>Applications &amp;&amp; Firmware</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_12">
+               <property name="spacing">
+                <number>3</number>
+               </property>
+               <property name="leftMargin">
+                <number>3</number>
+               </property>
+               <property name="topMargin">
+                <number>3</number>
+               </property>
+               <property name="rightMargin">
+                <number>3</number>
+               </property>
+               <property name="bottomMargin">
+                <number>3</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
