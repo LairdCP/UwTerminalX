@@ -67,7 +67,7 @@
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.93e" //Version string
+#define UwVersion "0.93f" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -496,6 +496,7 @@ private:
     QNetworkAccessManager *gnmManager; //Network access manager
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
+    QString gstrLastFilename; //Holds the last filename of the last selected file
 #ifdef UseSSL
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif

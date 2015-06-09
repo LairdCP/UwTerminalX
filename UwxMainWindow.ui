@@ -2123,7 +2123,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                <bool>true</bool>
               </property>
               <property name="plainText">
-               <string>This application is provided by Laird Technologies without warranty. You are welcome to check our website for the latest version. This version is UTF-8 compliant.
+               <string>This application is provided by Laird without warranty. You are welcome to check our website for the latest version. This version is UTF-8 compliant.
 
 This message is displayed EITHER because &quot;accept&quot; is not specified in the command line OR at least one command line option has been specified with an invalid parameter.
 
@@ -2135,7 +2135,7 @@ ACCEPT
 COM=n
     Windows: COM[1..255] specifies a comport number
     GNU/Linux: /dev/tty[device] specifies a TTY device
-    Mac: [todo]
+    Mac: /dev/[device] specifies a TTY device
 
 BAUD=n
     [1200..921600] Could be limited to 115200 depending on PC hardware (limited to 230400 on Mac)
