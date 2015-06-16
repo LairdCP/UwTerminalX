@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>1</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1130,7 +1130,7 @@
               </property>
               <property name="minimumSize">
                <size>
-                <width>180</width>
+                <width>176</width>
                 <height>160</height>
                </size>
               </property>
@@ -1675,7 +1675,7 @@
                <item>
                 <widget class="QPushButton" name="btn_SaveDevice">
                  <property name="text">
-                  <string>&amp;Save</string>
+                  <string>&amp;Save Device Configuration</string>
                  </property>
                 </widget>
                </item>
@@ -1760,7 +1760,7 @@
              <widget class="QGroupBox" name="groupBox">
               <property name="minimumSize">
                <size>
-                <width>200</width>
+                <width>180</width>
                 <height>0</height>
                </size>
               </property>
@@ -1968,7 +1968,7 @@ You can also use the button below to check if there is a newer version of UwTerm
              <widget class="QGroupBox" name="groupBox_4">
               <property name="minimumSize">
                <size>
-                <width>200</width>
+                <width>220</width>
                 <height>0</height>
                </size>
               </property>
