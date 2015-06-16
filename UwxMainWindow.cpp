@@ -1846,6 +1846,10 @@ MainWindow::balloontriggered
     if (qaAction->text() == "Show UwTerminalX")
     {
         //Make active window
+#if TARGET_OS_MAC
+        //Bugfix for mac (icon vanishes when clicked)
+        gpSysTray->setIcon(QIcon(*gpUw16Pixmap));
+#endif
         this->raise();
         this->activateWindow();
     }
