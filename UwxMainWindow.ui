@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>712</width>
-    <height>386</height>
+    <width>742</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -883,6 +883,18 @@
                <string>Misc</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
+               <property name="leftMargin">
+                <number>2</number>
+               </property>
+               <property name="topMargin">
+                <number>2</number>
+               </property>
+               <property name="rightMargin">
+                <number>2</number>
+               </property>
+               <property name="bottomMargin">
+                <number>2</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
                  <property name="spacing">
@@ -910,13 +922,23 @@
                    </property>
                    <item>
                     <widget class="QCheckBox" name="check_PreXCompRun">
+                     <property name="font">
+                      <font>
+                       <family>Arial</family>
+                      </font>
+                     </property>
                      <property name="text">
-                      <string>Run program</string>
+                      <string>Run program  </string>
                      </property>
                     </widget>
                    </item>
                    <item>
                     <widget class="QRadioButton" name="radio_XCompPre">
+                     <property name="font">
+                      <font>
+                       <family>Arial</family>
+                      </font>
+                     </property>
                      <property name="text">
                       <string>Before</string>
                      </property>
@@ -927,6 +949,11 @@
                    </item>
                    <item>
                     <widget class="QRadioButton" name="radio_XCompPost">
+                     <property name="font">
+                      <font>
+                       <family>Arial</family>
+                      </font>
+                     </property>
                      <property name="text">
                       <string>After</string>
                      </property>
@@ -937,6 +964,11 @@
                    </item>
                    <item>
                     <widget class="QLabel" name="label_PreXCompText">
+                     <property name="font">
+                      <font>
+                       <family>Arial</family>
+                      </font>
+                     </property>
                      <property name="text">
                       <string>XCompile</string>
                      </property>
@@ -961,7 +993,8 @@
                   <widget class="QLabel" name="label_PreXCompInfo">
                    <property name="font">
                     <font>
-                     <pointsize>8</pointsize>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
                     </font>
                    </property>
                    <property name="midLineWidth">
@@ -1050,6 +1083,12 @@
                    </item>
                    <item>
                     <widget class="QLabel" name="label_OnlineXCompInfo">
+                     <property name="font">
+                      <font>
+                       <family>Arial</family>
+                       <pointsize>9</pointsize>
+                      </font>
+                     </property>
                      <property name="text">
                       <string>XCompile Info Message</string>
                      </property>
@@ -1131,6 +1170,22 @@
                 </widget>
                </item>
                <item>
+                <spacer name="verticalSpacer_7">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Minimum</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>2</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
                 <widget class="QRadioButton" name="radio_LLF">
                  <property name="text">
                   <string>LF</string>
@@ -1138,11 +1193,43 @@
                 </widget>
                </item>
                <item>
+                <spacer name="verticalSpacer_6">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Minimum</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>2</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
                 <widget class="QRadioButton" name="radio_LCRLF">
                  <property name="text">
                   <string>CR LF</string>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer_8">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Minimum</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>2</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
                <item>
                 <widget class="QRadioButton" name="radio_LLFCR">
@@ -1156,17 +1243,10 @@
                  <property name="spacing">
                   <number>3</number>
                  </property>
-                 <item row="2" column="0">
-                  <widget class="QCheckBox" name="check_ShowCLRF">
-                   <property name="text">
-                    <string>Escape CR/LF/Tab</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_15">
                    <property name="text">
-                    <string>AT+FWRH Line Length:</string>
+                    <string>AT+FWRH Line Size:</string>
                    </property>
                   </widget>
                  </item>
@@ -1195,17 +1275,24 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
-                  <widget class="QCheckBox" name="check_SkipDL">
-                   <property name="text">
-                    <string>Skip download display</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
                 </layout>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_SkipDL">
+                 <property name="text">
+                  <string>Skip download display</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_ShowCLRF">
+                 <property name="text">
+                  <string>Escape CR/LF/Tab</string>
+                 </property>
+                </widget>
                </item>
                <item>
                 <spacer name="verticalSpacer_4">
@@ -1236,19 +1323,19 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_15">
                <property name="spacing">
-                <number>4</number>
+                <number>2</number>
                </property>
                <property name="leftMargin">
-                <number>4</number>
+                <number>2</number>
                </property>
                <property name="topMargin">
-                <number>4</number>
+                <number>2</number>
                </property>
                <property name="rightMargin">
-                <number>4</number>
+                <number>2</number>
                </property>
                <property name="bottomMargin">
-                <number>4</number>
+                <number>2</number>
                </property>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -1700,6 +1787,12 @@
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>
                   <widget class="QLabel" name="label_8">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
                    <property name="text">
                     <string>When an error is encountered in an application and printed to the UART, if the error code is highlighted then you can right click and select the 'Lookup Error Code' option, which will display a description of the error code.
 
@@ -1789,6 +1882,12 @@ As more error codes get added, newer releases of the error code lookup file will
                 <layout class="QVBoxLayout" name="verticalLayout_9">
                  <item>
                   <widget class="QLabel" name="label_9">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
                    <property name="text">
                     <string>UwTerminalX is an open source application developed by Laird, the source code is available for download/modification from the Github project page linked below.
 
@@ -1896,6 +1995,12 @@ You can also use the button below to check if there is a newer version of UwTerm
                 <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
                   <widget class="QLabel" name="label_10">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
                    <property name="text">
                     <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below.</string>
                    </property>
@@ -1961,6 +2066,11 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </property>
                     <item>
                      <widget class="QLabel" name="label_BL600Firmware">
+                      <property name="font">
+                       <font>
+                        <family>Arial</family>
+                       </font>
+                      </property>
                       <property name="text">
                        <string>BL600:</string>
                       </property>
@@ -1971,6 +2081,11 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </item>
                     <item>
                      <widget class="QLabel" name="label_BL620Firmware">
+                      <property name="font">
+                       <font>
+                        <family>Arial</family>
+                       </font>
+                      </property>
                       <property name="text">
                        <string>BL620:</string>
                       </property>
@@ -1981,6 +2096,11 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </item>
                     <item>
                      <widget class="QLabel" name="label_BT900Firmware">
+                      <property name="font">
+                       <font>
+                        <family>Arial</family>
+                       </font>
+                      </property>
                       <property name="text">
                        <string>BT900:</string>
                       </property>
@@ -2306,7 +2426,6 @@ Plus and Minus images obtained from http://www.clker.com</string>
   <tabstop>radio_LLF</tabstop>
   <tabstop>radio_LCRLF</tabstop>
   <tabstop>radio_LLFCR</tabstop>
-  <tabstop>check_SkipDL</tabstop>
   <tabstop>edit_FWRH</tabstop>
   <tabstop>check_RTS</tabstop>
   <tabstop>check_DTR</tabstop>

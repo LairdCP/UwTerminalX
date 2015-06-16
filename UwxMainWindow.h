@@ -67,7 +67,7 @@
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.93f" //Version string
+#define UwVersion "0.93h" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -163,12 +163,17 @@ public slots:
     void
     KeyPressed
         (
-        QChar intKeyValue
+        QChar chrKeyValue
         );
     void
     SerialBytesWritten
         (
         qint64 intByteCount
+        );
+
+    void
+    SerialPortClosing
+        (
         );
 
 private slots:
@@ -225,7 +230,7 @@ private slots:
     void
     closeEvent
         (
-        QCloseEvent *event
+        QCloseEvent *closeEvent
         );
     void
     on_btn_Cancel_clicked
@@ -242,7 +247,7 @@ private slots:
     void
     on_combo_COM_currentIndexChanged
         (
-        int index
+        int intIndex
         );
     void
     replyFinished
@@ -378,7 +383,7 @@ private slots:
     bool
     event
         (
-        QEvent *event
+        QEvent *evtEvent
         );
     void
     on_btn_OpenDeviceFile_clicked
@@ -504,11 +509,11 @@ private:
 protected:
     void dragEnterEvent
         (
-        QDragEnterEvent *event
+        QDragEnterEvent *dragEvent
         );
     void dropEvent
         (
-        QDropEvent *event
+        QDropEvent *dropEvent
         );
 };
 

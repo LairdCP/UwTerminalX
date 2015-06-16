@@ -241,6 +241,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     );
     setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
 
+    //Mac doesn't support basic file operatings like viewing ini files
+#if TARGET_OS_MAC
+    ui->btn_OpenDeviceFile->setEnabled(false);
+    ui->btn_OpenConfig->setEnabled(false);
+#endif
+
     //Create menu items
     gpMenu = new QMenu(this);
     gpMenu->addAction(new QAction("XCompile", this));
@@ -296,10 +302,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSignalTimer = new QTimer(this);
     connect(gpSignalTimer, SIGNAL(timeout()), this, SLOT(SerialStatusSlot()));
 
-    //Connect serial ready and serial error signals
+    //Connect serial signals
     connect(&gspSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
     connect(&gspSerialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(SerialError(QSerialPort::SerialPortError)));
     connect(&gspSerialPort, SIGNAL(bytesWritten(qint64)), this, SLOT(SerialBytesWritten(qint64)));
+    connect(&gspSerialPort, SIGNAL(aboutToClose()), this, SLOT(SerialPortClosing()));
 
     //Populate window handles for automation object
     guaAutomationForm->SetPopupHandle(gpmErrorForm);
@@ -653,7 +660,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Change terminal font to a monospaced font
     QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-//      fntTmpFnt.setPointSize(10);
     QFontMetrics tmTmpFM(fntTmpFnt);
     ui->text_TermEditData->setFont(fntTmpFnt);
     ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
@@ -696,6 +702,7 @@ MainWindow::~MainWindow()
     disconnect(this, SLOT(SerialError(QSerialPort::SerialPortError)));
     disconnect(this, SLOT(SerialBytesWritten(qint64)));
     disconnect(this, SLOT(UpdateReceiveText()));
+    disconnect(this, SLOT(SerialPortClosing()));
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
 
@@ -776,7 +783,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::closeEvent
     (
-    QCloseEvent *event
+    QCloseEvent *closeEvent
     )
 {
     //Runs when the form is closed. Close child popups to exit the application
@@ -936,8 +943,8 @@ MainWindow::RefreshSerialDevices
     //Clears and refreshes the list of serial devices
     QString strPrev = "";
     QRegularExpression reTempRE("^(\\D*?)(\\d+)$");
-    QList<unsigned int> Entries;
-    Entries.clear();
+    QList<unsigned int> lstEntries;
+    lstEntries.clear();
 
     if (ui->combo_COM->count() > 0)
     {
@@ -951,14 +958,14 @@ MainWindow::RefreshSerialDevices
         if (remTempREM.hasMatch() == true)
         {
             //Can sort this item
-            int i = Entries.count()-1;
+            int i = lstEntries.count()-1;
             while (i >= 0)
             {
-                if (remTempREM.captured(2).toInt() > Entries[i])
+                if (remTempREM.captured(2).toInt() > lstEntries[i])
                 {
                     //Found correct order position, add here
                     ui->combo_COM->insertItem(i+1, info.portName());
-                    Entries.insert(i+1, remTempREM.captured(2).toInt());
+                    lstEntries.insert(i+1, remTempREM.captured(2).toInt());
                     i = -1;
                 }
                 --i;
@@ -968,7 +975,7 @@ MainWindow::RefreshSerialDevices
             {
                 //Position not found, add to beginning
                 ui->combo_COM->insertItem(0, info.portName());
-                Entries.insert(0, remTempREM.captured(2).toInt());
+                lstEntries.insert(0, remTempREM.captured(2).toInt());
             }
         }
         else
@@ -1177,13 +1184,6 @@ MainWindow::readData
 #ifdef _WIN32
                     //Windows
                     if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
-#elif TARGET_OS_MAC
-                    //Mac
-                    if (QFile::exists(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
-#else
-                    //Linux
-                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))) == true)
-#endif
                     {
                         //XCompiler found! - First run the Pre XCompile program if enabled and it exists
                         if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
@@ -1191,21 +1191,10 @@ MainWindow::readData
                             //Run Pre-XComp program
                             RunPrePostExecutable(gstrTermFilename);
                         }
-#ifdef _WIN32
                         //Windows
                         gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
-#elif TARGET_OS_MAC
-                        //Mac
-                        gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
-                        //gprocCompileProcess.start(QString(gstrMacBundlePath).append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3), QStringList(gstrTermFilename));
-#else
-                        //Assume linux
-//                      gprocCompileProcess.start(QString("wine"), QStringList(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(rx.cap(1).left(8)).append("_").append(rx.cap(2)).append("_").append(rx.cap(3)).append(".exe"))<<gstrTermFilename);
-                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)), QStringList(gstrTermFilename));
-#endif
                         //gprocCompileProcess.waitForFinished(-1);
                     }
-#ifdef _WIN32
                     else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                     {
                         //XCompiler found in directory with sB file
@@ -1216,8 +1205,9 @@ MainWindow::readData
                         }
                         gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
                     }
+                    else
 #endif
-                    else if (ui->check_OnlineXComp->isChecked() == true)
+                    if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //XCompiler not found, try Online XCompiler
                         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
@@ -1498,11 +1488,11 @@ MainWindow::triggered
     {
         //Shows a meaning for the error code selected (number in hex)
         bool bTmpBool;
-        unsigned int ErrCode = QString("0x").append(ui->text_TermEditData->textCursor().selection().toPlainText()).toUInt(&bTmpBool, 16);
+        unsigned int uiErrCode = QString("0x").append(ui->text_TermEditData->textCursor().selection().toPlainText()).toUInt(&bTmpBool, 16);
         if (bTmpBool == true)
         {
             //Converted
-            LookupErrorCode(ErrCode);
+            LookupErrorCode(uiErrCode);
         }
     }
     else if (qaAction->text() == "Lookup Selected Error-Code (Int)")
@@ -1879,24 +1869,6 @@ MainWindow::EnterPressed
         QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
-        /*if (ui->check_Echo->isChecked() == true)
-        {
-            baTmpBA = ui->text_TermEditData->toPlainText().toUtf8();
-            if (ui->check_ShowCLRF->isChecked() == true)
-            {
-                //Escape \t, \r and \n
-                baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
-            }
-            baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
-            gbaDisplayBuffer.append(baTmpBA.append("\n"));
-
-            if (!gtmrTextUpdateTimer.isActive())
-            {
-                gtmrTextUpdateTimer.start();
-            }
-        }*/
-        //gpMainLog->WriteLogData(ui->text_TermEditData->GetDatOut().append("\n"));
-        //ui->text_TermEditData->setPlainText("");
         DoLineEnd();
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
@@ -2060,7 +2032,7 @@ MainWindow::UpdateImages
 void
 MainWindow::KeyPressed
     (
-    QChar intKeyValue
+    QChar chrKeyValue
     )
 {
     //Key pressed, send it out
@@ -2069,7 +2041,7 @@ MainWindow::KeyPressed
         if (ui->check_Echo->isChecked() == true)
         {
             //Echo mode on
-            if (intKeyValue == Qt::Key_Enter || intKeyValue == Qt::Key_Return)
+            if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return)
             {
                 gbaDisplayBuffer.append("\n");
             }
@@ -2078,12 +2050,12 @@ MainWindow::KeyPressed
                 /*if (ui->check_ShowCLRF->isChecked() == true)
                 {
                     //Escape \t, \r and \n in addition to normal escaping
-                    gbaDisplayBuffer.append(QString(QChar(intKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                    gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
                 }
                 else
                 {
                     //Normal escaping
-                    gbaDisplayBuffer.append(QString(QChar(intKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                    gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
                 }*/
             }
             if (!gtmrTextUpdateTimer.isActive())
@@ -2093,10 +2065,10 @@ MainWindow::KeyPressed
         }
 
         //Convert character to a byte array (in case it's UTF-8 and more than 1 byte)
-        QByteArray baTmpBA = QString(intKeyValue).toUtf8();
+        QByteArray baTmpBA = QString(chrKeyValue).toUtf8();
 
         //Character mode, send right on
-        if (intKeyValue == Qt::Key_Enter || intKeyValue == Qt::Key_Return || intKeyValue == '\r' || intKeyValue == '\n')
+        if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return || chrKeyValue == '\r' || chrKeyValue == '\n')
         {
             //Return key or newline
             gpMainLog->WriteLogData("\n");
@@ -2130,7 +2102,7 @@ MainWindow::KeyPressed
             }
 
             //Output to log file
-            gpMainLog->WriteLogData(QString(intKeyValue).toUtf8());
+            gpMainLog->WriteLogData(QString(chrKeyValue).toUtf8());
         }
     }
     else if (gbLoopbackMode == true)
@@ -2298,30 +2270,37 @@ MainWindow::SerialStatus
 {
     if (gspSerialPort.isOpen() == true)
     {
-        if ((gspSerialPort.pinoutSignals() & QSerialPort::ClearToSendSignal) != gbCTSStatus || bType == true)
+        if ((((gspSerialPort.pinoutSignals() & QSerialPort::ClearToSendSignal) == QSerialPort::ClearToSendSignal ? 1 : 0) != gbCTSStatus || bType == true))
         {
             //CTS changed
-            gbCTSStatus = (gspSerialPort.pinoutSignals() & QSerialPort::ClearToSendSignal);
+            gbCTSStatus = ((gspSerialPort.pinoutSignals() & QSerialPort::ClearToSendSignal) == QSerialPort::ClearToSendSignal ? 1 : 0);
             ui->image_CTS->setPixmap((gbCTSStatus == true ? *gpGreenCirclePixmap : *gpRedCirclePixmap));
         }
-        if ((gspSerialPort.pinoutSignals() & QSerialPort::DataCarrierDetectSignal) != gbDCDStatus || bType == true)
+        if ((((gspSerialPort.pinoutSignals() & QSerialPort::DataCarrierDetectSignal) == QSerialPort::DataCarrierDetectSignal ? 1 : 0) != gbDCDStatus || bType == true))
         {
             //DCD changed
-            gbDCDStatus = (gspSerialPort.pinoutSignals() & QSerialPort::DataCarrierDetectSignal);
+            gbDCDStatus = ((gspSerialPort.pinoutSignals() & QSerialPort::DataCarrierDetectSignal) == QSerialPort::DataCarrierDetectSignal ? 1 : 0);
             ui->image_DCD->setPixmap((gbDCDStatus == true ? *gpGreenCirclePixmap : *gpRedCirclePixmap));
         }
-        if ((gspSerialPort.pinoutSignals() & QSerialPort::DataSetReadySignal) != gbDSRStatus || bType == true)
+        if ((((gspSerialPort.pinoutSignals() & QSerialPort::DataSetReadySignal) == QSerialPort::DataSetReadySignal ? 1 : 0) != gbDSRStatus || bType == true))
         {
             //DSR changed
-            gbDSRStatus = (gspSerialPort.pinoutSignals() & QSerialPort::DataSetReadySignal);
+            gbDSRStatus = ((gspSerialPort.pinoutSignals() & QSerialPort::DataSetReadySignal) == QSerialPort::DataSetReadySignal ? 1 : 0);
             ui->image_DSR->setPixmap((gbDSRStatus == true ? *gpGreenCirclePixmap : *gpRedCirclePixmap));
         }
-        if ((gspSerialPort.pinoutSignals() & QSerialPort::RingIndicatorSignal) != gbRIStatus || bType == true)
+        if ((((gspSerialPort.pinoutSignals() & QSerialPort::RingIndicatorSignal) == QSerialPort::RingIndicatorSignal ? 1 : 0) != gbRIStatus || bType == true))
         {
             //RI changed
-            gbRIStatus = (gspSerialPort.pinoutSignals() & QSerialPort::RingIndicatorSignal);
+            gbRIStatus = ((gspSerialPort.pinoutSignals() & QSerialPort::RingIndicatorSignal) == QSerialPort::RingIndicatorSignal ? 1 : 0);
             ui->image_RI->setPixmap((gbRIStatus == true ? *gpGreenCirclePixmap : *gpRedCirclePixmap));
         }
+    }
+    else
+    {
+        ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
+        ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
+        ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
+        ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
     }
     return;
 }
@@ -2372,6 +2351,7 @@ MainWindow::OpenSerial
         UpdateImages();
     }
 
+    //Setup serial port
     gspSerialPort.setPortName(ui->combo_COM->currentText());
     gspSerialPort.setBaudRate(ui->combo_Baud->currentText().toInt());
     gspSerialPort.setDataBits((QSerialPort::DataBits)ui->combo_Data->currentText().toInt());
@@ -2464,8 +2444,8 @@ MainWindow::LoadFile
 {
     //Load
     QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-    QFile file((bToUWC == true ? QString(lstFI[0]).append(lstFI[1]).append(".uwc") : gstrTermFilename));
-    if (!file.open(QIODevice::ReadOnly))
+    QFile fileFileName((bToUWC == true ? QString(lstFI[0]).append(lstFI[1]).append(".uwc") : gstrTermFilename));
+    if (!fileFileName.open(QIODevice::ReadOnly))
     {
         //Unable to open file
         QString strMessage = tr("Error during XCompile: Access to selected file is denied: ").append((bToUWC ? QString(lstFI[0]).append(lstFI[1]).append(".uwc") : gstrTermFilename));
@@ -2480,7 +2460,7 @@ MainWindow::LoadFile
     gbIsUWCDownload = bToUWC;
 
     //Create a data stream and hex string holder
-    QDataStream in(&file);
+    QDataStream in(&fileFileName);
     gstrHexData = "";
     while (!in.atEnd())
     {
@@ -2500,7 +2480,7 @@ MainWindow::LoadFile
     }
 
     //Close the file handle
-    file.close();
+    fileFileName.close();
 
     //Download filename is filename without a file extension
     gstrDownloadFilename = (lstFI[1].indexOf(".") == -1 ? lstFI[1] : lstFI[1].left(lstFI[1].indexOf(".")));
@@ -3030,7 +3010,7 @@ MainWindow::BatchTimeoutSlot
 void
 MainWindow::on_combo_COM_currentIndexChanged
     (
-    int index
+    int intIndex
     )
 {
     //Serial port selection has been changed, update text
@@ -3063,14 +3043,14 @@ MainWindow::on_combo_COM_currentIndexChanged
 void
 MainWindow::dragEnterEvent
     (
-    QDragEnterEvent *event
+    QDragEnterEvent *dragEvent
     )
 {
     //A file is being dragged onto the window
-    if (event->mimeData()->urls().count() == 1 && gbTermBusy == false && gspSerialPort.isOpen() == true)
+    if (dragEvent->mimeData()->urls().count() == 1 && gbTermBusy == false && gspSerialPort.isOpen() == true)
     {
         //Nothing is running, serial handle is open and a single file is being dragged - accept action
-        event->acceptProposedAction();
+        dragEvent->acceptProposedAction();
     }
 }
 
@@ -3079,23 +3059,23 @@ MainWindow::dragEnterEvent
 void
 MainWindow::dropEvent
     (
-    QDropEvent *event
+    QDropEvent *dropEvent
     )
 {
     //A file has been dragged onto the window - send this file if possible
-    QList<QUrl> urls = event->mimeData()->urls();
-    if (urls.isEmpty())
+    QList<QUrl> lstURLs = dropEvent->mimeData()->urls();
+    if (lstURLs.isEmpty())
     {
         //No files
         return;
     }
-    else if (urls.length() > 1)
+    else if (lstURLs.length() > 1)
     {
         //More than 1 file - ignore
         return;
     }
 
-    QString strFileName = urls.first().toLocalFile();
+    QString strFileName = lstURLs.first().toLocalFile();
     if (strFileName.isEmpty())
     {
         //Invalid filename
@@ -3719,9 +3699,9 @@ MainWindow::replyFinished
         else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS)
         {
             //Error code update response
-            QByteArray tmpBA = nrReply->readAll();
+            QByteArray baTmpBA = nrReply->readAll();
             QJsonParseError jpeJsonError;
-            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(baTmpBA, &jpeJsonError);
 
             if (jpeJsonError.error == QJsonParseError::NoError)
             {
@@ -3781,9 +3761,9 @@ MainWindow::replyFinished
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {
             //UwTerminalX update response
-            QByteArray tmpBA = nrReply->readAll();
+            QByteArray baTmpBA = nrReply->readAll();
             QJsonParseError jpeJsonError;
-            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(baTmpBA, &jpeJsonError);
 
             if (jpeJsonError.error == QJsonParseError::NoError)
             {
@@ -3909,9 +3889,9 @@ MainWindow::replyFinished
         else if (gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS)
         {
             //Response containing latest firmware versions for modules
-            QByteArray tmpBA = nrReply->readAll();
+            QByteArray baTmpBA = nrReply->readAll();
             QJsonParseError jpeJsonError;
-            QJsonDocument jdJsonData = QJsonDocument::fromJson(tmpBA, &jpeJsonError);
+            QJsonDocument jdJsonData = QJsonDocument::fromJson(baTmpBA, &jpeJsonError);
 
             if (jpeJsonError.error == QJsonParseError::NoError)
             {
@@ -4179,7 +4159,7 @@ MainWindow::on_btn_PredefinedDelete_clicked
     //Remove current device configuration
     if (ui->combo_PredefinedDevice->count() > 0)
     {
-        //
+        //Item exists, delete selected item
         unsigned int uiDeviceNumber = ui->combo_PredefinedDevice->currentIndex();
         unsigned int i = uiDeviceNumber+2;
         gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Name"));
@@ -4210,12 +4190,6 @@ MainWindow::on_btn_PredefinedDelete_clicked
             gpPredefinedDevice->remove(QString("Port").append(QString::number(i-1)).append("Flow"));
         }
         ui->combo_PredefinedDevice->removeItem(uiDeviceNumber);
-
-        //Load configuration options from new item (if one exists)
-        if (ui->combo_PredefinedDevice->count() > 0)
-        {
-//TODO
-        }
     }
 }
 
@@ -4327,11 +4301,7 @@ MainWindow::on_btn_OpenConfig_clicked
     )
 {
     //Opens the UwTerminalX configuration file
-#if TARGET_OS_MAC
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("UwTerminalX.ini")));
-#else
     QDesktopServices::openUrl(QUrl::fromLocalFile("UwTerminalX.ini"));
-#endif
 }
 
 //=============================================================================
@@ -4385,15 +4355,15 @@ MainWindow::ContextMenuClosed
 bool
 MainWindow::event
     (
-    QEvent *event
+    QEvent *evtEvent
     )
 {
-    if (event->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == 0)
+    if (evtEvent->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == 0)
     {
         //Focus on the terminal
         ui->text_TermEditData->setFocus();
     }
-    return QMainWindow::event(event);
+    return QMainWindow::event(evtEvent);
 }
 
 //=============================================================================
@@ -4404,11 +4374,21 @@ MainWindow::on_btn_OpenDeviceFile_clicked
     )
 {
     //Opens the predefined devices configuration file
-#if TARGET_OS_MAC
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("Devices.ini")));
-#else
     QDesktopServices::openUrl(QUrl::fromLocalFile("Devices.ini"));
-#endif
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::SerialPortClosing
+    (
+    )
+{
+    //Called when the serial port is closing
+    ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
+    ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
+    ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
+    ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
 }
 
 /******************************************************************************/
