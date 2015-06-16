@@ -1,6 +1,6 @@
 <RCC>
-    <qresource prefix="/images">
-        <file>TermNotify.ico</file>
-        <file>TermNotify.png</file>
+    <qresource prefix="/">
+        <file>images/TermNotify.ico</file>
+        <file>images/TermNotify.png</file>
     </qresource>
 </RCC>

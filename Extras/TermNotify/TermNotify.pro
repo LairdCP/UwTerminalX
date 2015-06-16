@@ -22,3 +22,8 @@ FORMS    +=
 
 RESOURCES += \
     termnotifystore.qrc
+
+win32:RC_FILE = version.rc
+win32:RC_ICONS = images/TermNotify.ico
+
+ICON = MacTermNotifyIcon.icns

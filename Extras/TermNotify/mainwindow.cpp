@@ -44,11 +44,15 @@ MainWindow::MainWindow(QObject *parent) : QObject(parent)
         "./UwTerminalX"
 #endif
     ).toString();
+    gintDisplayTime = stgSettings.value("DisplayTime", DefaultDisplayTime).toUInt();
+    gintScanTime = stgSettings.value("ScanTime", DefaultScanTime).toUInt();
 
     if (stgSettings.value("RunFile").isNull())
     {
-        //Set default
+        //Set defaults
         stgSettings.setValue("RunFile", gstrExecutable);
+        stgSettings.setValue("DisplayTime", gintDisplayTime);
+        stgSettings.setValue("ScanTime", gintScanTime);
     }
 
 #ifdef TARGET_OS_MAC
@@ -90,7 +94,7 @@ MainWindow::MainWindow(QObject *parent) : QObject(parent)
     gbInitialScan = false;
 
     //Start the timer
-    gtSerialCheckTimer.setInterval(ScanTime);
+    gtSerialCheckTimer.setInterval(gintScanTime);
     gtSerialCheckTimer.start();
 }
 
@@ -134,7 +138,7 @@ MainWindow::SerialCheck
             if (glPorts.indexOf(spiThisSerialPort.portName()) == -1)
             {
                 //New port!
-                gstSysTrayIcon.showMessage("Detected new serial port!", QString("New port; ").append(spiThisSerialPort.portName()).append(". Click to open UwTerminalX!"), QSystemTrayIcon::Information, DisplayTime);
+                gstSysTrayIcon.showMessage("Detected new serial port!", QString("New port; ").append(spiThisSerialPort.portName()).append(". Click to open UwTerminalX!"), QSystemTrayIcon::Information, gintDisplayTime);
                 gstrSerialName = spiThisSerialPort.portName();
             }
             lTempList << spiThisSerialPort.portName();
