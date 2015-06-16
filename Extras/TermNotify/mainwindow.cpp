@@ -133,7 +133,7 @@ void MainWindow::OpenProgram
     //Assume linux
     "./UwTerminalX"
 #endif
-    , QStringList() << "ACCEPT" << QString("COM=").append(gstrSerialName));
+    , QStringList() << "ACCEPT" << QString("COM=").append(gstrSerialName) << "NOCONNECT");
 }
 
 //=============================================================================

@@ -27,7 +27,7 @@
 /******************************************************************************/
 #define DisplayTime 5000 //Time in mS to display a balloon message for (OS's can override this value)
 #define ScanTime 800 //Time in mS to scan for new devices
-#define TermNotifyVer "Version 0.5" //Version string
+#define TermNotifyVer "Version 0.53" //Version string
 
 #ifdef __APPLE__
 #error MAC OSX is not currently supported.
