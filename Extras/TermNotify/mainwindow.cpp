@@ -13,13 +13,49 @@
 // Include Files
 /******************************************************************************/
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(QObject *parent) : QObject(parent)
 {
+#if TARGET_OS_MAC
+    //On mac, get the directory of the bundle (which will be <location>/TermNotify.app/Contents/MacOS) and go up to the folder with the file in
+    QDir BundleDir(QCoreApplication::applicationDirPath());
+    BundleDir.cdUp();
+    BundleDir.cdUp();
+    BundleDir.cdUp();
+    QString strMacBundlePath = BundleDir.path().append("/");
+    QSettings stgSettings(QString(strMacBundlePath).append("TermNotify.ini"), QSettings::IniFormat);
+#else
+    QSettings stgSettings("TermNotify.ini", QSettings::IniFormat);
+#endif
+
+    //Load settings
+    gstrExecutable = stgSettings.value("RunFile",
+#ifdef _WIN32
+        //Windows
+        "UwTerminalX"
+#elif TARGET_OS_MAC
+        //Mac
+        "%DIRPATH%/UwTerminalX.app/Contents/MacOS/UwTerminalX"
+#else
+        //Linux
+        "./UwTerminalX"
+#endif
+    ).toString();
+
+    if (stgSettings.value("RunFile").isNull())
+    {
+        //Set default
+        stgSettings.setValue("RunFile", gstrExecutable);
+    }
+
+#ifdef TARGET_OS_MAC
+    //Replaces instances of %DIRPATH% with the folder location that TermNotify is in
+    gstrExecutable.replace("%DIRPATH%", strMacBundlePath);
+#endif
+
     //Create system tray menu
     gpContextMenu = new QMenu;
     gpContextMenu->addAction(new QAction("Laird TermNotify", this));
@@ -30,7 +66,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpContextMenu->actions()[1]->setDisabled(true);
 
     //Create system tray object
+#ifdef _WIN32
     giUw16Image = QImage(":/images/TermNotify.ico");
+#else
+    giUw16Image = QImage(":/images/TermNotify.png");
+#endif
     gpUw16Pixmap = new QPixmap(QPixmap::fromImage(giUw16Image));
     gstSysTrayIcon.setIcon(QIcon(*gpUw16Pixmap));
     gstSysTrayIcon.setContextMenu(gpContextMenu);
@@ -57,8 +97,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 //=============================================================================
 //=============================================================================
 MainWindow::~MainWindow
-(
-)
+    (
+    )
 {
     //Disconnect events
     disconnect(this, SLOT(CloseApplication(QAction*)));
@@ -73,16 +113,14 @@ MainWindow::~MainWindow
 
     //Delete pixmap
     delete gpUw16Pixmap;
-
-    //Delete UI
-    delete ui;
 }
 
 //=============================================================================
 //=============================================================================
-void MainWindow::SerialCheck
-(
-)
+void
+MainWindow::SerialCheck
+    (
+    )
 {
     //Checks is a new serial device has been detected
     QList<QSerialPortInfo> lSerialPorts = gspiSerialPortInfo.availablePorts();
@@ -116,33 +154,23 @@ void MainWindow::SerialCheck
 
 //=============================================================================
 //=============================================================================
-void MainWindow::OpenProgram
-(
-)
+void
+MainWindow::OpenProgram
+    (
+    )
 {
     //Opens UwTerminalX when clicked
-    gpTerminalProcess.startDetached(
-#ifdef _WIN32
-    //Windows
-    "UwTerminalX.exe"
-#elif __APPLE__
-    //Mac
-#pragma warning("TODO: MAC support");
-    "UwTerminalX"
-#else
-    //Assume linux
-    "./UwTerminalX"
-#endif
-    , QStringList() << "ACCEPT" << QString("COM=").append(gstrSerialName) << "NOCONNECT");
+    gpTerminalProcess.startDetached(gstrExecutable, QStringList() << "ACCEPT" << QString("COM=").append(gstrSerialName) << "NOCONNECT");
 }
 
 //=============================================================================
 //=============================================================================
-void MainWindow::CloseApplication
-(
+void
+MainWindow::CloseApplication
+    (
     QAction *Act
-)
+    )
 {
     //Closes the application
-    QCoreApplication::quit();
+    QApplication::quit();
 }
