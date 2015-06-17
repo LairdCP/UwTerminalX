@@ -3430,6 +3430,21 @@ MainWindow::replyFinished
                         {
                             //Failed to open file selected for download
                             nrReply->deleteLater();
+                            gtmrDownloadTimeoutTimer.stop();
+                            gstrHexData = "";
+                            if (!gtmrTextUpdateTimer.isActive())
+                            {
+                                gtmrTextUpdateTimer.start();
+                            }
+                            gchTermMode = 0;
+                            gchTermMode2 = 0;
+                            gbTermBusy = false;
+                            ui->btn_Cancel->setEnabled(false);
+
+                            QString strMessage = QString("Failed to open file for reading: ").append(gstrTermBusyData);
+                            gpmErrorForm->show();
+                            gpmErrorForm->SetMessage(&strMessage);
+
                             return;
                         }
 
@@ -3454,11 +3469,25 @@ MainWindow::replyFinished
                                 //Found an include, add the file data
                                 QRegularExpressionMatch ThisMatch = rx1match.next();
 
-                                file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5)));
+                                file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/")));
                                 if (!file.open(QIODevice::ReadOnly))
                                 {
                                     //Failed to open include file
                                     nrReply->deleteLater();
+                                    gtmrDownloadTimeoutTimer.stop();
+                                    gstrHexData = "";
+                                    if (!gtmrTextUpdateTimer.isActive())
+                                    {
+                                        gtmrTextUpdateTimer.start();
+                                    }
+                                    gchTermMode = 0;
+                                    gchTermMode2 = 0;
+                                    gbTermBusy = false;
+                                    ui->btn_Cancel->setEnabled(false);
+
+                                    QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/"));
+                                    gpmErrorForm->show();
+                                    gpmErrorForm->SetMessage(&strMessage);
                                     return;
                                 }
 
