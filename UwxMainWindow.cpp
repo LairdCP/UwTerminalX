@@ -4332,7 +4332,7 @@ MainWindow::on_btn_OpenLog_clicked
     )
 {
     //Opens the UwTerminalX log file
-    QDesktopServices::openUrl(QUrl::fromLocalFile(gpMainLog->GetLogName()));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(ui->edit_LogFile->text()));
 }
 
 //=============================================================================
@@ -4343,7 +4343,7 @@ MainWindow::on_btn_OpenConfig_clicked
     )
 {
     //Opens the UwTerminalX configuration file
-    QDesktopServices::openUrl(QUrl::fromLocalFile("UwTerminalX.ini"));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("UwTerminalX.ini").absoluteFilePath()));
 }
 
 //=============================================================================
@@ -4416,7 +4416,7 @@ MainWindow::on_btn_OpenDeviceFile_clicked
     )
 {
     //Opens the predefined devices configuration file
-    QDesktopServices::openUrl(QUrl::fromLocalFile("Devices.ini"));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Devices.ini").absoluteFilePath()));
 }
 
 //=============================================================================
