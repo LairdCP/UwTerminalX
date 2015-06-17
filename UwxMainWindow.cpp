@@ -112,9 +112,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         {
             gpTermSettings->setValue("LogMode", DefaultLogMode); //Clear log before opening, 0 = no, 1 = yes
         }
-        if (gpTermSettings->value("LogLevel").isNull())
+        if (gpTermSettings->value("LogEnable").isNull())
         {
-            gpTermSettings->setValue("LogLevel", DefaultLogLevel); //0 = none, 1 = single file, 2 = 1 + new file for each session
+            gpTermSettings->setValue("LogEnable", DefaultLogEnable); //0 = disabled, 1 = enable
         }
         if (gpTermSettings->value("CompilerDir").isNull())
         {
@@ -167,10 +167,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpTermSettings->setValue("ConfigVersion", UwVersion);
     }
 
-    //Create logging handle and variables for logging mode
+    //Create logging handle
     gpMainLog = new LrdLogger;
-    bool bLoggerOpened = false;
-    unsigned char chLoggerMode = 0;
 
     //Move to 'About' tab
     ui->selector_Tab->setCurrentIndex(3);
@@ -321,6 +319,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrBatchTimeoutTimer.setSingleShot(true);
     connect(&gtmrBatchTimeoutTimer, SIGNAL(timeout()), this, SLOT(BatchTimeoutSlot()));
 
+    //Set logging options
+    ui->edit_LogFile->setText(gpTermSettings->value("LogFile", DefaultLogFile).toString());
+    ui->check_LogEnable->setChecked(gpTermSettings->value("LogEnable", DefaultLogEnable).toBool());
+    ui->check_LogAppend->setChecked(gpTermSettings->value("LogMode", DefaultLogMode).toBool());
+
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
     {
@@ -408,7 +411,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
 
-    //Set Online XCompilation test
+    //Set Online XCompilation mode
 #ifdef _WIN32
     //Windows
     ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found when attempting to compile an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
@@ -569,48 +572,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         else if (slArgs[chi].toUpper() == "LOG")
         {
             //Enables logging
-            if (bLoggerOpened == true)
-            {
-                //Clear the file contents
-                gpMainLog->ClearLog();
-
-                //Add log opened message
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-            }
-            chLoggerMode = 1;
+            ui->check_LogEnable->setChecked(true);
         }
         else if (slArgs[chi].toUpper() == "LOG+")
         {
             //Enables appending to the previous log file instead of erasing
-            chLoggerMode = 2;
+            ui->check_LogAppend->setChecked(true);
         }
-        else if (slArgs[chi].left(4).toUpper() == "LOG=" && bLoggerOpened == false)
+        else if (slArgs[chi].left(4).toUpper() == "LOG=")
         {
             //Specifies log filename
-            if (chLoggerMode == 1)
-            {
-                //Clear log file before opening
-                QFile::remove(slArgs[chi].mid(4, -1));
-            }
-
-            if (gpMainLog->OpenLogFile(slArgs[chi].mid(4, -1)) == LOG_OK)
-            {
-                //Log opened
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-                gbMainLogEnabled = true;
-            }
-            else
-            {
-                //Log not writeable
-                QString strMessage = tr("Error whilst opening log:\nPlease ensure you have access to the log file ").append(slArgs[chi].mid(4, -1)).append(" and have enough free space on your hard drive.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-            bLoggerOpened = true;
+            ui->edit_LogFile->setText(slArgs[chi].mid(4, -1));
         }
         else if (slArgs[chi].toUpper() == "SHOWCRLF")
         {
@@ -623,39 +595,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             bArgNoConnect = true;
         }
         ++chi;
-    }
-
-    if (bLoggerOpened == false)
-    {
-        //Log file was not opened from command line
-        if (gpTermSettings->value("LogLevel", DefaultLogLevel).toInt() == 1 || gpTermSettings->value("LogLevel", DefaultLogLevel).toInt() == 2)
-        {
-            //Logging is enabled
-#if TARGET_OS_MAC
-            if (gpMainLog->OpenLogFile(QString(gstrMacBundlePath).append(gpTermSettings->value("LogFile").toString())) == LOG_OK)
-#else
-            if (gpMainLog->OpenLogFile(gpTermSettings->value("LogFile").toString()) == LOG_OK)
-#endif
-            {
-                //Log opened
-                if (gpTermSettings->value("LogMode", DefaultLogMode).toBool() == true)
-                {
-                    //Clear the log file
-                    gpMainLog->ClearLog();
-                }
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-                gbMainLogEnabled = true;
-            }
-            else
-            {
-                //Log not writeable
-                QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(gpTermSettings->value("LogFile").toString()).append(" and have enough free space on your hard drive.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-        }
     }
 
     //Change terminal font to a monospaced font
@@ -717,7 +656,6 @@ MainWindow::~MainWindow()
     {
         //Close main log file before quitting
         gpMainLog->CloseLogFile();
-        delete gpMainLog;
     }
 
     //Close popups if open
@@ -760,6 +698,7 @@ MainWindow::~MainWindow()
 #endif
 
     //Delete variables
+    delete gpMainLog;
     delete gpPredefinedDevice;
     delete gpTermSettings;
     delete gpErrorMessages;
@@ -916,6 +855,18 @@ MainWindow::on_btn_TermClose_clicked
 
         //Disallow file drops
         setAcceptDrops(false);
+
+        //Close log file if open
+        if (gpMainLog->IsLogOpen() == true)
+        {
+            gpMainLog->CloseLogFile();
+        }
+
+        //Enable log options
+        ui->edit_LogFile->setEnabled(true);
+        ui->check_LogEnable->setEnabled(true);
+        ui->check_LogAppend->setEnabled(true);
+        ui->btn_LogFileSelect->setEnabled(true);
     }
 
     //Update images
@@ -1874,6 +1825,9 @@ MainWindow::EnterPressed
         gspSerialPort.write(baTmpBA);
         gintQueuedTXBytes += baTmpBA.size();
         DoLineEnd();
+
+        //Add to log
+        gpMainLog->WriteLogData(baTmpBA.append("\n"));
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
     {
@@ -2353,6 +2307,12 @@ MainWindow::OpenSerial
 
         //Update images
         UpdateImages();
+
+        //Close log file if open
+        if (gpMainLog->IsLogOpen() == true)
+        {
+            gpMainLog->CloseLogFile();
+        }
     }
 
     //Setup serial port
@@ -2416,6 +2376,43 @@ MainWindow::OpenSerial
 
         //Set focus to input text edit
         ui->text_TermEditData->setFocus();
+
+        //Disable log options
+        ui->edit_LogFile->setEnabled(false);
+        ui->check_LogEnable->setEnabled(false);
+        ui->check_LogAppend->setEnabled(false);
+        ui->btn_LogFileSelect->setEnabled(false);
+
+        //Open log file
+        if (ui->check_LogEnable->isChecked() == true)
+        {
+            //Logging is enabled
+#if TARGET_OS_MAC
+            if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text())) == LOG_OK)
+#else
+            if (gpMainLog->OpenLogFile(ui->edit_LogFile->text()) == LOG_OK)
+#endif
+            {
+                //Log opened
+                if (ui->check_LogAppend->isChecked() == false)
+                {
+                    //Clear the log file
+                    gpMainLog->ClearLog();
+                }
+                gpMainLog->WriteLogData(tr("-").repeated(31));
+                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
+                gpMainLog->WriteLogData(QString(" Serial Port: ").append(ui->combo_COM->currentText()).append("\n"));
+                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
+                gbMainLogEnabled = true;
+            }
+            else
+            {
+                //Log not writeable
+                QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(ui->edit_LogFile->text()).append(" and have enough free space on your hard drive.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+        }
 
         //Allow file drops for uploads
         setAcceptDrops(true);
@@ -2657,6 +2654,18 @@ MainWindow::SerialError
 
         //Update images
         UpdateImages();
+
+        //Close log file if open
+        if (gpMainLog->IsLogOpen() == true)
+        {
+            gpMainLog->CloseLogFile();
+        }
+
+        //Enable log options
+        ui->edit_LogFile->setEnabled(true);
+        ui->check_LogEnable->setEnabled(true);
+        ui->check_LogAppend->setEnabled(true);
+        ui->btn_LogFileSelect->setEnabled(true);
 
         //Notify automation form
         guaAutomationForm->ConnectionChange(false);
@@ -4422,6 +4431,58 @@ MainWindow::SerialPortClosing
     ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
     ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_LogFileSelect_clicked
+    (
+    )
+{
+    //Updates the log file
+    QString strLogFilename = QFileDialog::getSaveFileName(this, "Select Log File", ui->edit_LogFile->text(), "Log Files (*.log);;All Files (*.*)");
+    if (!strLogFilename.isEmpty())
+    {
+        //Update log file
+        ui->edit_LogFile->setText(strLogFilename);
+        on_edit_LogFile_editingFinished();
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_edit_LogFile_editingFinished
+    (
+    )
+{
+    //Log filename has changed
+    gpTermSettings->setValue("LogFile", ui->edit_LogFile->text());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_LogEnable_stateChanged
+    (
+    int iChecked
+    )
+{
+    //Logging enabled/disabled changed
+    gpTermSettings->setValue("LogEnable", ui->check_LogEnable->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_LogAppend_stateChanged
+    (
+    int iChecked
+    )
+{
+    //Logging append/clearing changed
+    gpTermSettings->setValue("LogMode", ui->check_LogAppend->isChecked());
 }
 
 /******************************************************************************/

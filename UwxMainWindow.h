@@ -67,7 +67,7 @@
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.93h" //Version string
+#define UwVersion "0.94" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -76,7 +76,7 @@
 //Defines for default config values
 #define DefaultLogFile "UwTerminalX.log"
 #define DefaultLogMode 0
-#define DefaultLogLevel 1
+#define DefaultLogEnable 0
 #define DefaultCompilerDir "compilers/"
 #define DefaultCompilerSubDirs 0
 #define DefaultDelUWCAfterDownload 0
@@ -388,6 +388,24 @@ private slots:
     void
     on_btn_OpenDeviceFile_clicked
         (
+        );
+    void
+    on_btn_LogFileSelect_clicked
+        (
+        );
+    void
+    on_edit_LogFile_editingFinished
+        (
+        );
+    void
+    on_check_LogEnable_stateChanged
+        (
+        int iChecked
+        );
+    void
+    on_check_LogAppend_stateChanged
+        (
+        int iChecked
         );
 
 private:

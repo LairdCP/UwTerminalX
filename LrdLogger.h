@@ -72,6 +72,10 @@ public:
     GetLogName
         (
         );
+    bool
+    IsLogOpen
+        (
+        );
 
 private:
     bool mbLogOpen; //True when log file is open
