@@ -4332,7 +4332,7 @@ MainWindow::on_btn_OpenLog_clicked
     )
 {
     //Opens the UwTerminalX log file
-    QDesktopServices::openUrl(QUrl::fromLocalFile(ui->edit_LogFile->text()));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->edit_LogFile->text()).absoluteFilePath()));
 }
 
 //=============================================================================
