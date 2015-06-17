@@ -21,7 +21,7 @@
 UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxAutomation)
 {
     //On dialogue creation
-    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint));
+    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
 
     //Default values
@@ -85,6 +85,9 @@ UwxAutomation::SetMainHandle
 {
     //Sets the main window handle
     mMainAuto = mwNewHandle;
+    this->setParent(mMainAuto);
+    this->setWindowFlags((Qt::WindowCloseButtonHint | Qt::Window));
+    this->setModal(false);
 }
 
 //=============================================================================
