@@ -722,7 +722,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::closeEvent
     (
-    QCloseEvent *closeEvent
+    QCloseEvent *
     )
 {
     //Runs when the form is closed. Close child popups to exit the application
@@ -2136,7 +2136,7 @@ void
 MainWindow::process_finished
     (
     int intExitCode,
-    QProcess::ExitStatus esExitStatus
+    QProcess::ExitStatus
     )
 {
     if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPost->isChecked() == true && (intExitCode == 0 || ui->check_PreXCompFail->isChecked() == true))
@@ -3023,7 +3023,7 @@ MainWindow::BatchTimeoutSlot
 void
 MainWindow::on_combo_COM_currentIndexChanged
     (
-    int intIndex
+    int
     )
 {
     //Serial port selection has been changed, update text
@@ -3304,7 +3304,7 @@ MainWindow::on_btn_PreXCompSelect_clicked
 void
 MainWindow::on_radio_XCompPre_toggled
     (
-    bool bChecked
+    bool
     )
 {
     //Pre/post XCompiler run time changed to run before XCompiler - update settings
@@ -3316,7 +3316,7 @@ MainWindow::on_radio_XCompPre_toggled
 void
 MainWindow::on_radio_XCompPost_toggled
     (
-    bool bChecked
+    bool
     )
 {
     //Pre/post XCompiler run time changed to run after XCompiler - update settings
@@ -3328,7 +3328,7 @@ MainWindow::on_radio_XCompPost_toggled
 void
 MainWindow::on_check_PreXCompFail_stateChanged
     (
-    int bChecked
+    int
     )
 {
     //Pre/post XCompiler run if XCompiler failed changed - update settings
@@ -4010,7 +4010,7 @@ MainWindow::sslErrors
 void
 MainWindow::on_check_OnlineXComp_stateChanged
     (
-    int bChecked
+    int
     )
 {
     //Online XCompiler checkbox state changed
@@ -4127,7 +4127,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
 void
 MainWindow::on_check_Echo_stateChanged
     (
-    int bChecked
+    int
     )
 {
     //Local echo checkbox state changed
@@ -4466,7 +4466,7 @@ MainWindow::on_edit_LogFile_editingFinished
 void
 MainWindow::on_check_LogEnable_stateChanged
     (
-    int iChecked
+    int
     )
 {
     //Logging enabled/disabled changed
@@ -4478,7 +4478,7 @@ MainWindow::on_check_LogEnable_stateChanged
 void
 MainWindow::on_check_LogAppend_stateChanged
     (
-    int iChecked
+    int
     )
 {
     //Logging append/clearing changed

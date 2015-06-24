@@ -632,7 +632,7 @@ UwxAutomation::on_btn_Clear_clicked
 void
 UwxAutomation::on_check_OnTop_stateChanged
     (
-    int arg1
+    int
     )
 {
     //Always on-top state changed
