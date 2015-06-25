@@ -98,7 +98,10 @@
        <item>
         <widget class="QPushButton" name="pushButton">
          <property name="text">
-          <string>Close</string>
+          <string>&amp;Close</string>
+         </property>
+         <property name="default">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

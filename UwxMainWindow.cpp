@@ -4485,6 +4485,157 @@ MainWindow::on_check_LogAppend_stateChanged
     gpTermSettings->setValue("LogMode", ui->check_LogAppend->isChecked());
 }
 
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_Help_clicked
+    (
+    )
+{
+    //Opens the help PDF file
+#pragma warning("Port this over to mac")
+#ifdef __APPLE__
+    COMPILEFAIL();
+#endif
+    if (QFile::exists("Help.pdf"))
+    {
+        //File present - open
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Help.pdf").absoluteFilePath()));
+    }
+    else
+    {
+        //File not present
+        QString strMessage = tr("Help file (Help.pdf) was not found.");
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_combo_LogDirectory_currentIndexChanged
+    (
+    int
+    )
+{
+    //
+    on_btn_LogRefresh_clicked();
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_LogRefresh_clicked
+    (
+    )
+{
+    //
+#pragma warning("Port this over to mac")
+#ifdef __APPLE__
+    COMPILEFAIL();
+#endif
+    ui->list_LogFiles->clear();
+    QString strDirPath;
+    if (ui->combo_LogDirectory->currentIndex() == 1)
+    {
+        QFileInfo a(ui->edit_LogFile->text());
+        strDirPath = a.absolutePath();
+    }
+    else
+    {
+        strDirPath = "./";
+    }
+    QDir dirLogDir(strDirPath);
+    QFileInfoList filFiles;
+    filFiles = dirLogDir.entryInfoList(QStringList() << "*.log");
+    unsigned int i = 0;
+    while (i < filFiles.count())
+    {
+        ui->list_LogFiles->addItem(filFiles.at(i).fileName());
+        ++i;
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_ClearLog_clicked
+    (
+    )
+{
+    //Clears the current log file text
+    ui->text_LogData->clear();
+    ui->label_LogInfo->clear();
+    ui->list_LogFiles->setCurrentRow(ui->list_LogFiles->count());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_list_LogFiles_currentRowChanged
+    (
+    int
+    )
+{
+    //List item changed - load log file
+#pragma warning("Port this over to mac")
+#ifdef __APPLE__
+    COMPILEFAIL();
+#endif
+    ui->text_LogData->clear();
+    ui->label_LogInfo->clear();
+    if (ui->list_LogFiles->currentRow() >= 0)
+    {
+        //Open the log file for reading
+        QFile fileLogFile(ui->list_LogFiles->currentItem()->text());
+        if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
+        {
+            //Get the contents of the log file
+            ui->text_LogData->setPlainText(fileLogFile.readAll());
+            fileLogFile.close();
+
+            //Information about the log file
+            QFileInfo fiFileInfo(ui->list_LogFiles->currentItem()->text());
+            char cPrefixes[4] = {'K', 'M', 'G', 'T'};
+            float fltFilesize = fiFileInfo.size();
+            unsigned char cPrefix = 0;
+            while (fltFilesize > 1024)
+            {
+                //Go to next prefix
+                fltFilesize = fltFilesize/1024;
+                ++cPrefix;
+            }
+
+            //Create the filesize string
+            QString strFilesize = QString::number(fltFilesize);
+            if (strFilesize.indexOf(".") != -1 && strFilesize.length() > (strFilesize.indexOf(".") + 3))
+            {
+                //Reduce filesize length
+                strFilesize = strFilesize.left((strFilesize.indexOf(".") + 3));
+            }
+
+            //Update the string to file information of the current log
+            ui->label_LogInfo->setText(QString("Created: ").append(fiFileInfo.created().toString("hh:mm dd/MM/yyyy")).append(", Modified: ").append(fiFileInfo.lastModified().toString("hh:mm dd/MM/yyyy")).append(", Size: ").append(strFilesize));
+
+            //Check if a prefix needs adding
+            if (cPrefix > 0)
+            {
+                //Add size prefix
+                ui->label_LogInfo->setText(ui->label_LogInfo->text().append(cPrefixes[cPrefix-1]));
+            }
+
+            //Append the Byte unit
+            ui->label_LogInfo->setText(ui->label_LogInfo->text().append("B"));
+        }
+        else
+        {
+            //Log file opening failed
+            ui->label_LogInfo->setText("Failed to open log file.");
+        }
+    }
+}
+
 /******************************************************************************/
 // END OF FILE
 /******************************************************************************/

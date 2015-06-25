@@ -67,7 +67,7 @@
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 //Defines for version and functions
-#define UwVersion "0.94c" //Version string
+#define UwVersion "0.95" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -406,6 +406,28 @@ private slots:
     on_check_LogAppend_stateChanged
         (
         int iChecked
+        );
+    void
+    on_btn_Help_clicked
+        (
+        );
+    void
+    on_combo_LogDirectory_currentIndexChanged
+        (
+        int
+        );
+    void
+    on_btn_LogRefresh_clicked
+        (
+        );
+    void
+    on_btn_ClearLog_clicked
+        (
+        );
+    void
+    on_list_LogFiles_currentRowChanged
+        (
+        int
         );
 
 private:
