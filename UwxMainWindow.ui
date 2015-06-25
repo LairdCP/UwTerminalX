@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>658</width>
-    <height>384</height>
+    <width>680</width>
+    <height>400</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>4</number>
+         <number>3</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1357,7 +1357,7 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
                  <property name="spacing">
-                  <number>6</number>
+                  <number>4</number>
                  </property>
                  <property name="leftMargin">
                   <number>2</number>
@@ -1374,10 +1374,10 @@
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_5">
                    <property name="spacing">
-                    <number>3</number>
+                    <number>2</number>
                    </property>
                    <property name="topMargin">
-                    <number>3</number>
+                    <number>2</number>
                    </property>
                    <item>
                     <widget class="QCheckBox" name="check_PreXCompRun">
@@ -1516,7 +1516,7 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_10">
                    <property name="spacing">
-                    <number>6</number>
+                    <number>4</number>
                    </property>
                    <property name="leftMargin">
                     <number>2</number>
@@ -1816,6 +1816,9 @@
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="spacing">
+             <number>4</number>
+            </property>
             <item>
              <spacer name="horizontalSpacer_8">
               <property name="orientation">
@@ -1842,22 +1845,25 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_8">
                <property name="spacing">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="leftMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="topMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="rightMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="bottomMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
+                 <property name="spacing">
+                  <number>4</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="label_8">
                    <property name="font">
@@ -1937,22 +1943,25 @@ As more error codes get added, newer releases of the error code lookup file will
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_11">
                <property name="spacing">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="leftMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="topMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="rightMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="bottomMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
+                 <property name="spacing">
+                  <number>4</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="label_9">
                    <property name="font">
@@ -1964,7 +1973,7 @@ As more error codes get added, newer releases of the error code lookup file will
                    <property name="text">
                     <string>UwTerminalX is an open source application developed by Laird, the source code is available for download/modification from the Github project page linked below.
 
-You can also use the button below to check if there is a newer version of UwTerminalX available for download.</string>
+You can also use the button below to check if there is a newer version of UwTerminalX available.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -2050,22 +2059,25 @@ You can also use the button below to check if there is a newer version of UwTerm
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_12">
                <property name="spacing">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="leftMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="topMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="rightMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <property name="bottomMargin">
-                <number>3</number>
+                <number>2</number>
                </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_13">
+                 <property name="spacing">
+                  <number>4</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="label_10">
                    <property name="font">
@@ -2502,12 +2514,28 @@ Plus and Minus images obtained from http://www.clker.com</string>
              <number>3</number>
             </property>
             <item>
+             <widget class="QLabel" name="label_21">
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>View logs in:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QComboBox" name="combo_LogDirectory">
               <property name="maximumSize">
                <size>
                 <width>150</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="currentIndex">
+               <number>1</number>
               </property>
               <item>
                <property name="text">

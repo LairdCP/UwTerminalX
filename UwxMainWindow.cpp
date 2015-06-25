@@ -597,6 +597,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         ++chi;
     }
 
+    //Refresh list of log files
+    on_btn_LogRefresh_clicked();
+
     //Change terminal font to a monospaced font
     QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     QFontMetrics tmTmpFM(fntTmpFnt);
@@ -2315,123 +2318,132 @@ MainWindow::OpenSerial
         }
     }
 
-    //Setup serial port
-    gspSerialPort.setPortName(ui->combo_COM->currentText());
-    gspSerialPort.setBaudRate(ui->combo_Baud->currentText().toInt());
-    gspSerialPort.setDataBits((QSerialPort::DataBits)ui->combo_Data->currentText().toInt());
-    gspSerialPort.setStopBits((QSerialPort::StopBits)ui->combo_Stop->currentText().toInt());
-
-    //Parity
-    gspSerialPort.setParity((ui->combo_Parity->currentIndex() == 1 ? QSerialPort::OddParity : (ui->combo_Parity->currentIndex() == 2 ? QSerialPort::EvenParity : QSerialPort::NoParity)));
-
-    //Flow control
-    gspSerialPort.setFlowControl((ui->combo_Handshake->currentIndex() == 1 ? QSerialPort::HardwareControl : (ui->combo_Handshake->currentIndex() == 2 ? QSerialPort::SoftwareControl : QSerialPort::NoFlowControl)));
-
-    if (gspSerialPort.open(QIODevice::ReadWrite))
+    if (ui->combo_COM->currentText().length() > 0)
     {
-        //Successful
-        ui->statusBar->showMessage(QString("[").append(ui->combo_COM->currentText()).append(":").append(ui->combo_Baud->currentText()).append(",").append((ui->combo_Parity->currentIndex() == 0 ? "N" : ui->combo_Parity->currentIndex() == 1 ? "O" : ui->combo_Parity->currentIndex() == 2 ? "E" : "")).append(",").append(ui->combo_Data->currentText()).append(",").append(ui->combo_Stop->currentText()).append(",").append((ui->combo_Handshake->currentIndex() == 0 ? "N" : ui->combo_Handshake->currentIndex() == 1 ? "S" : ui->combo_Handshake->currentIndex() == 2 ? "H" : "")).append("]{").append((ui->radio_LCR->isChecked() ? "cr" : (ui->radio_LLF->isChecked() ? "lf" : (ui->radio_LCRLF->isChecked() ? "cr lf" : (ui->radio_LLFCR->isChecked() ? "lf cr" : ""))))).append("}"));
-        ui->label_TermConn->setText(ui->statusBar->currentMessage());
+        //Port selected: setup serial port
+        gspSerialPort.setPortName(ui->combo_COM->currentText());
+        gspSerialPort.setBaudRate(ui->combo_Baud->currentText().toInt());
+        gspSerialPort.setDataBits((QSerialPort::DataBits)ui->combo_Data->currentText().toInt());
+        gspSerialPort.setStopBits((QSerialPort::StopBits)ui->combo_Stop->currentText().toInt());
 
-        //Switch to Terminal tab
-        ui->selector_Tab->setCurrentIndex(0);
-
-        //Disable read-only mode
-        ui->text_TermEditData->setReadOnly(false);
-
-        //DTR
-        gspSerialPort.setDataTerminalReady(ui->check_DTR->isChecked());
+        //Parity
+        gspSerialPort.setParity((ui->combo_Parity->currentIndex() == 1 ? QSerialPort::OddParity : (ui->combo_Parity->currentIndex() == 2 ? QSerialPort::EvenParity : QSerialPort::NoParity)));
 
         //Flow control
-        if (ui->combo_Handshake->currentIndex() != 1)
+        gspSerialPort.setFlowControl((ui->combo_Handshake->currentIndex() == 1 ? QSerialPort::HardwareControl : (ui->combo_Handshake->currentIndex() == 2 ? QSerialPort::SoftwareControl : QSerialPort::NoFlowControl)));
+
+        if (gspSerialPort.open(QIODevice::ReadWrite))
         {
-            //Not hardware handshaking - RTS
-            ui->check_RTS->setEnabled(true);
-            gspSerialPort.setRequestToSend(ui->check_RTS->isChecked());
-        }
+            //Successful
+            ui->statusBar->showMessage(QString("[").append(ui->combo_COM->currentText()).append(":").append(ui->combo_Baud->currentText()).append(",").append((ui->combo_Parity->currentIndex() == 0 ? "N" : ui->combo_Parity->currentIndex() == 1 ? "O" : ui->combo_Parity->currentIndex() == 2 ? "E" : "")).append(",").append(ui->combo_Data->currentText()).append(",").append(ui->combo_Stop->currentText()).append(",").append((ui->combo_Handshake->currentIndex() == 0 ? "N" : ui->combo_Handshake->currentIndex() == 1 ? "S" : ui->combo_Handshake->currentIndex() == 2 ? "H" : "")).append("]{").append((ui->radio_LCR->isChecked() ? "cr" : (ui->radio_LLF->isChecked() ? "lf" : (ui->radio_LCRLF->isChecked() ? "cr lf" : (ui->radio_LLFCR->isChecked() ? "lf cr" : ""))))).append("}"));
+            ui->label_TermConn->setText(ui->statusBar->currentMessage());
 
-        //Break
-        gspSerialPort.setBreakEnabled(ui->check_Break->isChecked());
+            //Switch to Terminal tab
+            ui->selector_Tab->setCurrentIndex(0);
 
-        //Enable checkboxes
-        ui->check_Break->setEnabled(true);
-        ui->check_DTR->setEnabled(true);
-        ui->check_Echo->setEnabled(true);
-        ui->check_Line->setEnabled(true);
+            //Disable read-only mode
+            ui->text_TermEditData->setReadOnly(false);
 
-        //Update button text
-        ui->btn_TermClose->setText("C&lose Port");
+            //DTR
+            gspSerialPort.setDataTerminalReady(ui->check_DTR->isChecked());
 
-        //Signal checking
-        SerialStatus(1);
+            //Flow control
+            if (ui->combo_Handshake->currentIndex() != 1)
+            {
+                //Not hardware handshaking - RTS
+                ui->check_RTS->setEnabled(true);
+                gspSerialPort.setRequestToSend(ui->check_RTS->isChecked());
+            }
 
-        //Enable timer
-        gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval).toUInt());
+            //Break
+            gspSerialPort.setBreakEnabled(ui->check_Break->isChecked());
 
-        //Notify automation form
-        guaAutomationForm->ConnectionChange(true);
+            //Enable checkboxes
+            ui->check_Break->setEnabled(true);
+            ui->check_DTR->setEnabled(true);
+            ui->check_Echo->setEnabled(true);
+            ui->check_Line->setEnabled(true);
 
-        //Notify scroll edit
-        ui->text_TermEditData->SetSerialOpen(true);
+            //Update button text
+            ui->btn_TermClose->setText("C&lose Port");
 
-        //Set focus to input text edit
-        ui->text_TermEditData->setFocus();
+            //Signal checking
+            SerialStatus(1);
 
-        //Disable log options
-        ui->edit_LogFile->setEnabled(false);
-        ui->check_LogEnable->setEnabled(false);
-        ui->check_LogAppend->setEnabled(false);
-        ui->btn_LogFileSelect->setEnabled(false);
+            //Enable timer
+            gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval).toUInt());
 
-        //Open log file
-        if (ui->check_LogEnable->isChecked() == true)
-        {
-            //Logging is enabled
+            //Notify automation form
+            guaAutomationForm->ConnectionChange(true);
+
+            //Notify scroll edit
+            ui->text_TermEditData->SetSerialOpen(true);
+
+            //Set focus to input text edit
+            ui->text_TermEditData->setFocus();
+
+            //Disable log options
+            ui->edit_LogFile->setEnabled(false);
+            ui->check_LogEnable->setEnabled(false);
+            ui->check_LogAppend->setEnabled(false);
+            ui->btn_LogFileSelect->setEnabled(false);
+
+            //Open log file
+            if (ui->check_LogEnable->isChecked() == true)
+            {
+                //Logging is enabled
 #if TARGET_OS_MAC
-            if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text())) == LOG_OK)
+                if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text())) == LOG_OK)
 #else
-            if (gpMainLog->OpenLogFile(ui->edit_LogFile->text()) == LOG_OK)
+                if (gpMainLog->OpenLogFile(ui->edit_LogFile->text()) == LOG_OK)
 #endif
-            {
-                //Log opened
-                if (ui->check_LogAppend->isChecked() == false)
                 {
-                    //Clear the log file
-                    gpMainLog->ClearLog();
+                    //Log opened
+                    if (ui->check_LogAppend->isChecked() == false)
+                    {
+                        //Clear the log file
+                        gpMainLog->ClearLog();
+                    }
+                    gpMainLog->WriteLogData(tr("-").repeated(31));
+                    gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
+                    gpMainLog->WriteLogData(QString(" Serial Port: ").append(ui->combo_COM->currentText()).append("\n"));
+                    gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
+                    gbMainLogEnabled = true;
                 }
-                gpMainLog->WriteLogData(tr("-").repeated(31));
-                gpMainLog->WriteLogData(tr("\n Log opened ").append(QDate::currentDate().toString("dd/MM/yyyy")).append(" @ ").append(QTime::currentTime().toString("hh:mm")).append(" \n"));
-                gpMainLog->WriteLogData(QString(" Serial Port: ").append(ui->combo_COM->currentText()).append("\n"));
-                gpMainLog->WriteLogData(tr("-").repeated(31).append("\n\n"));
-                gbMainLogEnabled = true;
+                else
+                {
+                    //Log not writeable
+                    QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(ui->edit_LogFile->text()).append(" and have enough free space on your hard drive.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
             }
-            else
-            {
-                //Log not writeable
-                QString strMessage = tr("Error whilst opening log.\nPlease ensure you have access to the log file ").append(ui->edit_LogFile->text()).append(" and have enough free space on your hard drive.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
-            }
-        }
 
-        //Allow file drops for uploads
-        setAcceptDrops(true);
+            //Allow file drops for uploads
+            setAcceptDrops(true);
+        }
+        else
+        {
+            //Error whilst opening
+            ui->statusBar->showMessage("Error: ");
+            ui->statusBar->showMessage(ui->statusBar->currentMessage().append(gspSerialPort.errorString()));
+
+            QString strMessage = tr("Error whilst attempting to open the serial device: ").append(gspSerialPort.errorString()).append("\n\nIf the serial port is open in another application, please close the other application")
+#if !defined(_WIN32) && !defined( __APPLE__)
+            .append(", please also ensure you have been granted permission to the serial device in /dev/")
+#endif
+            .append(" and try again.");
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+            ui->text_TermEditData->SetSerialOpen(false);
+        }
     }
     else
     {
-        //Error whilst opening
-        ui->statusBar->showMessage("Error: ");
-        ui->statusBar->showMessage(ui->statusBar->currentMessage().append(gspSerialPort.errorString()));
-
-        QString strMessage = tr("Error whilst attempting to open the serial device: ").append(gspSerialPort.errorString()).append("\n\nIf the serial port is open in another application, please close the other application")
-#if !defined(_WIN32) && !defined( __APPLE__)
-        .append(", please also ensure you have been granted permission to the serial device in /dev/")
-#endif
-        .append(" and try again.");
-        ;
+        //No serial port selected
+        QString strMessage = tr("No serial port was selected, please select a serial port and try again.\r\nIf you see no serial ports listed, ensure your device is connected to your computer and you have the appropriate drivers installed.");
         gpmErrorForm->show();
         gpmErrorForm->SetMessage(&strMessage);
-        ui->text_TermEditData->SetSerialOpen(false);
     }
 }
 
@@ -3027,27 +3039,35 @@ MainWindow::on_combo_COM_currentIndexChanged
     )
 {
     //Serial port selection has been changed, update text
-    QSerialPortInfo SerialInfo(ui->combo_COM->currentText());
-    if (SerialInfo.isValid())
+    if (ui->combo_COM->currentText().length() > 0)
     {
-        //Port exists
-        QString strDisplayText(SerialInfo.description());
-        if (SerialInfo.manufacturer().length() > 1)
+        QSerialPortInfo SerialInfo(ui->combo_COM->currentText());
+        if (SerialInfo.isValid())
         {
-            //Add manufacturer
-            strDisplayText.append(" (").append(SerialInfo.manufacturer()).append(")");
+            //Port exists
+            QString strDisplayText(SerialInfo.description());
+            if (SerialInfo.manufacturer().length() > 1)
+            {
+                //Add manufacturer
+                strDisplayText.append(" (").append(SerialInfo.manufacturer()).append(")");
+            }
+            if (SerialInfo.serialNumber().length() > 1)
+            {
+                //Add serial
+                strDisplayText.append(" [").append(SerialInfo.serialNumber()).append("]");
+            }
+            ui->label_SerialInfo->setText(strDisplayText);
         }
-        if (SerialInfo.serialNumber().length() > 1)
+        else
         {
-            //Add serial
-            strDisplayText.append(" [").append(SerialInfo.serialNumber()).append("]");
+            //No such port
+            ui->label_SerialInfo->setText("Invalid serisl port selected");
         }
-        ui->label_SerialInfo->setText(strDisplayText);
     }
     else
     {
-        //No such port
-        ui->label_SerialInfo->setText("Invalid");
+        //Clear text as no port is selected
+        ui->label_SerialInfo->clear();
     }
 }
 
@@ -4519,7 +4539,7 @@ MainWindow::on_combo_LogDirectory_currentIndexChanged
     int
     )
 {
-    //
+    //Refresh the list of log files
     on_btn_LogRefresh_clicked();
 }
 
@@ -4530,30 +4550,43 @@ MainWindow::on_btn_LogRefresh_clicked
     (
     )
 {
-    //
-#pragma warning("Port this over to mac")
-#ifdef __APPLE__
-    COMPILEFAIL();
-#endif
+    //Refreshes the log files availanble for viewing
     ui->list_LogFiles->clear();
     QString strDirPath;
     if (ui->combo_LogDirectory->currentIndex() == 1)
     {
+        //Log file directory
+#if TARGET_OS_MAC
+        QFileInfo a(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text()));
+#else
         QFileInfo a(ui->edit_LogFile->text());
+#endif
         strDirPath = a.absolutePath();
     }
     else
     {
+        //Application directory
+#if TARGET_OS_MAC
+        strDirPath = gstrMacBundlePath;
+#else
         strDirPath = "./";
+#endif
     }
+
+    //Apply file filters
     QDir dirLogDir(strDirPath);
     QFileInfoList filFiles;
     filFiles = dirLogDir.entryInfoList(QStringList() << "*.log");
-    unsigned int i = 0;
-    while (i < filFiles.count())
+    if (filFiles.count() > 0)
     {
-        ui->list_LogFiles->addItem(filFiles.at(i).fileName());
-        ++i;
+        //At least one file was found
+        unsigned int i = 0;
+        while (i < filFiles.count())
+        {
+            //List all files
+            ui->list_LogFiles->addItem(filFiles.at(i).fileName());
+            ++i;
+        }
     }
 }
 
@@ -4579,16 +4612,37 @@ MainWindow::on_list_LogFiles_currentRowChanged
     )
 {
     //List item changed - load log file
-#pragma warning("Port this over to mac")
-#ifdef __APPLE__
-    COMPILEFAIL();
+    QString strFullFilename;
+
+    if (ui->combo_LogDirectory->currentIndex() == 1)
+    {
+        //Log file directory
+#if TARGET_OS_MAC
+        QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text()));
+#else
+        QFileInfo fiFileInfo(ui->edit_LogFile->text());
 #endif
+        strFullFilename = fiFileInfo.absolutePath();
+    }
+    else
+    {
+        //Application directory
+#if TARGET_OS_MAC
+        strFullFilename = gstrMacBundlePath;
+#else
+        strFullFilename = "./";
+#endif
+    }
+
     ui->text_LogData->clear();
     ui->label_LogInfo->clear();
     if (ui->list_LogFiles->currentRow() >= 0)
     {
+        //Create the full filename
+        strFullFilename = strFullFilename.append("/").append(ui->list_LogFiles->currentItem()->text());
+
         //Open the log file for reading
-        QFile fileLogFile(ui->list_LogFiles->currentItem()->text());
+        QFile fileLogFile(strFullFilename);
         if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
         {
             //Get the contents of the log file
@@ -4596,7 +4650,7 @@ MainWindow::on_list_LogFiles_currentRowChanged
             fileLogFile.close();
 
             //Information about the log file
-            QFileInfo fiFileInfo(ui->list_LogFiles->currentItem()->text());
+            QFileInfo fiFileInfo(strFullFilename);
             char cPrefixes[4] = {'K', 'M', 'G', 'T'};
             float fltFilesize = fiFileInfo.size();
             unsigned char cPrefix = 0;
