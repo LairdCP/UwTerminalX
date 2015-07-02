@@ -32,7 +32,7 @@ Laird encourages people to branch/fork UwTerminalX to modify the code and accept
 
 ##Companian Applications
 
- * [TermNotify](https://github.com/LairdCP/TermNotify) - TermNotify: an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
+ * [TermNotify](https://github.com/LairdCP/TermNotify): an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
 
 ##Compiling
 
@@ -40,4 +40,4 @@ For details on compiling, please refer to [the wiki](https://github.com/LairdCP/
 
 ##License
 
-UwTerminalX is released under the [GPLv3 license][LICENSE].
+UwTerminalX is released under the [GPLv3 license](https://github.com/LairdCP/UwTerminalX/blob/onlinebuild/LICENSE).
