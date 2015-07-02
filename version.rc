@@ -8,7 +8,6 @@
     FILEOS              VOS_NT_WINDOWS32
     FILETYPE            VFT_APP
     FILESUBTYPE         VFT2_UNKNOWN
-//    LANGID              0x0809
     BEGIN
         BLOCK   "VarFileInfo"
         BEGIN
@@ -30,4 +29,4 @@
         END
     END
 
-IDI_ICON1               ICON    DISCARDABLE     "images\\UwTerminal32.ico"
+    IDI_ICON1               ICON    DISCARDABLE     "images\\UwTerminal32.ico"
