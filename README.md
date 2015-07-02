@@ -21,13 +21,17 @@ Download and open the dmg file, open it to mount it as a drive on your computer,
 ###Linux:
 
 Download the tar file and extract it's contents to a location on your computer (this can be done using a graphical utility or from the command line using:
+
 	tar xf UwTerminalX.tar ~/
+
 Where '~/' is the location of where you want it extracted to, '~/' will extract to the home directory of your local user account). To launch UwTerminalX, either double click on the executable and click the 'run' button (if asked), or execute it from a terminal as so:
+
 	./UwTerminalX
 
 ##Help and contributing
 
 There are various instructions and help pages available on the [wiki site](https://github.com/LairdCP/UwTerminalX/wiki/), there is also a mailing list that you can subscribe to at uwterminalx@librelist.com
+
 Laird encourages people to branch/fork UwTerminalX to modify the code and accepts pull requests to merge these changes back into the main repository.
 
 ##Companian Applications
