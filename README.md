@@ -32,7 +32,7 @@ Laird encourages people to branch/fork UwTerminalX to modify the code and accept
 
 ##Companian Applications
 
- > [TermNotify][] - TermNotify: an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
+ * [TermNotify][] - TermNotify: an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
 
 ##Compiling
 
