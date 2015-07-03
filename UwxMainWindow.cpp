@@ -3403,6 +3403,7 @@ MainWindow::replyFinished
         //An error occured
         ui->btn_Cancel->setEnabled(false);
         ui->btn_ErrorCodeUpdate->setEnabled(true);
+        ui->btn_ErrorCodeDownload->setEnabled(true);
         ui->btn_UwTerminalXUpdate->setEnabled(true);
         ui->btn_ModuleFirmware->setEnabled(true);
         gtmrDownloadTimeoutTimer.stop();
@@ -3828,6 +3829,7 @@ MainWindow::replyFinished
             gbTermBusy = false;
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_ErrorCodeDownload->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->statusBar->showMessage("");
@@ -3890,6 +3892,7 @@ MainWindow::replyFinished
             gbTermBusy = false;
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_ErrorCodeDownload->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->statusBar->showMessage("");
@@ -3956,6 +3959,7 @@ MainWindow::replyFinished
             gbTermBusy = false;
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_ErrorCodeDownload->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->statusBar->showMessage("");
@@ -4008,6 +4012,7 @@ MainWindow::replyFinished
             gbTermBusy = false;
             ui->btn_Cancel->setEnabled(false);
             ui->btn_ErrorCodeUpdate->setEnabled(true);
+            ui->btn_ErrorCodeDownload->setEnabled(true);
             ui->btn_UwTerminalXUpdate->setEnabled(true);
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->statusBar->showMessage("");
@@ -4124,6 +4129,7 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked
         gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
@@ -4147,6 +4153,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
         gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
@@ -4182,6 +4189,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked
         gchTermMode2 = MODE_UPDATE_ERROR_CODE;
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
@@ -4394,6 +4402,7 @@ MainWindow::on_btn_ModuleFirmware_clicked
         gchTermMode2 = MODE_CHECK_FIRMWARE_VERSIONS;
         ui->btn_Cancel->setEnabled(true);
         ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/firmwares.php"))));
