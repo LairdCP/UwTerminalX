@@ -445,7 +445,7 @@
               <item>
                <widget class="QLabel" name="image_CTS">
                 <property name="text">
-                 <string>a</string>
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -475,7 +475,7 @@
               <item>
                <widget class="QLabel" name="image_DSR">
                 <property name="text">
-                 <string>a</string>
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -505,7 +505,7 @@
               <item>
                <widget class="QLabel" name="image_DCD">
                 <property name="text">
-                 <string>a</string>
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -535,7 +535,7 @@
               <item>
                <widget class="QLabel" name="image_RI">
                 <property name="text">
-                 <string>a</string>
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -2290,7 +2290,7 @@ You can also use the button below to check if there is a newer version of UwTerm
               </property>
              </widget>
             </item>
-            <item row="0" column="3">
+            <item row="0" column="4">
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -2307,6 +2307,13 @@ You can also use the button below to check if there is a newer version of UwTerm
              <widget class="QPushButton" name="btn_Help">
               <property name="text">
                <string>&amp;Help</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="btn_Licenses">
+              <property name="text">
+               <string>Licenses</string>
               </property>
              </widget>
             </item>
@@ -2370,13 +2377,10 @@ ENDCHR=n
 NOCONNECT
     Do not connect to device on startup even if ACCEPT is provided
 
-POLL
-    For Usb based serial ports -- if removed, then poll for reappearence
-
-LOCALECHO
+LOCALECHO=n
     [0=Disabled; 1=Enabled]
 
-LINEMODE
+LINEMODE=n
     [0=Disabled; 1=Enabled]
 
 LOG
@@ -2391,9 +2395,14 @@ LOG=filename
 SHOWCRLF
     When displaying a TX or RX text on screen, show \t,\r,\n as well
 
-Copyright © Laird Technologies 2011-2015
-For updates, check https://github.com/LairdCP/UwTerminalX or check the 'Update' tab.
-Plus and Minus images obtained from http://www.clker.com</string>
+Copyright © Laird Technologies 2015
+For updates and source code licensed under GPLv3, check https://github.com/LairdCP/UwTerminalX or the 'Update' tab.
+Plus and Minus images obtained from http://www.clker.com
+
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/</string>
               </property>
              </widget>
             </item>
@@ -2428,7 +2437,7 @@ Plus and Minus images obtained from http://www.clker.com</string>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_AboutI1">
                   <property name="text">
-                   <string>a</string>
+                   <string/>
                   </property>
                  </widget>
                 </item>
@@ -2442,7 +2451,7 @@ Plus and Minus images obtained from http://www.clker.com</string>
                 <item row="1" column="0">
                  <widget class="QLabel" name="label_AboutI2">
                   <property name="text">
-                   <string>b</string>
+                   <string/>
                   </property>
                  </widget>
                 </item>
@@ -2463,7 +2472,7 @@ Plus and Minus images obtained from http://www.clker.com</string>
                 <item row="2" column="0">
                  <widget class="QLabel" name="label_AboutI3">
                   <property name="text">
-                   <string>c</string>
+                   <string/>
                   </property>
                  </widget>
                 </item>
