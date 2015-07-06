@@ -79,7 +79,6 @@ LrdScrollEdit::eventFilter
                 }
                 mstrDatOut = mstrItemArray[mchPosition];
                 this->UpdateDisplay();
-                //this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 return true;
             }
             else if (keyEvent->key() == Qt::Key_Down && !(keyEvent->modifiers() & Qt::ShiftModifier))
@@ -89,8 +88,6 @@ LrdScrollEdit::eventFilter
                 {
                     mchPosition = mchPosition+1;
                 }
-                //this->setPlainText(mstrItemArray[mchPosition]);
-                //this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 mstrDatOut = mstrItemArray[mchPosition];
                 this->UpdateDisplay();
                 return true;
@@ -194,20 +191,6 @@ LrdScrollEdit::eventFilter
             {
                 //Add character
                 this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
-                /*if (!(keyEvent->modifiers() & Qt::ShiftModifier) && keyEvent->key() > 64 && keyEvent->key() < 91)
-                {
-                    mstrDatOut += (keyEvent->key()+32);
-                }
-                else
-                {
-                    mstrDatOut += keyEvent->key();
-                }*/
-
-                //Possible work-around for caps lock issue
-                /*if (mstrDatIn.length() == 0 && mstrDatIn.length() < 3)
-                {
-                    UpdateDisplay();
-                }*/
                 mstrDatOut += keyEvent->text();
             }
         }
@@ -349,7 +332,7 @@ LrdScrollEdit::insertFromMimeData
 {
     if (mdSrc->hasUrls() == true)
     {
-        //File has been dropped
+        //A file has been dropped
         QList<QUrl> urls = mdSrc->urls();
         if (urls.isEmpty())
         {
@@ -523,6 +506,7 @@ LrdScrollEdit::SetSerialOpen
     bool SerialOpen
     )
 {
+    //Updates the serial open variable
     mbSerialOpen = SerialOpen;
 }
 

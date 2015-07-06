@@ -363,6 +363,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString("Port3Data"), "8");
         gpPredefinedDevice->setValue(QString("Port3Flow"), "0");
 
+        //
+        gpPredefinedDevice->setValue(QString("Port4Name"), "WT-100");
+        gpPredefinedDevice->setValue(QString("Port4Baud"), "115200");
+        gpPredefinedDevice->setValue(QString("Port4Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port4Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port4Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port4Flow"), "1");
+
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
     }
@@ -4534,14 +4542,18 @@ MainWindow::on_btn_Help_clicked
     )
 {
     //Opens the help PDF file
-#pragma warning("Port this over to mac")
 #ifdef __APPLE__
-    COMPILEFAIL();
-#endif
+    if (QFile::exists(QString(gstrMacBundlePath).append("Help.pdf")))
+#else
     if (QFile::exists("Help.pdf"))
+#endif
     {
         //File present - open
+#ifdef __APPLE__
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QString(gstrMacBundlePath).append("Help.pdf")));
+#else
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Help.pdf").absoluteFilePath()));
+#endif
     }
     else
     {

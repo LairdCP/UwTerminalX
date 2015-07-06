@@ -2589,7 +2589,14 @@ You should have received a copy of the GNU General Public License along with thi
              <number>3</number>
             </property>
             <item>
-             <widget class="QPlainTextEdit" name="text_LogData"/>
+             <widget class="QPlainTextEdit" name="text_LogData">
+              <property name="undoRedoEnabled">
+               <bool>false</bool>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_13">

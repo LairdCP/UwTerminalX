@@ -20,7 +20,7 @@ Download and open the dmg file, open it to mount it as a drive on your computer,
 
 ###Linux:
 
-Download the tar file and extract it's contents to a location on your computer (this can be done using a graphical utility or from the command line using:
+Download the tar file and extract it's contents to a location on your computer, this can be done using a graphical utility or from the command line using:
 
 	tar xf UwTerminalX.tar ~/
 
@@ -37,6 +37,7 @@ Laird encourages people to branch/fork UwTerminalX to modify the code and accept
 ##Companian Applications
 
  * [TermNotify](https://github.com/LairdCP/TermNotify): an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
+ * [MultiDeviceLoader](https://github.com/LairdCP/MultiDeviceLoader): an application that can be used to XCompile a file and download it to multiple modules at the same time with various options including running the application or renaming it.
 
 ##Compiling
 
@@ -44,4 +45,4 @@ For details on compiling, please refer to [the wiki](https://github.com/LairdCP/
 
 ##License
 
-UwTerminalX is released under the [GPLv3 license](https://github.com/LairdCP/UwTerminalX/blob/onlinebuild/LICENSE).
+UwTerminalX is released under the [GPLv3 license](https://github.com/LairdCP/UwTerminalX/blob/master/LICENSE).
