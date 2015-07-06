@@ -1,11 +1,23 @@
 /******************************************************************************
-** Copyright (C) 2014-2015 Ezurio Ltd
+** Copyright (C) 2015 Laird
 **
 ** Project: UwTerminalX
 **
 ** Module: UwxAutomation.cpp
 **
 ** Notes:
+**
+** License: This program is free software: you can redistribute it and/or
+**          modify it under the terms of the GNU General Public License as
+**          published by the Free Software Foundation, version 3.
+**
+**          This program is distributed in the hope that it will be useful,
+**          but WITHOUT ANY WARRANTY; without even the implied warranty of
+**          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**          GNU General Public License for more details.
+**
+**          You should have received a copy of the GNU General Public License
+**          along with this program.  If not, see http://www.gnu.org/licenses/
 **
 *******************************************************************************/
 
@@ -21,7 +33,7 @@
 UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxAutomation)
 {
     //On dialogue creation
-    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint));
+    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
 
     //Default values
@@ -85,6 +97,9 @@ UwxAutomation::SetMainHandle
 {
     //Sets the main window handle
     mMainAuto = mwNewHandle;
+    this->setParent(mMainAuto);
+    this->setWindowFlags((Qt::WindowCloseButtonHint | Qt::Window));
+    this->setModal(false);
 }
 
 //=============================================================================
@@ -629,7 +644,7 @@ UwxAutomation::on_btn_Clear_clicked
 void
 UwxAutomation::on_check_OnTop_stateChanged
     (
-    int arg1
+    int
     )
 {
     //Always on-top state changed

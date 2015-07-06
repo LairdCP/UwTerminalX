@@ -1,14 +1,13 @@
     #include <windows.h>
      
     VS_VERSION_INFO     VERSIONINFO
-    FILEVERSION         0, 87, 5, 0
-    PRODUCTVERSION      0, 87, 5, 0
+    FILEVERSION         0, 95, 4, 0
+    PRODUCTVERSION      0, 95, 4, 0
     FILEFLAGSMASK       0x3fL
     FILEFLAGS           0
     FILEOS              VOS_NT_WINDOWS32
     FILETYPE            VFT_APP
     FILESUBTYPE         VFT2_UNKNOWN
-//    LANGID              0x0809
     BEGIN
         BLOCK   "VarFileInfo"
         BEGIN
@@ -20,14 +19,14 @@
             BEGIN
                 VALUE   "CompanyName",      "Laird\0"
                 VALUE   "FileDescription",  "UwTerminalX\0"
-                VALUE   "FileVersion",      "0.87.5.0\0"
+                VALUE   "FileVersion",      "0.95.4.0\0"
                 VALUE   "InternalName",     "UwTerminalX\0"
-                VALUE   "LegalCopyright",   "Copyright 2014-2015 by Laird\0"
+                VALUE   "LegalCopyright",   "Copyright 2015 by Laird\0"
                 VALUE   "OriginalFilename", "UwTerminalX.exe\0"
                 VALUE   "ProductName",      "UwTerminalX\0"
-                VALUE   "ProductVersion",   "0.87.5.0\0"
+                VALUE   "ProductVersion",   "0.95.4.0\0"
             END
         END
     END
 
-IDI_ICON1               ICON    DISCARDABLE     "images\\UwTerminal32.ico"
+    IDI_ICON1               ICON    DISCARDABLE     "images\\UwTerminal32.ico"

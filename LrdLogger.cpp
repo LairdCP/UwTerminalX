@@ -1,11 +1,23 @@
 /******************************************************************************
-** Copyright (C) 2014-2015 Ezurio Ltd
+** Copyright (C) 2015 Laird
 **
 ** Project: UwTerminalX
 **
 ** Module: LrdLogger.cpp
 **
 ** Notes:
+**
+** License: This program is free software: you can redistribute it and/or
+**          modify it under the terms of the GNU General Public License as
+**          published by the Free Software Foundation, version 3.
+**
+**          This program is distributed in the hope that it will be useful,
+**          but WITHOUT ANY WARRANTY; without even the implied warranty of
+**          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**          GNU General Public License for more details.
+**
+**          You should have received a copy of the GNU General Public License
+**          along with this program.  If not, see http://www.gnu.org/licenses/
 **
 *******************************************************************************/
 
@@ -108,11 +120,20 @@ LrdLogger::WriteLogData
     )
 {
     //Writes a line to the log file
-    *mpStreamOut << strData.toUtf8();
+    if (mbLogOpen == true)
+    {
+        //Log opened
+        *mpStreamOut << strData.toUtf8();
 #ifdef FLUSHDATAONWRITE
-    mpStreamOut->flush();
+        mpStreamOut->flush();
 #endif
-    return LOG_OK;
+        return LOG_OK;
+    }
+    else
+    {
+        //Log not open
+        return LOG_NOT_OPEN;
+    }
 }
 
 //=============================================================================
@@ -124,11 +145,20 @@ LrdLogger::WriteRawLogData
     )
 {
     //Writes raw data to the log file
-    *mpStreamOut << baData;
+    if (mbLogOpen == true)
+    {
+        //Log opened
+        *mpStreamOut << baData;
 #ifdef FLUSHDATAONWRITE
-    mpStreamOut->flush();
+        mpStreamOut->flush();
 #endif
-    return LOG_OK;
+        return LOG_OK;
+    }
+    else
+    {
+        //Log not opened
+        return LOG_NOT_OPEN;
+    }
 }
 
 //=============================================================================
@@ -139,7 +169,16 @@ LrdLogger::GetLogSize
     )
 {
     //Returns the size of the log
-    return mpLogFile->size();
+    if (mbLogOpen == true)
+    {
+        //Log open
+        return mpLogFile->size();
+    }
+    else
+    {
+        //Log not open
+        return 0;
+    }
 }
 
 //=============================================================================
@@ -155,6 +194,36 @@ LrdLogger::ClearLog
         mpLogFile->resize(0);
         mpStreamOut->setGenerateByteOrderMark(true);
     }
+}
+
+//=============================================================================
+//=============================================================================
+QString
+LrdLogger::GetLogName
+    (
+    )
+{
+    if (mpLogFile->isOpen() == true)
+    {
+        //Log open, return log file name
+        return mpLogFile->fileName();
+    }
+    else
+    {
+        //Log not open, return empty string
+        return "";
+    }
+}
+
+//=============================================================================
+//=============================================================================
+bool
+LrdLogger::IsLogOpen
+    (
+    )
+{
+    //Returns true if log is open
+    return mbLogOpen;
 }
 
 /******************************************************************************/
