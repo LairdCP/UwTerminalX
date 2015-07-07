@@ -49,7 +49,7 @@ PopupMessage::~PopupMessage
 //=============================================================================
 //=============================================================================
 void
-PopupMessage::on_btn_Close_clicked()
+PopupMessage::on_btn_Close_clicked
     (
     )
 {

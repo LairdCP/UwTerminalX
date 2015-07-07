@@ -1811,7 +1811,7 @@
         </widget>
         <widget class="QWidget" name="tab_Update">
          <attribute name="title">
-          <string>Update</string>
+          <string>U&amp;pdate</string>
          </attribute>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
@@ -2150,48 +2150,106 @@ You can also use the button below to check if there is a newer version of UwTerm
                      <number>2</number>
                     </property>
                     <item>
-                     <widget class="QLabel" name="label_BL600Firmware">
-                      <property name="font">
-                       <font>
-                        <family>Arial</family>
-                       </font>
+                     <widget class="QScrollArea" name="scrollArea">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>50</height>
+                       </size>
                       </property>
-                      <property name="text">
-                       <string>BL600:</string>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16777215</height>
+                       </size>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                      <property name="frameShape">
+                       <enum>QFrame::NoFrame</enum>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_BL620Firmware">
-                      <property name="font">
-                       <font>
-                        <family>Arial</family>
-                       </font>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
                       </property>
-                      <property name="text">
-                       <string>BL620:</string>
+                      <property name="widgetResizable">
+                       <bool>true</bool>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_BT900Firmware">
-                      <property name="font">
-                       <font>
-                        <family>Arial</family>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>BT900:</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
+                      <widget class="QWidget" name="scrollAreaWidgetContents">
+                       <property name="geometry">
+                        <rect>
+                         <x>0</x>
+                         <y>0</y>
+                         <width>202</width>
+                         <height>50</height>
+                        </rect>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                        <property name="spacing">
+                         <number>2</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>2</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>2</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>2</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>2</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="label_BL600Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>BL600:</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_BL620Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>BL620:</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_BT900Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>BT900:</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
                      </widget>
                     </item>
                     <item>
@@ -2313,7 +2371,7 @@ You can also use the button below to check if there is a newer version of UwTerm
             <item row="0" column="3">
              <widget class="QPushButton" name="btn_Licenses">
               <property name="text">
-               <string>Licenses</string>
+               <string>Li&amp;censes</string>
               </property>
              </widget>
             </item>
@@ -2499,7 +2557,7 @@ You should have received a copy of the GNU General Public License along with thi
         </widget>
         <widget class="QWidget" name="tab_Logs">
          <attribute name="title">
-          <string>Logs</string>
+          <string>L&amp;ogs</string>
          </attribute>
          <layout class="QHBoxLayout" name="horizontalLayout_10">
           <property name="spacing">
@@ -2651,18 +2709,42 @@ You should have received a copy of the GNU General Public License along with thi
  <tabstops>
   <tabstop>btn_Accept</tabstop>
   <tabstop>btn_Decline</tabstop>
+  <tabstop>btn_Help</tabstop>
+  <tabstop>btn_Licenses</tabstop>
   <tabstop>text_Terms</tabstop>
+  <tabstop>selector_Tab</tabstop>
+  <tabstop>btn_Connect</tabstop>
+  <tabstop>btn_Quit</tabstop>
+  <tabstop>btn_Duplicate</tabstop>
+  <tabstop>combo_PredefinedDevice</tabstop>
+  <tabstop>btn_PredefinedAdd</tabstop>
+  <tabstop>btn_PredefinedDelete</tabstop>
+  <tabstop>btn_Refresh</tabstop>
   <tabstop>combo_COM</tabstop>
   <tabstop>combo_Baud</tabstop>
   <tabstop>combo_Parity</tabstop>
   <tabstop>combo_Stop</tabstop>
   <tabstop>combo_Data</tabstop>
   <tabstop>combo_Handshake</tabstop>
+  <tabstop>btn_SaveDevice</tabstop>
   <tabstop>radio_LCR</tabstop>
   <tabstop>radio_LLF</tabstop>
   <tabstop>radio_LCRLF</tabstop>
   <tabstop>radio_LLFCR</tabstop>
   <tabstop>edit_FWRH</tabstop>
+  <tabstop>check_SkipDL</tabstop>
+  <tabstop>check_ShowCLRF</tabstop>
+  <tabstop>check_PreXCompRun</tabstop>
+  <tabstop>radio_XCompPre</tabstop>
+  <tabstop>radio_XCompPost</tabstop>
+  <tabstop>check_PreXCompFail</tabstop>
+  <tabstop>edit_PreXCompFilename</tabstop>
+  <tabstop>btn_PreXCompSelect</tabstop>
+  <tabstop>check_OnlineXComp</tabstop>
+  <tabstop>edit_LogFile</tabstop>
+  <tabstop>btn_LogFileSelect</tabstop>
+  <tabstop>check_LogEnable</tabstop>
+  <tabstop>check_LogAppend</tabstop>
   <tabstop>check_RTS</tabstop>
   <tabstop>check_DTR</tabstop>
   <tabstop>check_Break</tabstop>
@@ -2670,7 +2752,26 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>check_Line</tabstop>
   <tabstop>btn_TermClear</tabstop>
   <tabstop>btn_TermClose</tabstop>
+  <tabstop>btn_Cancel</tabstop>
   <tabstop>text_TermEditData</tabstop>
+  <tabstop>btn_ErrorCodeUpdate</tabstop>
+  <tabstop>btn_ErrorCodeDownload</tabstop>
+  <tabstop>btn_UwTerminalXUpdate</tabstop>
+  <tabstop>btn_GitHub</tabstop>
+  <tabstop>btn_OpenLog</tabstop>
+  <tabstop>btn_OpenConfig</tabstop>
+  <tabstop>btn_OpenDeviceFile</tabstop>
+  <tabstop>btn_BL600Apps</tabstop>
+  <tabstop>btn_BL620Apps</tabstop>
+  <tabstop>btn_BT900Apps</tabstop>
+  <tabstop>btn_LairdModules</tabstop>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>btn_ModuleFirmware</tabstop>
+  <tabstop>combo_LogDirectory</tabstop>
+  <tabstop>btn_LogRefresh</tabstop>
+  <tabstop>list_LogFiles</tabstop>
+  <tabstop>text_LogData</tabstop>
+  <tabstop>btn_ClearLog</tabstop>
  </tabstops>
  <resources/>
  <connections/>

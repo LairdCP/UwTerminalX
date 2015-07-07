@@ -58,7 +58,8 @@ public:
         );
 
 private slots:
-    void on_btn_Close_clicked
+    void
+    on_btn_Close_clicked
         (
         );
 
