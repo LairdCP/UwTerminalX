@@ -125,377 +125,299 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    explicit MainWindow(
+        QWidget *parent = 0
+        );
+    ~MainWindow(
+        );
     void
-    MessagePass
-        (
+    MessagePass(
         QString strDataString,
         bool bEscapeString
         );
 
 public slots:
     void
-    readData
-        (
+    readData(
         );
     void
-    triggered
-        (
+    triggered(
         QAction* qaAction
         );
     void
-    balloontriggered
-        (
+    balloontriggered(
         QAction* qaAction
         );
     void
-    DevRespTimeout
-        (
+    DevRespTimeout(
         );
     void
-    process_finished
-        (
+    process_finished(
         int intExitCode,
         QProcess::ExitStatus esExitStatus
         );
     void
-    SerialStatusSlot
-        (
+    SerialStatusSlot(
         );
     void
-    SerialError
-        (
+    SerialError(
         QSerialPort::SerialPortError speErrorCode
         );
     void
-    EnterPressed
-        (
+    EnterPressed(
         );
     void
-    KeyPressed
-        (
+    KeyPressed(
         QChar chrKeyValue
         );
     void
-    SerialBytesWritten
-        (
+    SerialBytesWritten(
         qint64 intByteCount
         );
 
     void
-    SerialPortClosing
-        (
+    SerialPortClosing(
         );
 
 private slots:
     void
-    on_btn_Accept_clicked
-        (
+    on_btn_Accept_clicked(
         );
     void
-    on_selector_Tab_currentChanged
-        (
+    on_selector_Tab_currentChanged(
         int intIndex
         );
     void
-    on_btn_Connect_clicked
-        (
+    on_btn_Connect_clicked(
         );
     void
-    on_btn_TermClose_clicked
-        (
+    on_btn_TermClose_clicked(
         );
     void
-    on_btn_Refresh_clicked
-        (
+    on_btn_Refresh_clicked(
         );
     void
-    on_btn_TermClear_clicked
-        (
+    on_btn_TermClear_clicked(
         );
     void
-    on_btn_Duplicate_clicked
-        (
+    on_btn_Duplicate_clicked(
         );
     void
-    on_text_TermEditData_customContextMenuRequested
-        (
+    on_text_TermEditData_customContextMenuRequested(
         const QPoint &pos
         );
     void
-    on_check_Break_stateChanged
-        (
+    on_check_Break_stateChanged(
         );
     void
-    on_check_RTS_stateChanged
-        (
+    on_check_RTS_stateChanged(
         );
     void
-    on_check_DTR_stateChanged
-        (
+    on_check_DTR_stateChanged(
         );
     void
-    on_check_Line_stateChanged
-        (
+    on_check_Line_stateChanged(
         );
     void
-    closeEvent
-        (
+    closeEvent(
         QCloseEvent *closeEvent
         );
     void
-    on_btn_Cancel_clicked
-        (
+    on_btn_Cancel_clicked(
         );
     void
-    UpdateReceiveText
-        (
+    UpdateReceiveText(
         );
     void
-    BatchTimeoutSlot
-        (
+    BatchTimeoutSlot(
         );
     void
-    on_combo_COM_currentIndexChanged
-        (
+    on_combo_COM_currentIndexChanged(
         int intIndex
         );
     void
-    replyFinished
-        (
+    replyFinished(
         QNetworkReply* nrReply
         );
 #ifdef UseSSL
     void
-    sslErrors
-        (
+    sslErrors(
         QNetworkReply*,
         QList<QSslError>
         );
 #endif
     void
-    on_check_PreXCompRun_stateChanged
-        (
+    on_check_PreXCompRun_stateChanged(
         int iChecked
         );
     bool
-    RunPrePostExecutable
-        (
+    RunPrePostExecutable(
         QString strFilename
         );
     void
-    on_btn_PreXCompSelect_clicked
-        (
+    on_btn_PreXCompSelect_clicked(
         );
     void
-    on_radio_XCompPre_toggled
-        (
+    on_radio_XCompPre_toggled(
         bool bChecked
         );
     void
-    on_radio_XCompPost_toggled
-        (
+    on_radio_XCompPost_toggled(
         bool bChecked
         );
     void
-    on_check_PreXCompFail_stateChanged
-        (
+    on_check_PreXCompFail_stateChanged(
         int bChecked
         );
     void
-    on_edit_PreXCompFilename_editingFinished
-        (
+    on_edit_PreXCompFilename_editingFinished(
         );
     void
-    on_btn_GitHub_clicked
-        (
+    on_btn_GitHub_clicked(
         );
     void
-    on_check_OnlineXComp_stateChanged
-        (
+    on_check_OnlineXComp_stateChanged(
         int bChecked
         );
     QList<QString>
-    SplitFilePath
-        (
+    SplitFilePath(
         QString strFilename
         );
     void
-    on_btn_BL600Apps_clicked
-        (
+    on_btn_BL600Apps_clicked(
         );
     void
-    on_btn_BL620Apps_clicked
-        (
+    on_btn_BL620Apps_clicked(
         );
     void
-    on_btn_BT900Apps_clicked
-        (
+    on_btn_BT900Apps_clicked(
         );
     void
-    on_btn_ErrorCodeUpdate_clicked
-        (
+    on_btn_ErrorCodeUpdate_clicked(
         );
     void
-    on_btn_UwTerminalXUpdate_clicked
-        (
+    on_btn_UwTerminalXUpdate_clicked(
         );
     void
-    on_check_Echo_stateChanged
-        (
+    on_check_Echo_stateChanged(
         int bChecked
         );
     void
-    on_btn_ErrorCodeDownload_clicked
-        (
+    on_btn_ErrorCodeDownload_clicked(
         );
     void
-    on_combo_PredefinedDevice_currentIndexChanged
-        (
+    on_combo_PredefinedDevice_currentIndexChanged(
         int index
         );
     void
-    on_btn_PredefinedAdd_clicked
-        (
+    on_btn_PredefinedAdd_clicked(
         );
     void
-    on_btn_PredefinedDelete_clicked
-        (
+    on_btn_PredefinedDelete_clicked(
         );
     void
-    DroppedFile
-        (
+    DroppedFile(
         QString strFilename
         );
     void
-    on_btn_SaveDevice_clicked
-        (
+    on_btn_SaveDevice_clicked(
         );
     void
-    on_btn_OpenLog_clicked
-        (
+    on_btn_OpenLog_clicked(
         );
     void
-    on_btn_OpenConfig_clicked
-        (
+    on_btn_OpenConfig_clicked(
         );
     void
-    on_btn_ModuleFirmware_clicked
-        (
+    on_btn_ModuleFirmware_clicked(
         );
     void
-    on_btn_LairdModules_clicked
-        (
+    on_btn_LairdModules_clicked(
         );
     void
-    ContextMenuClosed
-        (
+    ContextMenuClosed(
         );
     bool
-    event
-        (
+    event(
         QEvent *evtEvent
         );
     void
-    on_btn_OpenDeviceFile_clicked
-        (
+    on_btn_OpenDeviceFile_clicked(
         );
     void
-    on_btn_LogFileSelect_clicked
-        (
+    on_btn_LogFileSelect_clicked(
         );
     void
-    on_edit_LogFile_editingFinished
-        (
+    on_edit_LogFile_editingFinished(
         );
     void
-    on_check_LogEnable_stateChanged
-        (
+    on_check_LogEnable_stateChanged(
         int iChecked
         );
     void
-    on_check_LogAppend_stateChanged
-        (
+    on_check_LogAppend_stateChanged(
         int iChecked
         );
     void
-    on_btn_Help_clicked
-        (
+    on_btn_Help_clicked(
         );
     void
-    on_combo_LogDirectory_currentIndexChanged
-        (
+    on_combo_LogDirectory_currentIndexChanged(
         int
         );
     void
-    on_btn_LogRefresh_clicked
-        (
+    on_btn_LogRefresh_clicked(
         );
     void
-    on_btn_ClearLog_clicked
-        (
+    on_btn_ClearLog_clicked(
         );
     void
-    on_list_LogFiles_currentRowChanged
-        (
+    on_list_LogFiles_currentRowChanged(
         int
         );
     void
-    on_btn_Licenses_clicked
-        (
+    on_btn_Licenses_clicked(
         );
 
 private:
     Ui::MainWindow *ui;
     void
-    RefreshSerialDevices
-        (
+    RefreshSerialDevices(
         );
     unsigned char
-    CompileApp
-        (
+    CompileApp(
         unsigned char chMode
         );
     void
-    UpdateImages
-        (
+    UpdateImages(
         );
     void
-    DoLineEnd
-        (
+    DoLineEnd(
         );
     void
-    SerialStatus
-        (
+    SerialStatus(
         bool bType
         );
     void
-    OpenSerial
-        (
+    OpenSerial(
         );
     void
-    LoadFile
-        (
+    LoadFile(
         bool bToUWC
         );
     void
-    RunApplication
-        (
+    RunApplication(
         );
     void
-    LookupErrorCode
-        (
+    LookupErrorCode(
         unsigned int intErrorCode
         );
     void
-    FinishStream
-        (
+    FinishStream(
         bool bType
         );
     void
-    FinishBatch
-        (
+    FinishBatch(
         bool bType
         );
 
@@ -563,12 +485,10 @@ private:
 #endif
 
 protected:
-    void dragEnterEvent
-        (
+    void dragEnterEvent(
         QDragEnterEvent *dragEvent
         );
-    void dropEvent
-        (
+    void dropEvent(
         QDropEvent *dropEvent
         );
 };

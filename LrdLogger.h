@@ -46,47 +46,37 @@ class LrdLogger : public QWidget
 {
     Q_OBJECT
 public:
-    explicit LrdLogger
-        (
+    explicit LrdLogger(
         QWidget *parent = 0
         );
-    ~LrdLogger
-        (
+    ~LrdLogger(
         );
     unsigned char
-    OpenLogFile
-        (
+    OpenLogFile(
         QString strFilename
         );
     void
-    CloseLogFile
-        (
+    CloseLogFile(
         );
     unsigned char
-    WriteLogData
-        (
+    WriteLogData(
         QString strData
         );
     unsigned char
-    WriteRawLogData
-        (
+    WriteRawLogData(
         QByteArray baData
         );
     unsigned short
-    GetLogSize
-        (
+    GetLogSize(
         );
     void
-    ClearLog
-        (
+    ClearLog(
         );
     QString
-    GetLogName
-        (
+    GetLogName(
         );
     bool
-    IsLogOpen
-        (
+    IsLogOpen(
         );
 
 private:

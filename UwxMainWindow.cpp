@@ -59,8 +59,7 @@ UwxAutomation *guaAutomationForm; //Automation form
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
-{
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow){
     //Setup the GUI
     ui->setupUi(this);
 
@@ -647,8 +646,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 //=============================================================================
 //=============================================================================
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     //Disconnect all signals
     disconnect(this, SLOT(process_finished(int, QProcess::ExitStatus)));
     disconnect(this, SLOT(close()));
@@ -743,8 +741,7 @@ MainWindow::~MainWindow()
 //=============================================================================
 //=============================================================================
 void
-MainWindow::closeEvent
-    (
+MainWindow::closeEvent(
     QCloseEvent *
     )
 {
@@ -764,8 +761,7 @@ MainWindow::closeEvent
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Accept_clicked
-    (
+MainWindow::on_btn_Accept_clicked(
     )
 {
     //Runs when accept button is clicked - disable buttons
@@ -785,8 +781,7 @@ MainWindow::on_btn_Accept_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_selector_Tab_currentChanged
-    (
+MainWindow::on_selector_Tab_currentChanged(
     int intIndex
     )
 {
@@ -800,8 +795,7 @@ MainWindow::on_selector_Tab_currentChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Connect_clicked
-    (
+MainWindow::on_btn_Connect_clicked(
     )
 {
     //Connect to COM port button clicked.
@@ -811,8 +805,7 @@ MainWindow::on_btn_Connect_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_TermClose_clicked
-    (
+MainWindow::on_btn_TermClose_clicked(
     )
 {
     if (ui->btn_TermClose->text() == "&Open Port")
@@ -899,8 +892,7 @@ MainWindow::on_btn_TermClose_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Refresh_clicked
-    (
+MainWindow::on_btn_Refresh_clicked(
     )
 {
     //Refresh the list of serial ports
@@ -910,8 +902,7 @@ MainWindow::on_btn_Refresh_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::RefreshSerialDevices
-    (
+MainWindow::RefreshSerialDevices(
     )
 {
     //Clears and refreshes the list of serial devices
@@ -988,8 +979,7 @@ MainWindow::RefreshSerialDevices
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_TermClear_clicked
-    (
+MainWindow::on_btn_TermClear_clicked(
     )
 {
     //Clears the screen of the terminal tab
@@ -999,8 +989,7 @@ MainWindow::on_btn_TermClear_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::readData
-    (
+MainWindow::readData(
     )
 {
     //Read the data into a buffer and copy it to edit for the display data
@@ -1399,8 +1388,7 @@ MainWindow::readData
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_text_TermEditData_customContextMenuRequested
-    (
+MainWindow::on_text_TermEditData_customContextMenuRequested(
     const QPoint &pos
     )
 {
@@ -1811,8 +1799,7 @@ MainWindow::triggered
 //=============================================================================
 //=============================================================================
 void
-MainWindow::balloontriggered
-    (
+MainWindow::balloontriggered(
     QAction* qaAction
     )
 {
@@ -1837,8 +1824,7 @@ MainWindow::balloontriggered
 //=============================================================================
 //=============================================================================
 void
-MainWindow::EnterPressed
-    (
+MainWindow::EnterPressed(
     )
 {
     //Enter pressed in line mode
@@ -1875,8 +1861,7 @@ MainWindow::EnterPressed
 //=============================================================================
 //=============================================================================
 unsigned char
-MainWindow::CompileApp
-    (
+MainWindow::CompileApp(
     unsigned char chMode
     )
 {
@@ -1988,8 +1973,7 @@ MainWindow::CompileApp
 //=============================================================================
 //=============================================================================
 void
-MainWindow::UpdateImages
-    (
+MainWindow::UpdateImages(
     )
 {
     //Updates images to reflect status
@@ -2011,8 +1995,7 @@ MainWindow::UpdateImages
 //=============================================================================
 //=============================================================================
 void
-MainWindow::KeyPressed
-    (
+MainWindow::KeyPressed(
     QChar chrKeyValue
     )
 {
@@ -2096,8 +2079,7 @@ MainWindow::KeyPressed
 //=============================================================================
 //=============================================================================
 void
-MainWindow::DoLineEnd
-    (
+MainWindow::DoLineEnd(
     )
 {
     //Outputs a line ending
@@ -2131,8 +2113,7 @@ MainWindow::DoLineEnd
 //=============================================================================
 //=============================================================================
 void
-MainWindow::DevRespTimeout
-    (
+MainWindow::DevRespTimeout(
     )
 {
     //Runs to indiciate a device timeout when waiting to compile an application
@@ -2156,8 +2137,7 @@ MainWindow::DevRespTimeout
 //=============================================================================
 //=============================================================================
 void
-MainWindow::process_finished
-    (
+MainWindow::process_finished(
     int intExitCode,
     QProcess::ExitStatus
     )
@@ -2244,8 +2224,7 @@ MainWindow::process_finished
 //=============================================================================
 //=============================================================================
 void
-MainWindow::SerialStatus
-    (
+MainWindow::SerialStatus(
     bool bType
     )
 {
@@ -2289,8 +2268,7 @@ MainWindow::SerialStatus
 //=============================================================================
 //=============================================================================
 void
-MainWindow::SerialStatusSlot
-    (
+MainWindow::SerialStatusSlot(
     )
 {
     //Slot function to update serial pinout status
@@ -2300,8 +2278,7 @@ MainWindow::SerialStatusSlot
 //=============================================================================
 //=============================================================================
 void
-MainWindow::OpenSerial
-    (
+MainWindow::OpenSerial(
     )
 {
     //Function to open serial port
@@ -2470,8 +2447,7 @@ MainWindow::OpenSerial
 //=============================================================================
 //=============================================================================
 void
-MainWindow::LoadFile
-    (
+MainWindow::LoadFile(
     bool bToUWC
     )
 {
@@ -2522,8 +2498,7 @@ MainWindow::LoadFile
 //=============================================================================
 //=============================================================================
 void
-MainWindow::RunApplication
-    (
+MainWindow::RunApplication(
     )
 {
     //Runs an application
@@ -2562,8 +2537,7 @@ MainWindow::RunApplication
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_Break_stateChanged
-    (
+MainWindow::on_check_Break_stateChanged(
     )
 {
     //Break status changed
@@ -2573,8 +2547,7 @@ MainWindow::on_check_Break_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_RTS_stateChanged
-    (
+MainWindow::on_check_RTS_stateChanged(
     )
 {
     //RTS status changed
@@ -2584,8 +2557,7 @@ MainWindow::on_check_RTS_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_DTR_stateChanged
-    (
+MainWindow::on_check_DTR_stateChanged(
     )
 {
     //DTR status changed
@@ -2595,8 +2567,7 @@ MainWindow::on_check_DTR_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_Line_stateChanged
-    (
+MainWindow::on_check_Line_stateChanged(
     )
 {
     //Line mode status changed
@@ -2606,8 +2577,7 @@ MainWindow::on_check_Line_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::SerialError
-    (
+MainWindow::SerialError(
     QSerialPort::SerialPortError speErrorCode
     )
 {
@@ -2716,8 +2686,7 @@ MainWindow::SerialError
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Duplicate_clicked
-    (
+MainWindow::on_btn_Duplicate_clicked(
     )
 {
     //Duplicates instance of UwTerminalX
@@ -2792,8 +2761,7 @@ MainWindow::MessagePass
 //=============================================================================
 //=============================================================================
 void
-MainWindow::LookupErrorCode
-    (
+MainWindow::LookupErrorCode(
     unsigned int intErrorCode
     )
 {
@@ -2809,8 +2777,7 @@ MainWindow::LookupErrorCode
 //=============================================================================
 //=============================================================================
 void
-MainWindow::SerialBytesWritten
-    (
+MainWindow::SerialBytesWritten(
     qint64 intByteCount
     )
 {
@@ -2864,8 +2831,7 @@ MainWindow::SerialBytesWritten
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Cancel_clicked
-    (
+MainWindow::on_btn_Cancel_clicked(
     )
 {
     //Cancel current stream or file download
@@ -2942,8 +2908,7 @@ MainWindow::on_btn_Cancel_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::FinishStream
-    (
+MainWindow::FinishStream(
     bool bType
     )
 {
@@ -2980,8 +2945,7 @@ MainWindow::FinishStream
 //=============================================================================
 //=============================================================================
 void
-MainWindow::FinishBatch
-    (
+MainWindow::FinishBatch(
     bool bType
     )
 {
@@ -3020,8 +2984,7 @@ MainWindow::FinishBatch
 //=============================================================================
 //=============================================================================
 void
-MainWindow::UpdateReceiveText
-    (
+MainWindow::UpdateReceiveText(
     )
 {
     //Updates the receive text buffer
@@ -3032,8 +2995,7 @@ MainWindow::UpdateReceiveText
 //=============================================================================
 //=============================================================================
 void
-MainWindow::BatchTimeoutSlot
-    (
+MainWindow::BatchTimeoutSlot(
     )
 {
     //A response to a batch command has timed out
@@ -3053,8 +3015,7 @@ MainWindow::BatchTimeoutSlot
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_combo_COM_currentIndexChanged
-    (
+MainWindow::on_combo_COM_currentIndexChanged(
     int
     )
 {
@@ -3094,8 +3055,7 @@ MainWindow::on_combo_COM_currentIndexChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::dragEnterEvent
-    (
+MainWindow::dragEnterEvent(
     QDragEnterEvent *dragEvent
     )
 {
@@ -3110,8 +3070,7 @@ MainWindow::dragEnterEvent
 //=============================================================================
 //=============================================================================
 void
-MainWindow::dropEvent
-    (
+MainWindow::dropEvent(
     QDropEvent *dropEvent
     )
 {
@@ -3142,10 +3101,9 @@ MainWindow::dropEvent
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_PreXCompRun_stateChanged
-(
+MainWindow::on_check_PreXCompRun_stateChanged(
     int iChecked
-)
+    )
 {
     //User has changed running pre/post XCompiler executable, update GUI
     if (iChecked == 2)
@@ -3177,10 +3135,9 @@ MainWindow::on_check_PreXCompRun_stateChanged
 //=============================================================================
 //=============================================================================
 bool
-MainWindow::RunPrePostExecutable
-(
+MainWindow::RunPrePostExecutable(
     QString strFilename
-)
+    )
 {
     //Runs the pre/post XCompile executable
     QProcess pXProcess;
@@ -3309,8 +3266,7 @@ MainWindow::RunPrePostExecutable
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_PreXCompSelect_clicked
-    (
+MainWindow::on_btn_PreXCompSelect_clicked(
     )
 {
     //Opens an executable selector
@@ -3342,8 +3298,7 @@ MainWindow::on_btn_PreXCompSelect_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_radio_XCompPre_toggled
-    (
+MainWindow::on_radio_XCompPre_toggled(
     bool
     )
 {
@@ -3354,8 +3309,7 @@ MainWindow::on_radio_XCompPre_toggled
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_radio_XCompPost_toggled
-    (
+MainWindow::on_radio_XCompPost_toggled(
     bool
     )
 {
@@ -3366,8 +3320,7 @@ MainWindow::on_radio_XCompPost_toggled
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_PreXCompFail_stateChanged
-    (
+MainWindow::on_check_PreXCompFail_stateChanged(
     int
     )
 {
@@ -3378,8 +3331,7 @@ MainWindow::on_check_PreXCompFail_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_edit_PreXCompFilename_editingFinished
-    (
+MainWindow::on_edit_PreXCompFilename_editingFinished(
     )
 {
     //Pre/post XCompiler executable changed - update settings
@@ -3389,8 +3341,7 @@ MainWindow::on_edit_PreXCompFilename_editingFinished
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_GitHub_clicked
-    (
+MainWindow::on_btn_GitHub_clicked(
     )
 {
     //Open webpage at the UwTerminalX github page)
@@ -3400,8 +3351,7 @@ MainWindow::on_btn_GitHub_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::replyFinished
-    (
+MainWindow::replyFinished(
     QNetworkReply* nrReply
     )
 {
@@ -4035,8 +3985,7 @@ MainWindow::replyFinished
 //=============================================================================
 #ifdef UseSSL
 void
-MainWindow::sslErrors
-    (
+MainWindow::sslErrors(
     QNetworkReply* nrReply,
     QList<QSslError> lstSSLErrors
     )
@@ -4053,8 +4002,7 @@ MainWindow::sslErrors
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_OnlineXComp_stateChanged
-    (
+MainWindow::on_check_OnlineXComp_stateChanged(
     int
     )
 {
@@ -4066,8 +4014,7 @@ MainWindow::on_check_OnlineXComp_stateChanged
 //=============================================================================
 //=============================================================================
 QList<QString>
-MainWindow::SplitFilePath
-    (
+MainWindow::SplitFilePath(
     QString strFilename
     )
 {
@@ -4091,8 +4038,7 @@ MainWindow::SplitFilePath
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_BL600Apps_clicked
-    (
+MainWindow::on_btn_BL600Apps_clicked(
     )
 {
     //BL600 Applications button clicked
@@ -4113,8 +4059,7 @@ MainWindow::on_btn_BL620Apps_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_BT900Apps_clicked
-    (
+MainWindow::on_btn_BT900Apps_clicked(
     )
 {
     //BT900 Applications button clicked
@@ -4124,8 +4069,7 @@ MainWindow::on_btn_BT900Apps_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_ErrorCodeUpdate_clicked
-    (
+MainWindow::on_btn_ErrorCodeUpdate_clicked(
     )
 {
     //Check for updates to error codes
@@ -4148,8 +4092,7 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_UwTerminalXUpdate_clicked
-    (
+MainWindow::on_btn_UwTerminalXUpdate_clicked(
     )
 {
     //Check for updates to UwTerminalX
@@ -4172,8 +4115,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_Echo_stateChanged
-    (
+MainWindow::on_check_Echo_stateChanged(
     int
     )
 {
@@ -4184,8 +4126,7 @@ MainWindow::on_check_Echo_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_ErrorCodeDownload_clicked
-    (
+MainWindow::on_btn_ErrorCodeDownload_clicked(
     )
 {
     //Download latest error code file button clicked
@@ -4208,8 +4149,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_combo_PredefinedDevice_currentIndexChanged
-    (
+MainWindow::on_combo_PredefinedDevice_currentIndexChanged(
     int iIndex
     )
 {
@@ -4224,8 +4164,7 @@ MainWindow::on_combo_PredefinedDevice_currentIndexChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_PredefinedAdd_clicked
-    (
+MainWindow::on_btn_PredefinedAdd_clicked(
     )
 {
     //Adds a new predefined device entry
@@ -4242,8 +4181,7 @@ MainWindow::on_btn_PredefinedAdd_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_PredefinedDelete_clicked
-    (
+MainWindow::on_btn_PredefinedDelete_clicked(
     )
 {
     //Remove current device configuration
@@ -4286,8 +4224,7 @@ MainWindow::on_btn_PredefinedDelete_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::DroppedFile
-    (
+MainWindow::DroppedFile(
     QString strFilename
     )
 {
@@ -4358,8 +4295,7 @@ MainWindow::DroppedFile
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_SaveDevice_clicked
-    (
+MainWindow::on_btn_SaveDevice_clicked(
     )
 {
     //Saves changes to a configuration
@@ -4375,8 +4311,7 @@ MainWindow::on_btn_SaveDevice_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_OpenLog_clicked
-    (
+MainWindow::on_btn_OpenLog_clicked(
     )
 {
     //Opens the UwTerminalX log file
@@ -4386,8 +4321,7 @@ MainWindow::on_btn_OpenLog_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_OpenConfig_clicked
-    (
+MainWindow::on_btn_OpenConfig_clicked(
     )
 {
     //Opens the UwTerminalX configuration file
@@ -4397,8 +4331,7 @@ MainWindow::on_btn_OpenConfig_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_ModuleFirmware_clicked
-    (
+MainWindow::on_btn_ModuleFirmware_clicked(
     )
 {
     //Checks what the latest module firmware versions are
@@ -4421,8 +4354,7 @@ MainWindow::on_btn_ModuleFirmware_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_LairdModules_clicked
-    (
+MainWindow::on_btn_LairdModules_clicked(
     )
 {
     //Opens the Laird Bluetooh modules page
@@ -4432,8 +4364,7 @@ MainWindow::on_btn_LairdModules_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::ContextMenuClosed
-    (
+MainWindow::ContextMenuClosed(
     )
 {
     //Right click context menu closed, send message to text edit object
@@ -4444,8 +4375,7 @@ MainWindow::ContextMenuClosed
 //=============================================================================
 //=============================================================================
 bool
-MainWindow::event
-    (
+MainWindow::event(
     QEvent *evtEvent
     )
 {
@@ -4460,8 +4390,7 @@ MainWindow::event
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_OpenDeviceFile_clicked
-    (
+MainWindow::on_btn_OpenDeviceFile_clicked(
     )
 {
     //Opens the predefined devices configuration file
@@ -4471,8 +4400,7 @@ MainWindow::on_btn_OpenDeviceFile_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::SerialPortClosing
-    (
+MainWindow::SerialPortClosing(
     )
 {
     //Called when the serial port is closing
@@ -4485,8 +4413,7 @@ MainWindow::SerialPortClosing
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_LogFileSelect_clicked
-    (
+MainWindow::on_btn_LogFileSelect_clicked(
     )
 {
     //Updates the log file
@@ -4502,8 +4429,7 @@ MainWindow::on_btn_LogFileSelect_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_edit_LogFile_editingFinished
-    (
+MainWindow::on_edit_LogFile_editingFinished(
     )
 {
     //Log filename has changed
@@ -4513,8 +4439,7 @@ MainWindow::on_edit_LogFile_editingFinished
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_LogEnable_stateChanged
-    (
+MainWindow::on_check_LogEnable_stateChanged(
     int
     )
 {
@@ -4525,8 +4450,7 @@ MainWindow::on_check_LogEnable_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_LogAppend_stateChanged
-    (
+MainWindow::on_check_LogAppend_stateChanged(
     int
     )
 {
@@ -4537,8 +4461,7 @@ MainWindow::on_check_LogAppend_stateChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Help_clicked
-    (
+MainWindow::on_btn_Help_clicked(
     )
 {
     //Opens the help PDF file
@@ -4567,8 +4490,7 @@ MainWindow::on_btn_Help_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_combo_LogDirectory_currentIndexChanged
-    (
+MainWindow::on_combo_LogDirectory_currentIndexChanged(
     int
     )
 {
@@ -4579,8 +4501,7 @@ MainWindow::on_combo_LogDirectory_currentIndexChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_LogRefresh_clicked
-    (
+MainWindow::on_btn_LogRefresh_clicked(
     )
 {
     //Refreshes the log files availanble for viewing
@@ -4626,8 +4547,7 @@ MainWindow::on_btn_LogRefresh_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_ClearLog_clicked
-    (
+MainWindow::on_btn_ClearLog_clicked(
     )
 {
     //Clears the current log file text
@@ -4639,8 +4559,7 @@ MainWindow::on_btn_ClearLog_clicked
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_list_LogFiles_currentRowChanged
-    (
+MainWindow::on_list_LogFiles_currentRowChanged(
     int
     )
 {
@@ -4726,8 +4645,7 @@ MainWindow::on_list_LogFiles_currentRowChanged
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_Licenses_clicked
-    (
+MainWindow::on_btn_Licenses_clicked(
     )
 {
     //Show license text

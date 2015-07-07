@@ -30,8 +30,7 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage)
-{
+PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage){
     //Setup window to be a dialog
     this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
@@ -39,8 +38,7 @@ PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMes
 
 //=============================================================================
 //=============================================================================
-PopupMessage::~PopupMessage
-    (
+PopupMessage::~PopupMessage(
     )
 {
     delete ui;
@@ -49,8 +47,7 @@ PopupMessage::~PopupMessage
 //=============================================================================
 //=============================================================================
 void
-PopupMessage::on_btn_Close_clicked
-    (
+PopupMessage::on_btn_Close_clicked(
     )
 {
     //Close button clicked, close popup.
@@ -59,8 +56,7 @@ PopupMessage::on_btn_Close_clicked
 
 //=============================================================================
 //=============================================================================
-void PopupMessage::SetMessage
-    (
+void PopupMessage::SetMessage(
     QString *strMsg
     )
 {

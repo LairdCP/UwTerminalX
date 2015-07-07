@@ -46,77 +46,62 @@ class LrdScrollEdit : public QPlainTextEdit
     Q_OBJECT
 public:
     explicit
-    LrdScrollEdit
-        (
+    LrdScrollEdit(
         QWidget *parent = 0
         );
     void
-    SetLineMode
-        (
+    SetLineMode(
         bool bNewLineMode
         );
     void
-    insertFromMimeData
-        (
+    insertFromMimeData(
         const QMimeData *mdSrc
         );
     void
-    UpdateDisplay
-        (
+    UpdateDisplay(
         );
     void
-    AddDatInText
-        (
+    AddDatInText(
         QByteArray *baDat
         );
     void
-    AddDatOutText
-        (
+    AddDatOutText(
         QString strDat
         );
     void
-    ClearDatIn
-        (
+    ClearDatIn(
         );
     void
-    ClearDatOut
-        (
+    ClearDatOut(
         );
     QString
-    *GetDatOut
-        (
+    *GetDatOut(
         );
     void
-    UpdateCursor
-        (
+    UpdateCursor(
         );
     void
-    SetSerialOpen
-        (
+    SetSerialOpen(
         bool SerialOpen
         );
 
 protected:
     bool
-    eventFilter
-        (
+    eventFilter(
         QObject *target,
         QEvent *event
         );
 
 signals:
     void
-    EnterPressed
-        (
+    EnterPressed(
         );
     void
-    KeyPressed
-        (
+    KeyPressed(
         QChar KeyValue
         );
     void
-    FileDropped
-        (
+    FileDropped(
         QString strFilename
         );
 

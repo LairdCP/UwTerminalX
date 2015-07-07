@@ -29,8 +29,7 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
-{
+LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent){
     //Enable an event filter
     installEventFilter(this);
     installEventFilter(this->verticalScrollBar());
@@ -48,8 +47,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
 //=============================================================================
 //=============================================================================
 bool
-LrdScrollEdit::eventFilter
-    (
+LrdScrollEdit::eventFilter(
     QObject *target,
     QEvent *event
     )
@@ -231,8 +229,7 @@ LrdScrollEdit::eventFilter
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::SetLineMode
-    (
+LrdScrollEdit::SetLineMode(
     bool bNewLineMode
     )
 {
@@ -244,8 +241,7 @@ LrdScrollEdit::SetLineMode
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::AddDatInText
-    (
+LrdScrollEdit::AddDatInText(
     QByteArray *baDat
     )
 {
@@ -261,8 +257,7 @@ LrdScrollEdit::AddDatInText
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::AddDatOutText
-    (
+LrdScrollEdit::AddDatOutText(
     QString strDat
     )
 {
@@ -287,8 +282,7 @@ LrdScrollEdit::AddDatOutText
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::ClearDatIn
-    (
+LrdScrollEdit::ClearDatIn(
     )
 {
     //Clears the DatIn buffer
@@ -302,8 +296,7 @@ LrdScrollEdit::ClearDatIn
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::ClearDatOut
-    (
+LrdScrollEdit::ClearDatOut(
     )
 {
     //Clears the DatOut buffer
@@ -314,8 +307,7 @@ LrdScrollEdit::ClearDatOut
 //=============================================================================
 //=============================================================================
 QString *
-LrdScrollEdit::GetDatOut
-    (
+LrdScrollEdit::GetDatOut(
     )
 {
     //Returns the DatOut buffer
@@ -325,8 +317,7 @@ LrdScrollEdit::GetDatOut
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::insertFromMimeData
-    (
+LrdScrollEdit::insertFromMimeData(
     const QMimeData *mdSrc
     )
 {
@@ -379,8 +370,7 @@ LrdScrollEdit::insertFromMimeData
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::UpdateDisplay
-    (
+LrdScrollEdit::UpdateDisplay(
     )
 {
     //Updates the receive text buffer, faster
@@ -477,8 +467,7 @@ LrdScrollEdit::UpdateDisplay
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::UpdateCursor
-    (
+LrdScrollEdit::UpdateCursor(
     )
 {
     //Updates the text control's cursor position
@@ -501,8 +490,7 @@ LrdScrollEdit::UpdateCursor
 //=============================================================================
 //=============================================================================
 void
-LrdScrollEdit::SetSerialOpen
-    (
+LrdScrollEdit::SetSerialOpen(
     bool SerialOpen
     )
 {
