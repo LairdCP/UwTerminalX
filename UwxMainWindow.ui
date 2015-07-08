@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>680</width>
+    <width>650</width>
     <height>400</height>
    </rect>
   </property>
@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>3</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1453,7 +1453,7 @@
                    <property name="font">
                     <font>
                      <family>Arial</family>
-                     <pointsize>9</pointsize>
+                     <pointsize>8</pointsize>
                     </font>
                    </property>
                    <property name="midLineWidth">
@@ -1565,7 +1565,7 @@
                      <property name="font">
                       <font>
                        <family>Arial</family>
-                       <pointsize>9</pointsize>
+                       <pointsize>8</pointsize>
                       </font>
                      </property>
                      <property name="text">
@@ -2197,7 +2197,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>100</width>
+                         <width>202</width>
                          <height>50</height>
                         </rect>
                        </property>
