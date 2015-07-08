@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>1</number>
         </property>
         <property name="documentMode">
          <bool>false</bool>
@@ -1516,29 +1516,49 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_10">
                    <property name="spacing">
-                    <number>4</number>
+                    <number>2</number>
                    </property>
                    <property name="leftMargin">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <property name="topMargin">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <property name="rightMargin">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <property name="bottomMargin">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <item>
-                    <widget class="QCheckBox" name="check_OnlineXComp">
-                     <property name="text">
-                      <string>Enable Online XCompile</string>
+                    <layout class="QHBoxLayout" name="horizontalLayout_14">
+                     <property name="spacing">
+                      <number>2</number>
                      </property>
-                     <property name="checked">
-                      <bool>true</bool>
+                     <property name="leftMargin">
+                      <number>0</number>
                      </property>
-                    </widget>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QCheckBox" name="check_OnlineXComp">
+                       <property name="text">
+                        <string>Enable Online XCompile</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="btn_OnlineXComp_Supported">
+                       <property name="text">
+                        <string>Supported Devices</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                    <item>
                     <widget class="QLabel" name="label_OnlineXCompInfo">
@@ -2177,7 +2197,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
+                         <width>100</width>
                          <height>50</height>
                         </rect>
                        </property>
@@ -2740,7 +2760,6 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>check_PreXCompFail</tabstop>
   <tabstop>edit_PreXCompFilename</tabstop>
   <tabstop>btn_PreXCompSelect</tabstop>
-  <tabstop>check_OnlineXComp</tabstop>
   <tabstop>edit_LogFile</tabstop>
   <tabstop>btn_LogFileSelect</tabstop>
   <tabstop>check_LogEnable</tabstop>

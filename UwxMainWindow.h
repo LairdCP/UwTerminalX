@@ -78,8 +78,9 @@
 #define MODE_CHECK_UWTERMINALX_VERSIONS 15
 #define MODE_UPDATE_ERROR_CODE 16
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
+#define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "0.95f" //Version string
+#define UwVersion "0.96" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -377,6 +378,9 @@ private slots:
         );
     void
     on_btn_Licenses_clicked(
+        );
+    void
+    on_btn_OnlineXComp_Supported_clicked(
         );
 
 private:
