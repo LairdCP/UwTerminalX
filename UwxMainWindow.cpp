@@ -111,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #if TARGET_OS_MAC
     if (!QFile::exists(QString(gstrMacBundlePath).append("UwTerminalX.ini")))
 #else
-    if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion", UwVersion).toString() != UwVersion)
+    if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #endif
     {
         //No settings, or some config values not present defaults
@@ -643,7 +643,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
     {
         //Enough information to connect!
-        OpenSerial();
+        OpenDevice();
     }
 
 #ifdef UseSSL
@@ -814,7 +814,7 @@ MainWindow::on_btn_Connect_clicked(
     )
 {
     //Connect to COM port button clicked.
-    OpenSerial();
+    OpenDevice();
 }
 
 //=============================================================================
@@ -826,7 +826,7 @@ MainWindow::on_btn_TermClose_clicked(
     if (ui->btn_TermClose->text() == "&Open Port")
     {
         //Open connection
-        OpenSerial();
+        OpenDevice();
     }
     else if (ui->btn_TermClose->text() == "C&lose Port")
     {
@@ -1843,7 +1843,7 @@ MainWindow::EnterPressed(
     )
 {
     //Enter pressed in line mode
-    if (gspSerialPort.isOpen() == true && gbTermBusy == false && gbLoopbackMode == false)
+    if (/*gspSerialPort.isOpen() == true &&*/ gbTermBusy == false && gbLoopbackMode == false)
     {
         QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
         gspSerialPort.write(baTmpBA);
@@ -2293,7 +2293,7 @@ MainWindow::SerialStatusSlot(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::OpenSerial(
+MainWindow::OpenDevice(
     )
 {
     //Function to open serial port
@@ -3343,7 +3343,7 @@ MainWindow::on_check_PreXCompFail_stateChanged(
     )
 {
     //Pre/post XCompiler run if XCompiler failed changed - update settings
-    gpTermSettings->setValue("PrePostXCompFail", ui->check_PreXCompFail->isChecked());
+    gpTermSettings->setValue("PrePostXCompFail", (ui->check_PreXCompFail->isChecked() == true ? 1 : 0));
 }
 
 //=============================================================================
@@ -4050,7 +4050,7 @@ MainWindow::on_check_OnlineXComp_stateChanged(
 {
     //Online XCompiler checkbox state changed
     ui->label_OnlineXCompInfo->setEnabled(ui->check_OnlineXComp->isChecked());
-    gpTermSettings->setValue("OnlineXComp", ui->check_OnlineXComp->isChecked());
+    gpTermSettings->setValue("OnlineXComp", (ui->check_OnlineXComp->isChecked() == true ? 1 : 0));
 }
 
 //=============================================================================
@@ -4490,7 +4490,7 @@ MainWindow::on_check_LogEnable_stateChanged(
     )
 {
     //Logging enabled/disabled changed
-    gpTermSettings->setValue("LogEnable", ui->check_LogEnable->isChecked());
+    gpTermSettings->setValue("LogEnable", (ui->check_LogEnable->isChecked() == true ? 1 : 0));
 }
 
 //=============================================================================
@@ -4501,7 +4501,7 @@ MainWindow::on_check_LogAppend_stateChanged(
     )
 {
     //Logging append/clearing changed
-    gpTermSettings->setValue("LogMode", ui->check_LogAppend->isChecked());
+    gpTermSettings->setValue("LogMode", (ui->check_LogAppend->isChecked() == true ? 1 : 0));
 }
 
 //=============================================================================
@@ -4732,7 +4732,7 @@ MainWindow::on_check_SkipDL_stateChanged(
     )
 {
     //Skip download option changed
-    gpTermSettings->setValue("SkipDownloadDisplay", ui->check_SkipDL->isChecked());
+    gpTermSettings->setValue("SkipDownloadDisplay", (ui->check_SkipDL->isChecked() == true ? 1 : 0));
 }
 
 /******************************************************************************/

@@ -53,6 +53,11 @@ UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxA
     connect(ui->edit_Line7, SIGNAL(returnPressed()), this, SLOT(EnterPressed()));
     connect(ui->edit_Line8, SIGNAL(returnPressed()), this, SLOT(EnterPressed()));
     connect(ui->edit_Line9, SIGNAL(returnPressed()), this, SLOT(EnterPressed()));
+
+    //
+    msbStatusBar = new QStatusBar;
+    ui->StatusBarLayout->addWidget(msbStatusBar);
+    msbStatusBar->showMessage("");
 }
 
 //=============================================================================
@@ -70,6 +75,7 @@ UwxAutomation::~UwxAutomation(
     disconnect(ui->edit_Line7, SIGNAL(returnPressed()));
     disconnect(ui->edit_Line8, SIGNAL(returnPressed()));
     disconnect(ui->edit_Line9, SIGNAL(returnPressed()));
+    delete msbStatusBar;
     delete ui;
 }
 
@@ -145,6 +151,9 @@ UwxAutomation::on_btn_Load_clicked(
         //Close the file handle
         file.close();
 
+        //
+        msbStatusBar->showMessage(QString(strLoadFile).append(": ").append(QString::number(i)).append(" line").append((i == 1 ? " loaded." : "s loaded.")));
+
         //Update the text boxes
         mchItemPosition = 0;
         LoadTextData();
@@ -194,6 +203,9 @@ UwxAutomation::on_btn_Save_clicked(
         //Flush the file output and close the file handke
         file.flush();
         file.close();
+
+        //
+        msbStatusBar->showMessage(QString(strSaveFile).append(": ").append(QString::number(i)).append(" line").append((i == 1 ? " saved." : "s saved.")));
     }
 }
 

@@ -31,6 +31,7 @@
 #include "UwxMainWindow.h"
 #include <QFileDialog>
 #include <QFile>
+#include <QStatusBar>
 
 /******************************************************************************/
 // Defines
@@ -146,6 +147,7 @@ private:
     unsigned char mchItemPosition; //Current position of the array for the text boxes
     unsigned char mchItemTotal; //Total number of array entries
     unsigned char mchItemHighest; //Highest number in the array with an entry that has data
+    QStatusBar *msbStatusBar; //
 };
 
 #endif // UWXAUTOMATION_H

@@ -43,6 +43,9 @@
    </property>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout_2">
+     <property name="spacing">
+      <number>2</number>
+     </property>
      <item row="0" column="0">
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
@@ -592,6 +595,13 @@
        </item>
       </layout>
      </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <layout class="QHBoxLayout" name="StatusBarLayout">
+     <property name="spacing">
+      <number>2</number>
+     </property>
     </layout>
    </item>
   </layout>
