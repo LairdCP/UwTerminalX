@@ -175,6 +175,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         {
             gpTermSettings->setValue("TextUpdateInterval", DefaultTextUpdateInterval); //Interval between screen updates in mS, lower = faster but can be problematic when receiving/sending large amounts of data (200 is good for this)
         }
+        if (gpTermSettings->value("SkipDownloadDisplay").isNull())
+        {
+            gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
+        }
         gpTermSettings->setValue("ConfigVersion", UwVersion);
     }
 
@@ -426,6 +430,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         ui->radio_XCompPre->setChecked(true);
     }
     ui->edit_PreXCompFilename->setText(gpTermSettings->value("PrePostXCompPath", DefaultPrePostXCompPath).toString());
+
+    //Load skip download display setting
+    ui->check_SkipDL->setChecked(gpTermSettings->value("SkipDownloadDisplay", DefaultSkipDownloadDisplay).toBool());
 
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
@@ -2726,6 +2733,9 @@ MainWindow::MessagePass
                 QRegularExpressionMatch remThisESeqMatch = remiESeqMatch.next();
                 strDataString.replace(QString("\\").append(remThisESeqMatch.captured(1)), QString((char)remThisESeqMatch.captured(1).toInt(&bSuccess, 16)));
             }
+
+            //Replace newline characters
+            strDataString.replace("\\r", "\r").replace("\\n", "\n").replace("\\t", "\t");
         }
         QByteArray baTmpBA = strDataString.toUtf8();
         gspSerialPort.write(baTmpBA);
@@ -4712,6 +4722,17 @@ MainWindow::on_btn_OnlineXComp_Supported_clicked(
         gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/compiler_list.php"))));
         ui->statusBar->showMessage("Checking for supported XCompilers...");
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_SkipDL_stateChanged(
+    int
+    )
+{
+    //Skip download option changed
+    gpTermSettings->setValue("SkipDownloadDisplay", ui->check_SkipDL->isChecked());
 }
 
 /******************************************************************************/

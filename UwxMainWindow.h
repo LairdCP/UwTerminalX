@@ -59,6 +59,7 @@
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
 #include "LrdLogger.h"
+#include <QTcpSocket>
 
 /******************************************************************************/
 // Defines
@@ -80,7 +81,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "0.96a" //Version string
+#define UwVersion "0.96b" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -101,6 +102,7 @@
 #define DefaultPrePostXCompPath ""
 #define DefaultOnlineXComp 1
 #define DefaultTextUpdateInterval 80
+#define DefaultSkipDownloadDisplay 1
 //Define the protocol
 #ifdef UseSSL
     //HTTPS
@@ -381,6 +383,10 @@ private slots:
         );
     void
     on_btn_OnlineXComp_Supported_clicked(
+        );
+    void
+    on_check_SkipDL_stateChanged(
+        int
         );
 
 private:

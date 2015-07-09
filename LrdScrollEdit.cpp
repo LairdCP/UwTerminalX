@@ -416,7 +416,7 @@ LrdScrollEdit::UpdateDisplay(
             Pos = this->verticalScrollBar()->sliderPosition();
         }
         this->setUpdatesEnabled(false);
-        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true && mstrDatIn.length() > 0 ? "\n" : "")).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
+        this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
         this->setUpdatesEnabled(true);
 
         //Update previous text size variable
