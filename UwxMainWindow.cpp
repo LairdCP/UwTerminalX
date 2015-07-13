@@ -75,12 +75,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpPredefinedDevice = new QSettings(QString(gstrMacBundlePath).append("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 
     //Fix mac's resize
-    resize(660, 360);
+    resize(680, 380);
 #else
     //Open files in same directory
     gpTermSettings = new QSettings(QString("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat); //Handle to error codes
     gpPredefinedDevice = new QSettings(QString("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
+#endif
+
+#ifndef _WIN32
+#ifndef __APPLE__
+    //Increase Linux window size to cope with possible large Linux fonts
+    resize(this->width()+20, this->height()+20);
+#endif
 #endif
 
     //Define default variable values
