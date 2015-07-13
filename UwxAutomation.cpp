@@ -228,10 +228,28 @@ UwxAutomation::on_btn_Up_clicked(
     )
 {
     //Up button clicked
-    if (mchItemPosition > 0)
+    if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
     {
-        --mchItemPosition;
-        LoadTextData();
+        //Scroll by 10
+        if (mchItemPosition > 9)
+        {
+            mchItemPosition = mchItemPosition-10;
+            LoadTextData();
+        }
+        else if (mchItemPosition > 0)
+        {
+            mchItemPosition = 0;
+            LoadTextData();
+        }
+    }
+    else
+    {
+        //Scroll by 1
+        if (mchItemPosition > 0)
+        {
+            --mchItemPosition;
+            LoadTextData();
+        }
     }
 }
 
@@ -242,10 +260,28 @@ UwxAutomation::on_btn_Down_clicked(
     )
 {
     //Down button clicked
-    if (mchItemPosition < AutoItemAllow-10)
+    if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
     {
-        ++mchItemPosition;
-        LoadTextData();
+        //Scroll by 10
+        if (mchItemPosition < AutoItemAllow-20)
+        {
+            mchItemPosition = mchItemPosition+10;
+            LoadTextData();
+        }
+        else
+        {
+            mchItemPosition = AutoItemAllow-10;
+            LoadTextData();
+        }
+    }
+    else
+    {
+        //Scroll by 1
+        if (mchItemPosition < AutoItemAllow-10)
+        {
+            ++mchItemPosition;
+            LoadTextData();
+        }
     }
 }
 

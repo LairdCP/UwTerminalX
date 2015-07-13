@@ -36,7 +36,7 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define AutoItemAllow 40        //Number of items in the list to allow
+#define AutoItemAllow 100        //Number of items in the list to allow
 #define SaveFilesWithUTF8Header //Define to save files with a UTF8 BOM header
 
 /******************************************************************************/
