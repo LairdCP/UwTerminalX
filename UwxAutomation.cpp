@@ -144,6 +144,7 @@ UwxAutomation::on_btn_Load_clicked(
             if (i > AutoItemAllow)
             {
                 //Maximum lines reached, stop processing
+                --i;
                 break;
             }
         }
@@ -151,7 +152,7 @@ UwxAutomation::on_btn_Load_clicked(
         //Close the file handle
         file.close();
 
-        //
+        //Show number of lines loaded
         msbStatusBar->showMessage(QString(strLoadFile).append(": ").append(QString::number(i)).append(" line").append((i == 1 ? " loaded." : "s loaded.")));
 
         //Update the text boxes
