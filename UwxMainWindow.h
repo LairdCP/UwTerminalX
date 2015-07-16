@@ -56,6 +56,7 @@
 #include <QJsonObject>
 #include <QUrl>
 #include <QFileInfo>
+#include <QHostInfo>
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
 #include "LrdLogger.h"
@@ -80,7 +81,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.00" //Version string
+#define UwVersion "1.01" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -387,6 +388,9 @@ private slots:
     on_check_SkipDL_stateChanged(
         int
         );
+    bool
+    LookupDNSName(
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -489,6 +493,7 @@ private:
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
     QString gstrLastFilename; //Holds the last filename of the last selected file
+    QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
 #ifdef UseSSL
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif

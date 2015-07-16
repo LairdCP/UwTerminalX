@@ -653,6 +653,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         OpenDevice();
     }
 
+    //Set resolved hostname to be empty
+    gstrResolvedServer = "";
+
 #ifdef UseSSL
     //Load SSL certificate
     QFile certFile(":/certificates/UwTerminalX.crt");
@@ -1149,7 +1152,10 @@ MainWindow::readData(
                     if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //Check if online XCompiler supports this device
-                        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        if (LookupDNSName() == true)
+                        {
+                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                        }
                     }
                     else
                     {
@@ -1195,20 +1201,29 @@ MainWindow::readData(
                     if (ui->check_OnlineXComp->isChecked() == true)
                     {
                         //XCompiler not found, try Online XCompiler
-                        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
-                        ui->statusBar->showMessage("Device support request sent...", 2000);
+                        if (LookupDNSName() == true)
+                        {
+                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                            ui->statusBar->showMessage("Device support request sent...", 2000);
 
-                        if (gchTermMode == MODE_COMPILE)
-                        {
-                            gchTermMode = MODE_SERVER_COMPILE;
+                            if (gchTermMode == MODE_COMPILE)
+                            {
+                                gchTermMode = MODE_SERVER_COMPILE;
+                            }
+                            else if (gchTermMode == MODE_COMPILE_LOAD)
+                            {
+                                gchTermMode = MODE_SERVER_COMPILE_LOAD;
+                            }
+                            else if (gchTermMode == MODE_COMPILE_LOAD_RUN)
+                            {
+                                gchTermMode = MODE_SERVER_COMPILE_LOAD_RUN;
+                            }
                         }
-                        else if (gchTermMode == MODE_COMPILE_LOAD)
+                        else
                         {
-                            gchTermMode = MODE_SERVER_COMPILE_LOAD;
-                        }
-                        else if (gchTermMode == MODE_COMPILE_LOAD_RUN)
-                        {
-                            gchTermMode = MODE_SERVER_COMPILE_LOAD_RUN;
+                            //DNS resolution failed
+                            gbTermBusy = false;
+                            ui->btn_Cancel->setEnabled(false);
                         }
                     }
                     else
@@ -3444,19 +3459,110 @@ MainWindow::replyFinished(
                         gchTermMode2 = MODE_SERVER_COMPILE;
 
                         //Compile application
-                        QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/xcompile.php?JSON=1")));
-                        QByteArray baPostData;
-                        baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
-                        baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
-
-                        //Add file data
-                        QFile file(gstrTermFilename);
-                        QByteArray tmpData;
-                        if (!file.open(QIODevice::ReadOnly))
+                        if (LookupDNSName() == true)
                         {
-                            //Failed to open file selected for download
-                            nrReply->deleteLater();
-                            gtmrDownloadTimeoutTimer.stop();
+                            QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1")));
+                            QByteArray baPostData;
+                            baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
+                            baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
+
+                            //Add file data
+                            QFile file(gstrTermFilename);
+                            QByteArray tmpData;
+                            if (!file.open(QIODevice::ReadOnly))
+                            {
+                                //Failed to open file selected for download
+                                nrReply->deleteLater();
+                                gtmrDownloadTimeoutTimer.stop();
+                                gstrHexData = "";
+                                if (!gtmrTextUpdateTimer.isActive())
+                                {
+                                    gtmrTextUpdateTimer.start();
+                                }
+                                gchTermMode = 0;
+                                gchTermMode2 = 0;
+                                gbTermBusy = false;
+                                ui->btn_Cancel->setEnabled(false);
+
+                                QString strMessage = QString("Failed to open file for reading: ").append(gstrTermBusyData);
+                                gpmErrorForm->show();
+                                gpmErrorForm->SetMessage(&strMessage);
+
+                                return;
+                            }
+
+                            while (!file.atEnd())
+                            {
+                                tmpData.append(file.readAll());
+                            }
+                            file.close();
+
+                            QFileInfo fiFileInfo(gstrTermFilename);
+
+                            //Include other files
+                            QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})\"(.*?)\"");
+                            reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
+                            bool bChangedState = true;
+                            while (bChangedState == true)
+                            {
+                                bChangedState = false;
+                                QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
+                                while (rx1match.hasNext())
+                                {
+                                    //Found an include, add the file data
+                                    QRegularExpressionMatch ThisMatch = rx1match.next();
+
+                                    file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/")));
+                                    if (!file.open(QIODevice::ReadOnly))
+                                    {
+                                        //Failed to open include file
+                                        nrReply->deleteLater();
+                                        gtmrDownloadTimeoutTimer.stop();
+                                        gstrHexData = "";
+                                        if (!gtmrTextUpdateTimer.isActive())
+                                        {
+                                            gtmrTextUpdateTimer.start();
+                                        }
+                                        gchTermMode = 0;
+                                        gchTermMode2 = 0;
+                                        gbTermBusy = false;
+                                        ui->btn_Cancel->setEnabled(false);
+
+                                        QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/"));
+                                        gpmErrorForm->show();
+                                        gpmErrorForm->SetMessage(&strMessage);
+                                        return;
+                                    }
+
+                                    bChangedState = true;
+
+                                    QByteArray tmpData2;
+                                    while (!file.atEnd())
+                                    {
+                                        tmpData2.append(file.readAll());
+                                    }
+                                    file.close();
+                                    unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
+                                    tmpData.remove(i, ThisMatch.captured(0).length());
+                                    tmpData.insert(i, "\r\n");
+                                    tmpData.insert(i+2, tmpData2);
+                                }
+                            }
+
+                            //Remove all extra #include statments
+                            tmpData.replace("#include", "");
+
+                            //Append the data to the POST request
+                            baPostData.append(tmpData);
+                            baPostData.append("\r\n-----------------------------17192614014659--\r\n");
+                            nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
+                            nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
+                            gnmManager->post(nrThisReq, baPostData);
+                            ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
+                        }
+                        else
+                        {
+                            //DNS resolution failed
                             gstrHexData = "";
                             if (!gtmrTextUpdateTimer.isActive())
                             {
@@ -3466,82 +3572,7 @@ MainWindow::replyFinished(
                             gchTermMode2 = 0;
                             gbTermBusy = false;
                             ui->btn_Cancel->setEnabled(false);
-
-                            QString strMessage = QString("Failed to open file for reading: ").append(gstrTermBusyData);
-                            gpmErrorForm->show();
-                            gpmErrorForm->SetMessage(&strMessage);
-
-                            return;
                         }
-
-                        while (!file.atEnd())
-                        {
-                            tmpData.append(file.readAll());
-                        }
-                        file.close();
-
-                        QFileInfo fiFileInfo(gstrTermFilename);
-
-                        //Include other files
-                        QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})\"(.*?)\"");
-                        reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
-                        bool bChangedState = true;
-                        while (bChangedState == true)
-                        {
-                            bChangedState = false;
-                            QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
-                            while (rx1match.hasNext())
-                            {
-                                //Found an include, add the file data
-                                QRegularExpressionMatch ThisMatch = rx1match.next();
-
-                                file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/")));
-                                if (!file.open(QIODevice::ReadOnly))
-                                {
-                                    //Failed to open include file
-                                    nrReply->deleteLater();
-                                    gtmrDownloadTimeoutTimer.stop();
-                                    gstrHexData = "";
-                                    if (!gtmrTextUpdateTimer.isActive())
-                                    {
-                                        gtmrTextUpdateTimer.start();
-                                    }
-                                    gchTermMode = 0;
-                                    gchTermMode2 = 0;
-                                    gbTermBusy = false;
-                                    ui->btn_Cancel->setEnabled(false);
-
-                                    QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/"));
-                                    gpmErrorForm->show();
-                                    gpmErrorForm->SetMessage(&strMessage);
-                                    return;
-                                }
-
-                                bChangedState = true;
-
-                                QByteArray tmpData2;
-                                while (!file.atEnd())
-                                {
-                                    tmpData2.append(file.readAll());
-                                }
-                                file.close();
-                                unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
-                                tmpData.remove(i, ThisMatch.captured(0).length());
-                                tmpData.insert(i, "\r\n");
-                                tmpData.insert(i+2, tmpData2);
-                            }
-                        }
-
-                        //Remove all extra #include statments
-                        tmpData.replace("#include", "");
-
-                        //Append the data to the POST request
-                        baPostData.append(tmpData);
-                        baPostData.append("\r\n-----------------------------17192614014659--\r\n");
-                        nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
-                        nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
-                        gnmManager->post(nrThisReq, baPostData);
-                        ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
 
                         //Stop the module timeout timer
                         gtmrDownloadTimeoutTimer.stop();
@@ -4125,17 +4156,20 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        gbTermBusy = true;
-        gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
-        gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
-        ui->btn_Cancel->setEnabled(true);
-        ui->btn_ErrorCodeUpdate->setEnabled(false);
-        ui->btn_ErrorCodeDownload->setEnabled(false);
-        ui->btn_UwTerminalXUpdate->setEnabled(false);
-        ui->btn_ModuleFirmware->setEnabled(false);
-        ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
-        ui->statusBar->showMessage("Checking for Error Code file updates...");
+        if (LookupDNSName() == true)
+        {
+            gbTermBusy = true;
+            gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
+            gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
+            ui->btn_Cancel->setEnabled(true);
+            ui->btn_ErrorCodeUpdate->setEnabled(false);
+            ui->btn_ErrorCodeDownload->setEnabled(false);
+            ui->btn_UwTerminalXUpdate->setEnabled(false);
+            ui->btn_ModuleFirmware->setEnabled(false);
+            ui->btn_OnlineXComp_Supported->setEnabled(false);
+            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+            ui->statusBar->showMessage("Checking for Error Code file updates...");
+        }
     }
 }
 
@@ -4149,17 +4183,20 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        gbTermBusy = true;
-        gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
-        gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
-        ui->btn_Cancel->setEnabled(true);
-        ui->btn_ErrorCodeUpdate->setEnabled(false);
-        ui->btn_ErrorCodeDownload->setEnabled(false);
-        ui->btn_UwTerminalXUpdate->setEnabled(false);
-        ui->btn_ModuleFirmware->setEnabled(false);
-        ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
-        ui->statusBar->showMessage("Checking for UwTerminalX updates...");
+        if (LookupDNSName() == true)
+        {
+            gbTermBusy = true;
+            gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
+            gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
+            ui->btn_Cancel->setEnabled(true);
+            ui->btn_ErrorCodeUpdate->setEnabled(false);
+            ui->btn_ErrorCodeDownload->setEnabled(false);
+            ui->btn_UwTerminalXUpdate->setEnabled(false);
+            ui->btn_ModuleFirmware->setEnabled(false);
+            ui->btn_OnlineXComp_Supported->setEnabled(false);
+            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
+            ui->statusBar->showMessage("Checking for UwTerminalX updates...");
+        }
     }
 }
 
@@ -4184,17 +4221,20 @@ MainWindow::on_btn_ErrorCodeDownload_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        gbTermBusy = true;
-        gchTermMode = MODE_UPDATE_ERROR_CODE;
-        gchTermMode2 = MODE_UPDATE_ERROR_CODE;
-        ui->btn_Cancel->setEnabled(true);
-        ui->btn_ErrorCodeUpdate->setEnabled(false);
-        ui->btn_ErrorCodeDownload->setEnabled(false);
-        ui->btn_UwTerminalXUpdate->setEnabled(false);
-        ui->btn_ModuleFirmware->setEnabled(false);
-        ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/codes.csv"))));
-        ui->statusBar->showMessage("Downloading Error Code file...");
+        if (LookupDNSName() == true)
+        {
+            gbTermBusy = true;
+            gchTermMode = MODE_UPDATE_ERROR_CODE;
+            gchTermMode2 = MODE_UPDATE_ERROR_CODE;
+            ui->btn_Cancel->setEnabled(true);
+            ui->btn_ErrorCodeUpdate->setEnabled(false);
+            ui->btn_ErrorCodeDownload->setEnabled(false);
+            ui->btn_UwTerminalXUpdate->setEnabled(false);
+            ui->btn_ModuleFirmware->setEnabled(false);
+            ui->btn_OnlineXComp_Supported->setEnabled(false);
+            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/codes.csv"))));
+            ui->statusBar->showMessage("Downloading Error Code file...");
+        }
     }
 }
 
@@ -4390,17 +4430,20 @@ MainWindow::on_btn_ModuleFirmware_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        gbTermBusy = true;
-        gchTermMode = MODE_CHECK_FIRMWARE_VERSIONS;
-        gchTermMode2 = MODE_CHECK_FIRMWARE_VERSIONS;
-        ui->btn_Cancel->setEnabled(true);
-        ui->btn_ErrorCodeUpdate->setEnabled(false);
-        ui->btn_ErrorCodeDownload->setEnabled(false);
-        ui->btn_UwTerminalXUpdate->setEnabled(false);
-        ui->btn_ModuleFirmware->setEnabled(false);
-        ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/firmwares.php"))));
-        ui->statusBar->showMessage("Checking for latest firmware versions...");
+        if (LookupDNSName() == true)
+        {
+            gbTermBusy = true;
+            gchTermMode = MODE_CHECK_FIRMWARE_VERSIONS;
+            gchTermMode2 = MODE_CHECK_FIRMWARE_VERSIONS;
+            ui->btn_Cancel->setEnabled(true);
+            ui->btn_ErrorCodeUpdate->setEnabled(false);
+            ui->btn_ErrorCodeDownload->setEnabled(false);
+            ui->btn_UwTerminalXUpdate->setEnabled(false);
+            ui->btn_ModuleFirmware->setEnabled(false);
+            ui->btn_OnlineXComp_Supported->setEnabled(false);
+            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/firmwares.php"))));
+            ui->statusBar->showMessage("Checking for latest firmware versions...");
+        }
     }
 }
 
@@ -4717,17 +4760,20 @@ MainWindow::on_btn_OnlineXComp_Supported_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        gbTermBusy = true;
-        gchTermMode = MODE_CHECK_FIRMWARE_SUPPORT;
-        gchTermMode2 = MODE_CHECK_FIRMWARE_SUPPORT;
-        ui->btn_Cancel->setEnabled(true);
-        ui->btn_ErrorCodeUpdate->setEnabled(false);
-        ui->btn_ErrorCodeDownload->setEnabled(false);
-        ui->btn_UwTerminalXUpdate->setEnabled(false);
-        ui->btn_ModuleFirmware->setEnabled(false);
-        ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("/compiler_list.php"))));
-        ui->statusBar->showMessage("Checking for supported XCompilers...");
+        if (LookupDNSName() == true)
+        {
+            gbTermBusy = true;
+            gchTermMode = MODE_CHECK_FIRMWARE_SUPPORT;
+            gchTermMode2 = MODE_CHECK_FIRMWARE_SUPPORT;
+            ui->btn_Cancel->setEnabled(true);
+            ui->btn_ErrorCodeUpdate->setEnabled(false);
+            ui->btn_ErrorCodeDownload->setEnabled(false);
+            ui->btn_UwTerminalXUpdate->setEnabled(false);
+            ui->btn_ModuleFirmware->setEnabled(false);
+            ui->btn_OnlineXComp_Supported->setEnabled(false);
+            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/compiler_list.php"))));
+            ui->statusBar->showMessage("Checking for supported XCompilers...");
+        }
     }
 }
 
@@ -4740,6 +4786,47 @@ MainWindow::on_check_SkipDL_stateChanged(
 {
     //Skip download option changed
     gpTermSettings->setValue("SkipDownloadDisplay", (ui->check_SkipDL->isChecked() == true ? 1 : 0));
+}
+
+//=============================================================================
+//=============================================================================
+bool
+MainWindow::LookupDNSName(
+    )
+{
+    //Function to lookup hostname of the cloud XCompile server (a workaround for a bug causing a segmentation fault on Linux)
+    if (gstrResolvedServer == "")
+    {
+        //Name not yet resolved
+        QHostInfo hiIP = QHostInfo::fromName(gpTermSettings->value("OnlineXCompServer", ServerHost).toString());
+        if (hiIP.error() == QHostInfo::NoError)
+        {
+            //Resolved hostname
+            if (hiIP.addresses().isEmpty())
+            {
+                //No results returned
+                QString strMessage = QString("Failed to retrieve an IP address for the cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): No IP address is listed for this host.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+                return false;
+            }
+            else
+            {
+                //Found the host
+                gstrResolvedServer = hiIP.addresses().first().toString();
+                return true;
+            }
+        }
+        else
+        {
+            //Failed to resolve hostname
+            QString strMessage = QString("Failed to resolve cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): ").append(hiIP.errorString());
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+            return false;
+        }
+    }
+    return true;
 }
 
 /******************************************************************************/
