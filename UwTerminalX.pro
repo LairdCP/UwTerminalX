@@ -16,19 +16,22 @@ SOURCES += main.cpp\
     UwxMainWindow.cpp \
     UwxPopup.cpp \
     LrdLogger.cpp \
-    UwxAutomation.cpp
+    UwxAutomation.cpp \
+    UwxSpace.cpp
 
 HEADERS  += \
     LrdScrollEdit.h \
     UwxMainWindow.h \
     UwxPopup.h \
     LrdLogger.h \
-    UwxAutomation.h
+    UwxAutomation.h \
+    UwxSpace.h
 
 FORMS    += \
     UwxPopup.ui \
     UwxMainWindow.ui \
-    UwxAutomation.ui
+    UwxAutomation.ui \
+    UwxSpace.ui
 
 RESOURCES += \
     UwTerminalXImages.qrc

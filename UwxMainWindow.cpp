@@ -55,6 +55,7 @@
 /******************************************************************************/
 PopupMessage *gpmErrorForm; //Error message form
 UwxAutomation *guaAutomationForm; //Automation form
+UwxSpace *gusSpaceForm; //Space used form
 
 /******************************************************************************/
 // Local Functions or Private Members
@@ -250,6 +251,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Initialise automation popup
     guaAutomationForm = new UwxAutomation;
 
+    //Initialise space used form
+    gusSpaceForm = new UwxSpace;
+
     //Populate the list of devices
     RefreshSerialDevices();
 
@@ -284,6 +288,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSMenu2->addAction(new QAction("Dir", this)); //AT+DIR
     gpSMenu2->addAction(new QAction("Run", this));
     gpSMenu3 = gpSMenu1->addMenu("Data");
+    gpSMenu3->addAction(new QAction("Space Usage (Data)", this));
+    gpSMenu3->addAction(new QAction("Space Usage (FAT)", this));
     gpSMenu3->addAction(new QAction("Data File +", this));
     gpSMenu3->addAction(new QAction("Erase File +", this));
     gpSMenu3->addAction(new QAction("Multi Data File +", this)); //Downloads more than 1 data file
@@ -759,6 +765,7 @@ MainWindow::~MainWindow(){
     delete gpGreenCirclePixmap;
     delete gpmErrorForm;
     delete guaAutomationForm;
+    delete gusSpaceForm;
     delete gnmManager;
     delete ui;
 }
@@ -1401,6 +1408,27 @@ MainWindow::readData(
                     RunApplication();
                 }
             }
+            else if (gchTermMode2 == MODE_SPACE_USAGE)
+            {
+                //Response to space used on module
+                QRegularExpression reTempRE("10\t(6|7)\t([0-9]+),([0-9]+),([0-9]+)\r");
+                QRegularExpressionMatch remTempREM = reTempRE.match(baOrigData);
+                if (remTempREM.hasMatch() == true)
+                {
+                    //Got the device usage information
+                    bool ok; //Used to store/ignore if Qt string-to-ULong works, we already check in the regex itself so it'll only fail from a PC problem like running out of memory
+                    gusSpaceForm->SetupBars(remTempREM.captured(2).toULong(&ok, 10), remTempREM.captured(3).toULong(&ok, 10), remTempREM.captured(4).toULong(&ok, 10));
+                    gusSpaceForm->SetupMode((remTempREM.captured(1) == "6" ? false : true));
+                    gusSpaceForm->show();
+                }
+                else
+                {
+                    //Invalid data received.
+                    QString strMessage = tr("Error whilst getting module space usage information from device.\n\nReceived: ").append(QString::fromUtf8(baOrigData));
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
             ++gchTermMode2;
 
             if (gchTermMode2 > gchTermMode)
@@ -1830,6 +1858,37 @@ MainWindow::triggered
     {
         //Select all text
         ui->text_TermEditData->selectAll();
+    }
+    else if (qaAction->text() == "Space Usage (Data)" || qaAction->text() == "Space Usage (FAT)")
+    {
+        //Get the space usage information from the module
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+        {
+            //Not currently busy
+            QByteArray baTmpBA = QString("at i ").append((qaAction->text() == "Space Usage (Data)" ? "6" : "7")).toUtf8();
+            gspSerialPort.write(baTmpBA);
+            gintQueuedTXBytes += baTmpBA.size();
+            gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            DoLineEnd();
+
+            //We're now busy
+            gbTermBusy = true;
+            gchTermMode = MODE_SPACE_USAGE;
+            gchTermMode2 = MODE_SPACE_USAGE;
+            gchTermBusyLines = 0;
+            gstrTermBusyData = tr("");
+            ui->btn_Cancel->setEnabled(true);
+
+            //Start the timeout timer (this should be adapted to use a different timer with a different error message in your own modifications, and runs if the module doesn't respond)
+            gtmrDownloadTimeoutTimer.start();
+
+            //Update display buffer
+            gbaDisplayBuffer.append(baTmpBA);
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+        }
     }
 }
 
@@ -2938,6 +2997,19 @@ MainWindow::on_btn_Cancel_clicked(
             //Cancel network request
 #pragma warning("Cannot currently cancel network request")
             return;
+        }
+        else if (gchTermMode == MODE_SPACE_USAGE)
+        {
+            //Cancel request to get module space usage information
+            gtmrDownloadTimeoutTimer.stop();
+            gbaDisplayBuffer.append("\n-- Space usage information request cancelled --\n");
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+            gchTermMode = 0;
+            gchTermMode2 = 0;
+            gbTermBusy = false;
         }
     }
 
