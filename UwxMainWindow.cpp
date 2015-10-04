@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
 ** Copyright (C) 2015 Laird
 **
 ** Project: UwTerminalX
@@ -1143,10 +1143,12 @@ MainWindow::readData(
         if (gchTermBusyLines == 4)
         {
             //Enough data, check it.
-            QRegularExpression reTempRE("\n10	0	([a-zA-Z0-9]{2,14})\r\n00\r\n10	13	([a-zA-Z0-9]{4}) ([a-zA-Z0-9]{4}) \r\n00\r");
+            QRegularExpression reTempRE("\n10	0	(.{2,32}?)\r\n00\r\n10	13	([a-zA-Z0-9]{4}) ([a-zA-Z0-9]{4}) \r\n00\r");
             QRegularExpressionMatch remTempREM = reTempRE.match(gstrTermBusyData);
             if (remTempREM.hasMatch() == true)
             {
+                //Extract device name
+                QString strDevName = AtiToXCompName(remTempREM.captured(1));
                 if (gchTermMode == MODE_SERVER_COMPILE || gchTermMode == MODE_SERVER_COMPILE_LOAD || gchTermMode == MODE_SERVER_COMPILE_LOAD_RUN)
                 {
                     if (ui->check_OnlineXComp->isChecked() == true)
@@ -1154,7 +1156,7 @@ MainWindow::readData(
                         //Check if online XCompiler supports this device
                         if (LookupDNSName() == true)
                         {
-                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                         }
                     }
                     else
@@ -1170,11 +1172,11 @@ MainWindow::readData(
                     //Matched and split, now start the compilation!
                     gtmrDownloadTimeoutTimer.stop();
 
-                    //
+                    //Split the file path up
                     QList<QString> lstFI = SplitFilePath(gstrTermFilename);
 #ifdef _WIN32
                     //Windows
-                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                    if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName).append("/") : "")).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                     {
                         //XCompiler found! - First run the Pre XCompile program if enabled and it exists
                         if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
@@ -1183,10 +1185,10 @@ MainWindow::readData(
                             RunPrePostExecutable(gstrTermFilename);
                         }
                         //Windows
-                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8).append("/") : "")).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                        gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName).append("/") : "")).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
                         //gprocCompileProcess.waitForFinished(-1);
                     }
-                    else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                    else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                     {
                         //XCompiler found in directory with sB file
                         if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
@@ -1194,7 +1196,7 @@ MainWindow::readData(
                             //Run Pre-XComp program
                             RunPrePostExecutable(gstrTermFilename);
                         }
-                        gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                        gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
                     }
                     else
 #endif
@@ -1203,7 +1205,7 @@ MainWindow::readData(
                         //XCompiler not found, try Online XCompiler
                         if (LookupDNSName() == true)
                         {
-                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(remTempREM.captured(1).left(8)).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                             ui->statusBar->showMessage("Device support request sent...", 2000);
 
                             if (gchTermMode == MODE_COMPILE)
@@ -1229,11 +1231,11 @@ MainWindow::readData(
                     else
                     {
                         //XCompiler not found, Online XCompiler disabled
-                        QString strMessage = tr("Error during XCompile:\nXCompiler \"XComp_").append(remTempREM.captured(1).left(8)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))
+                        QString strMessage = tr("Error during XCompile:\nXCompiler \"XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))
 #ifdef _WIN32
                         .append(".exe")
 #endif
-                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? remTempREM.captured(1).left(8) : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
+                        .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
 #pragma warning("Add full file path for XCompilers?")
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
@@ -4827,6 +4829,36 @@ MainWindow::LookupDNSName(
         }
     }
     return true;
+}
+
+//=============================================================================
+//=============================================================================
+QString
+MainWindow::AtiToXCompName(
+    QString strAtiResp
+    )
+{
+    //Function to extract XCompiler name from ATI response
+    if (strAtiResp.length() > MaxDevNameSize)
+    {
+        //Shorten device name
+        strAtiResp = strAtiResp.left(MaxDevNameSize);
+    }
+
+    //Only allow a-z, A-Z, 0-9 and underscores in device name
+    int iI = 0;
+    while (iI < strAtiResp.length())
+    {
+        //Check each character
+        char cTmpC = strAtiResp.at(iI).toLatin1();
+        if (!(cTmpC > 47 && cTmpC < 58) && !(cTmpC > 64 && cTmpC < 91) && !(cTmpC > 96 && cTmpC < 123) && cTmpC != 95)
+        {
+            //Replace non-alphanumeric character with an underscore
+            strAtiResp[iI] = '_';
+        }
+        ++iI;
+    }
+    return strAtiResp;
 }
 
 /******************************************************************************/
