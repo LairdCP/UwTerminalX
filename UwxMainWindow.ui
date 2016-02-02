@@ -914,7 +914,7 @@
               <property name="maximumSize">
                <size>
                 <width>500</width>
-                <height>300</height>
+                <height>16777215</height>
                </size>
               </property>
               <property name="title">
@@ -1043,8 +1043,8 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>30</width>
-                     <height>28</height>
+                     <width>40</width>
+                     <height>30</height>
                     </size>
                    </property>
                    <property name="plainText">
@@ -2184,7 +2184,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
+                         <width>100</width>
                          <height>50</height>
                         </rect>
                        </property>
