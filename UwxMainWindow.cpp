@@ -781,6 +781,9 @@ MainWindow::closeEvent(
         //Close automation form
         guaAutomationForm->close();
     }
+
+    //Close application
+    QApplication::quit();
 }
 
 //=============================================================================
