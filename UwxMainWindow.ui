@@ -2094,7 +2094,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </font>
                    </property>
                    <property name="text">
-                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below.</string>
+                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below:</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -2102,23 +2102,63 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btn_BL600Apps">
-                   <property name="text">
-                    <string>View BL600 Github Page</string>
+                  <layout class="QHBoxLayout" name="horizontalLayout_15">
+                   <property name="spacing">
+                    <number>2</number>
                    </property>
-                  </widget>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPushButton" name="btn_BL600Apps">
+                     <property name="text">
+                      <string>BL600</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_BL620Apps">
+                     <property name="text">
+                      <string>BL620</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_BT900Apps">
+                     <property name="text">
+                      <string>BT900</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_RM186Apps">
+                     <property name="text">
+                      <string>RM186</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_RM191Apps">
+                     <property name="text">
+                      <string>RM191</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btn_BL620Apps">
-                   <property name="text">
-                    <string>View BL620 Github Page</string>
+                  <widget class="QLabel" name="label_22">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
+                    </font>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_BT900Apps">
                    <property name="text">
-                    <string>View BT900 Github Page</string>
+                    <string>Additional information can also be found on the Laird Bluetooth modules website:</string>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -2161,7 +2201,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>50</height>
+                        <height>60</height>
                        </size>
                       </property>
                       <property name="maximumSize">
@@ -2184,8 +2224,8 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>100</width>
-                         <height>50</height>
+                         <width>186</width>
+                         <height>82</height>
                         </rect>
                        </property>
                        <property name="minimumSize">
@@ -2255,6 +2295,36 @@ You can also use the button below to check if there is a newer version of UwTerm
                           </property>
                          </widget>
                         </item>
+                        <item>
+                         <widget class="QLabel" name="label_RM191Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>RM186:</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_RM186Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>RM191::</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
                        </layout>
                       </widget>
                      </widget>
@@ -2266,21 +2336,21 @@ You can also use the button below to check if there is a newer version of UwTerm
                       </property>
                      </widget>
                     </item>
+                    <item>
+                     <spacer name="verticalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>20</width>
+                        <height>40</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
                    </layout>
                   </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_13">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
                  </item>
                 </layout>
                </item>
@@ -2765,9 +2835,6 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>btn_OpenLog</tabstop>
   <tabstop>btn_OpenConfig</tabstop>
   <tabstop>btn_OpenDeviceFile</tabstop>
-  <tabstop>btn_BL600Apps</tabstop>
-  <tabstop>btn_BL620Apps</tabstop>
-  <tabstop>btn_BT900Apps</tabstop>
   <tabstop>btn_LairdModules</tabstop>
   <tabstop>scrollArea</tabstop>
   <tabstop>btn_ModuleFirmware</tabstop>

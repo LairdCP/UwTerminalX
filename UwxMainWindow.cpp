@@ -1,5 +1,5 @@
 ﻿/******************************************************************************
-** Copyright (C) 2015 Laird
+** Copyright (C) 2015-2016 Laird
 **
 ** Project: UwTerminalX
 **
@@ -373,13 +373,29 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString("Port3Data"), "8");
         gpPredefinedDevice->setValue(QString("Port3Flow"), "0");
 
-        //
+        //WT-100
         gpPredefinedDevice->setValue(QString("Port4Name"), "WT-100");
         gpPredefinedDevice->setValue(QString("Port4Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port4Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port4Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port4Data"), "8");
         gpPredefinedDevice->setValue(QString("Port4Flow"), "1");
+
+        //RM186
+        gpPredefinedDevice->setValue(QString("Port5Name"), "RM186");
+        gpPredefinedDevice->setValue(QString("Port5Baud"), "115200");
+        gpPredefinedDevice->setValue(QString("Port5Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port5Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port5Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port5Flow"), "1");
+
+        //RM191
+        gpPredefinedDevice->setValue(QString("Port6Name"), "RM191");
+        gpPredefinedDevice->setValue(QString("Port6Baud"), "115200");
+        gpPredefinedDevice->setValue(QString("Port6Parity"), "0");
+        gpPredefinedDevice->setValue(QString("Port6Stop"), "1");
+        gpPredefinedDevice->setValue(QString("Port6Data"), "8");
+        gpPredefinedDevice->setValue(QString("Port6Flow"), "1");
 
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
@@ -3999,13 +4015,14 @@ MainWindow::replyFinished(
                 //Decoded JSON
                 QJsonObject joJsonObject = jdJsonData.object();
 
-                //Server responded with error
                 if (joJsonObject["Result"].toString() == "1")
                 {
-                    //Outdated version
+                    //Update version list
                     ui->label_BL600Firmware->setText(QString("BL600: ").append(joJsonObject["BL600r2"].toString()));
                     ui->label_BL620Firmware->setText(QString("BL620: ").append(joJsonObject["BL620"].toString()));
                     ui->label_BT900Firmware->setText(QString("BT900: ").append(joJsonObject["BT900"].toString()));
+                    ui->label_RM186Firmware->setText(QString("RM186: ").append(joJsonObject["RM186"].toString()));
+                    ui->label_RM191Firmware->setText(QString("RM191: ").append(joJsonObject["RM191"].toString()));
                     QPalette palBGColour = QPalette();
                     palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
                     palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
@@ -4013,6 +4030,8 @@ MainWindow::replyFinished(
                     ui->label_BL600Firmware->setPalette(palBGColour);
                     ui->label_BL620Firmware->setPalette(palBGColour);
                     ui->label_BT900Firmware->setPalette(palBGColour);
+                    ui->label_RM186Firmware->setPalette(palBGColour);
+                    ui->label_RM191Firmware->setPalette(palBGColour);
                 }
                 else
                 {
@@ -4149,6 +4168,27 @@ MainWindow::on_btn_BT900Apps_clicked(
 {
     //BT900 Applications button clicked
     QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_RM186Apps_clicked(
+    )
+{
+    //RM186 Applications button clicked
+    bool bob = QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
+    qDebug() << "Bob is " << bob;
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_RM191Apps_clicked(
+    )
+{
+    //RM191 Applications button clicked
+    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM191-Applications"));
 }
 
 //=============================================================================

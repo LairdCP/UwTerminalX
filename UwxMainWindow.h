@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015 Laird
+** Copyright (C) 2015-2016 Laird
 **
 ** Project: UwTerminalX
 **
@@ -81,7 +81,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.03" //Version string
+#define UwVersion "1.03b" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -295,6 +295,12 @@ private slots:
         );
     void
     on_btn_BT900Apps_clicked(
+        );
+    void
+    on_btn_RM186Apps_clicked(
+        );
+    void
+    on_btn_RM191Apps_clicked(
         );
     void
     on_btn_ErrorCodeUpdate_clicked(
