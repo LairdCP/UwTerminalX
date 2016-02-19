@@ -27,6 +27,9 @@
 #include "UwxMainWindow.h"
 #include <QApplication>
 #include <QCommandLineParser>
+#if TARGET_OS_MAC
+#include <QStyleFactory>
+#endif
 
 //=============================================================================
 //=============================================================================
@@ -37,6 +40,10 @@ main(
     )
 {    
     QApplication a(argc, argv);
+#if TARGET_OS_MAC
+    //Fix for Mac to stop bad styling
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
+#endif
     MainWindow w;
     w.show();
 
