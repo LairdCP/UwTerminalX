@@ -4177,8 +4177,7 @@ MainWindow::on_btn_RM186Apps_clicked(
     )
 {
     //RM186 Applications button clicked
-    bool bob = QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
-    qDebug() << "Bob is " << bob;
+    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
 }
 
 //=============================================================================
