@@ -4142,57 +4142,6 @@ MainWindow::SplitFilePath(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_BL600Apps_clicked(
-    )
-{
-    //BL600 Applications button clicked
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL600-Applications"));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_BL620Apps_clicked
-    (
-    )
-{
-    //BL620 Applications button clicked
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL620-Applications"));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_BT900Apps_clicked(
-    )
-{
-    //BT900 Applications button clicked
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_RM186Apps_clicked(
-    )
-{
-    //RM186 Applications button clicked
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_RM191Apps_clicked(
-    )
-{
-    //RM191 Applications button clicked
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM191-Applications"));
-}
-
-//=============================================================================
-//=============================================================================
-void
 MainWindow::on_btn_ErrorCodeUpdate_clicked(
     )
 {
@@ -4447,26 +4396,6 @@ MainWindow::on_btn_SaveDevice_clicked(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_OpenLog_clicked(
-    )
-{
-    //Opens the UwTerminalX log file
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->edit_LogFile->text()).absoluteFilePath()));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_OpenConfig_clicked(
-    )
-{
-    //Opens the UwTerminalX configuration file
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("UwTerminalX.ini").absoluteFilePath()));
-}
-
-//=============================================================================
-//=============================================================================
-void
 MainWindow::on_btn_ModuleFirmware_clicked(
     )
 {
@@ -4494,16 +4423,6 @@ MainWindow::on_btn_ModuleFirmware_clicked(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_btn_LairdModules_clicked(
-    )
-{
-    //Opens the Laird Bluetooh modules page
-    QDesktopServices::openUrl(QUrl("http://www.lairdtech.com/products/category/741"));
-}
-
-//=============================================================================
-//=============================================================================
-void
 MainWindow::ContextMenuClosed(
     )
 {
@@ -4525,16 +4444,6 @@ MainWindow::event(
         ui->text_TermEditData->setFocus();
     }
     return QMainWindow::event(evtEvent);
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_OpenDeviceFile_clicked(
-    )
-{
-    //Opens the predefined devices configuration file
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Devices.ini").absoluteFilePath()));
 }
 
 //=============================================================================
@@ -4901,6 +4810,66 @@ MainWindow::AtiToXCompName(
         ++iI;
     }
     return strAtiResp;
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_WebBrowse_clicked(
+    )
+{
+    //
+    if (ui->combo_WebSelection->currentIndex() == 0)
+    {
+        //BL600 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL600-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 1)
+    {
+        //BL620 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL620-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 2)
+    {
+        //BT900 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 3)
+    {
+        //RM186 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 4)
+    {
+        //RM191 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM191-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 5)
+    {
+        //Laird Bluetooth modules page
+        QDesktopServices::openUrl(QUrl("http://www.lairdtech.com/products/category/741"));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_btn_UwTerminalXOpen_clicked()
+{
+    if (ui->combo_UwTerminalXSelection->currentIndex() == 0)
+    {
+        //Opens the UwTerminalX log file
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->edit_LogFile->text()).absoluteFilePath()));
+    }
+    else if (ui->combo_UwTerminalXSelection->currentIndex() == 1)
+    {
+        //Opens the UwTerminalX configuration file
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("UwTerminalX.ini").absoluteFilePath()));
+    }
+    else if (ui->combo_UwTerminalXSelection->currentIndex() == 2)
+    {
+        //Opens the predefined devices configuration file
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Devices.ini").absoluteFilePath()));
+    }
 }
 
 /******************************************************************************/

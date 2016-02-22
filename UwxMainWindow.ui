@@ -2005,25 +2005,68 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btn_OpenLog">
+                  <widget class="QLabel" name="label_25">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
                    <property name="text">
-                    <string>Open UwTerminalX Log file</string>
+                    <string>Use the selection below to open various UwTerminalX files.</string>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btn_OpenConfig">
-                   <property name="text">
-                    <string>Open UwTerminalX Configuration</string>
+                  <layout class="QHBoxLayout" name="horizontalLayout_16">
+                   <property name="spacing">
+                    <number>2</number>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_OpenDeviceFile">
-                   <property name="text">
-                    <string>Open UwTerminalX Devices file</string>
+                   <property name="bottomMargin">
+                    <number>0</number>
                    </property>
-                  </widget>
+                   <item>
+                    <widget class="QComboBox" name="combo_UwTerminalXSelection">
+                     <item>
+                      <property name="text">
+                       <string>Log file</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Configuration</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Devices file</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_UwTerminalXOpen">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>40</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Open</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                  <item>
                   <widget class="QLabel" name="label_UwTerminalXUpdate">
@@ -2094,7 +2137,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </font>
                    </property>
                    <property name="text">
-                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below:</string>
+                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below. Additional information can also be found on the Laird Bluetooth modules website.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -2106,41 +2149,56 @@ You can also use the button below to check if there is a newer version of UwTerm
                    <property name="spacing">
                     <number>2</number>
                    </property>
+                   <property name="sizeConstraint">
+                    <enum>QLayout::SetDefaultConstraint</enum>
+                   </property>
                    <property name="topMargin">
                     <number>0</number>
                    </property>
                    <item>
-                    <widget class="QPushButton" name="btn_BL600Apps">
-                     <property name="text">
-                      <string>BL600</string>
-                     </property>
+                    <widget class="QComboBox" name="combo_WebSelection">
+                     <item>
+                      <property name="text">
+                       <string>BL600</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>BL620</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>WT-100</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>RM186</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>RM191</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Laird Bluetooth Modules</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="btn_BL620Apps">
-                     <property name="text">
-                      <string>BL620</string>
+                    <widget class="QPushButton" name="btn_WebBrowse">
+                     <property name="minimumSize">
+                      <size>
+                       <width>64</width>
+                       <height>0</height>
+                      </size>
                      </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="btn_BT900Apps">
                      <property name="text">
-                      <string>BT900</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="btn_RM186Apps">
-                     <property name="text">
-                      <string>RM186</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="btn_RM191Apps">
-                     <property name="text">
-                      <string>RM191</string>
+                      <string>Browse</string>
                      </property>
                     </widget>
                    </item>
@@ -2155,7 +2213,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </font>
                    </property>
                    <property name="text">
-                    <string>Additional information can also be found on the Laird Bluetooth modules website:</string>
+                    <string>The current firmware version of Laird modules can be retrieved below.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -2163,18 +2221,17 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btn_LairdModules">
-                   <property name="text">
-                    <string>Laird Bluetooth Modules Site</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QGroupBox" name="groupBox_7">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>96</height>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="title">
@@ -2227,6 +2284,12 @@ You can also use the button below to check if there is a newer version of UwTerm
                          <width>186</width>
                          <height>82</height>
                         </rect>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
                        </property>
                        <property name="minimumSize">
                         <size>
@@ -2344,7 +2407,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                       <property name="sizeHint" stdset="0">
                        <size>
                         <width>20</width>
-                        <height>40</height>
+                        <height>5</height>
                        </size>
                       </property>
                      </spacer>
@@ -2832,10 +2895,6 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>btn_ErrorCodeDownload</tabstop>
   <tabstop>btn_UwTerminalXUpdate</tabstop>
   <tabstop>btn_GitHub</tabstop>
-  <tabstop>btn_OpenLog</tabstop>
-  <tabstop>btn_OpenConfig</tabstop>
-  <tabstop>btn_OpenDeviceFile</tabstop>
-  <tabstop>btn_LairdModules</tabstop>
   <tabstop>scrollArea</tabstop>
   <tabstop>btn_ModuleFirmware</tabstop>
   <tabstop>combo_LogDirectory</tabstop>
