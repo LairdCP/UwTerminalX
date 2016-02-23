@@ -97,13 +97,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
 #endif
 
-#ifndef _WIN32
+//#ifndef _WIN32
     //Change size of text fonts for Mac/Linux
-    QFont fntTmpFnt(ui->label_PreXCompInfo->font());
-    fntTmpFnt.setPixelSize(12);
-    ui->label_PreXCompInfo->setFont(fntTmpFnt);
-    ui->label_OnlineXCompInfo->setFont(fntTmpFnt);
-#endif
+    QFont tst(ui->label_PreXCompInfo->font());
+    tst.setPixelSize(10);
+    ui->label_PreXCompInfo->setFont(tst);
+    ui->label_OnlineXCompInfo->setFont(tst);
+//#endif
 
     //Define default variable values
     gbTermBusy = false;

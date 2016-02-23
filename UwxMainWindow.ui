@@ -1324,7 +1324,7 @@
                      <item>
                       <widget class="QCheckBox" name="check_OnlineXComp">
                        <property name="text">
-                        <string>Enable Online XCompile</string>
+                        <string>Online XCompile</string>
                        </property>
                        <property name="checked">
                         <bool>true</bool>
