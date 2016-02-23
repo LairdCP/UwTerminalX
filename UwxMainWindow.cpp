@@ -27,7 +27,6 @@
 #include "UwxMainWindow.h"
 #include "ui_UwxMainWindow.h"
 #include "UwxAutomation.h"
-#include "QStandardPaths"
 
 /******************************************************************************/
 // Conditional Compile Defines
@@ -77,17 +76,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         //Create UwTerminalX directory in application support
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
     }
-    gpTermSettings = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
-    gpErrorMessages = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"), QSettings::IniFormat); //Handle to error codes
-    gpPredefinedDevice = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 
     //Fix mac's resize
     resize(680, 380);
-#else
-    //Open files in same directory
-    gpTermSettings = new QSettings(QString("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
-    gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat); //Handle to error codes
-    gpPredefinedDevice = new QSettings(QString("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
+
+    //Disable viewing files externally for mac
+    ui->btn_EditExternal->setEnabled(false);
 #endif
 
 #ifndef _WIN32
@@ -128,84 +122,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbStreamingBatch = false;
     gbaBatchReceive.clear();
     gbFileOpened = false;
+    gbEditFileModified = false;
+    giEditFileType = -1;
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
 
-    //Check settings
-#if TARGET_OS_MAC
-    if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini")))
-#else
-    if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
-#endif
-    {
-        //No settings, or some config values not present defaults
-        if (gpTermSettings->value("LogFile").isNull())
-        {
-            gpTermSettings->setValue("LogFile", DefaultLogFile); //Default log file
-        }
-        if (gpTermSettings->value("LogMode").isNull())
-        {
-            gpTermSettings->setValue("LogMode", DefaultLogMode); //Clear log before opening, 0 = no, 1 = yes
-        }
-        if (gpTermSettings->value("LogEnable").isNull())
-        {
-            gpTermSettings->setValue("LogEnable", DefaultLogEnable); //0 = disabled, 1 = enable
-        }
-        if (gpTermSettings->value("CompilerDir").isNull())
-        {
-            gpTermSettings->setValue("CompilerDir", DefaultCompilerDir); //Directory that compilers go in
-        }
-        if (gpTermSettings->value("CompilerSubDirs").isNull())
-        {
-            gpTermSettings->setValue("CompilerSubDirs", DefaultCompilerSubDirs); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
-        }
-        if (gpTermSettings->value("DelUWCAfterDownload").isNull())
-        {
-            gpTermSettings->setValue("DelUWCAfterDownload", DefaultDelUWCAfterDownload); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
-        }
-        if (gpTermSettings->value("SysTrayIcon").isNull())
-        {
-            gpTermSettings->setValue("SysTrayIcon", DefaultSysTrayIcon); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
-        }
-        if (gpTermSettings->value("SerialSignalCheckInterval").isNull())
-        {
-            gpTermSettings->setValue("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
-        }
-        if (gpTermSettings->value("PrePostXCompRun").isNull())
-        {
-            gpTermSettings->setValue("PrePostXCompRun", DefaultPrePostXCompRun); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
-        }
-        if (gpTermSettings->value("PrePostXCompFail").isNull())
-        {
-            gpTermSettings->setValue("PrePostXCompFail", DefaultPrePostXCompFail); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
-        }
-        if (gpTermSettings->value("PrePostXCompMode").isNull())
-        {
-            gpTermSettings->setValue("PrePostXCompMode", DefaultPrePostXCompMode); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
-        }
-        if (gpTermSettings->value("PrePostXCompPath").isNull())
-        {
-            gpTermSettings->setValue("PrePostXCompPath", DefaultPrePostXCompPath); //Filename of pre/post XCompiler executable (with additional arguments)
-        }
-        if (gpTermSettings->value("OnlineXComp").isNull())
-        {
-            gpTermSettings->setValue("OnlineXComp", DefaultOnlineXComp); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
-        }
-        if (gpTermSettings->value("OnlineXCompServer").isNull())
-        {
-            gpTermSettings->setValue("OnlineXCompServer", ServerHost); //Online XCompiler server IP/Hostname
-        }
-        if (gpTermSettings->value("TextUpdateInterval").isNull())
-        {
-            gpTermSettings->setValue("TextUpdateInterval", DefaultTextUpdateInterval); //Interval between screen updates in mS, lower = faster but can be problematic when receiving/sending large amounts of data (200 is good for this)
-        }
-        if (gpTermSettings->value("SkipDownloadDisplay").isNull())
-        {
-            gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
-        }
-        gpTermSettings->setValue("ConfigVersion", UwVersion);
-    }
+    //Load settings from configuration files
+    LoadSettings();
 
     //Create logging handle
     gpMainLog = new LrdLogger;
@@ -4871,23 +4795,284 @@ MainWindow::on_btn_WebBrowse_clicked(
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_btn_UwTerminalXOpen_clicked()
+void
+MainWindow::on_btn_EditViewFolder_clicked(
+    )
 {
-    if (ui->combo_UwTerminalXSelection->currentIndex() == 0)
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_combo_EditFile_currentIndexChanged(
+    int
+    )
+{
+    if (ui->combo_EditFile->currentIndex() != giEditFileType)
+    {
+        if (gbEditFileModified == true)
+        {
+            //Confirm if user wants to discard changes
+            if (QMessageBox::question(this, "Discard changes?", "You have unsaved changes to this file, do you wish to discard them and load another file or continue editing your unsaved file?", QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
+            {
+                ui->combo_EditFile->setCurrentIndex(giEditFileType);
+                return;
+            }
+        }
+
+        //Load file data
+        QString strFullFilename;
+
+#if TARGET_OS_MAC
+        strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+#else
+        strFullFilename = "./";
+#endif
+
+        ui->text_LogData->clear();
+        ui->label_LogInfo->clear();
+
+        //Create the full filename
+        strFullFilename = strFullFilename.append("/").append(ui->combo_EditFile->currentIndex() == 0 ? "UwTerminalX.ini" : "Devices.ini");
+
+        //Open the log file for reading
+        QFile fileLogFile(strFullFilename);
+        if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
+        {
+            //Get the contents of the log file
+            ui->text_EditData->setPlainText(fileLogFile.readAll());
+            fileLogFile.close();
+            gbEditFileModified = false;
+            giEditFileType = ui->combo_EditFile->currentIndex();
+        }
+        else
+        {
+            //Log file opening failed
+            ui->label_EditInfo->setText("Failed to open log file.");
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_EditSave_clicked(
+    )
+{
+    //Save file data
+    QString strFullFilename;
+
+#if TARGET_OS_MAC
+    strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+#else
+    strFullFilename = "./";
+#endif
+
+    //Create the full filename
+    strFullFilename = strFullFilename.append("/").append(ui->combo_EditFile->currentIndex() == 0 ? "UwTerminalX.ini" : "Devices.ini");
+
+    //Open the log file for reading
+    QFile fileLogFile(strFullFilename);
+    if (fileLogFile.open(QFile::WriteOnly | QFile::Text))
+    {
+        //Get the contents of the log file
+        fileLogFile.write(ui->text_EditData->toPlainText().toUtf8());
+        fileLogFile.close();
+        gbEditFileModified = false;
+    }
+    else
+    {
+        //Log file opening failed
+        ui->label_EditInfo->setText("Failed to open file for writing.");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_EditLoad_clicked(
+    )
+{
+    //Reload file data
+    on_combo_EditFile_currentIndexChanged(0);
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_EditExternal_clicked(
+    )
+{
+    /*if (ui->combo_EditFile->currentIndex() == 0)
     {
         //Opens the UwTerminalX log file
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->edit_LogFile->text()).absoluteFilePath()));
-    }
-    else if (ui->combo_UwTerminalXSelection->currentIndex() == 1)
+    }*/
+    if (ui->combo_EditFile->currentIndex() == 0)
     {
         //Opens the UwTerminalX configuration file
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("UwTerminalX.ini").absoluteFilePath()));
     }
-    else if (ui->combo_UwTerminalXSelection->currentIndex() == 2)
+    else if (ui->combo_EditFile->currentIndex() == 1)
     {
         //Opens the predefined devices configuration file
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Devices.ini").absoluteFilePath()));
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::LoadSettings(
+    )
+{
+#if TARGET_OS_MAC
+    if (!QDir().exists(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)))
+    {
+        //Create UwTerminalX directory in application support
+        QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    }
+    gpTermSettings = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
+    gpErrorMessages = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"), QSettings::IniFormat); //Handle to error codes
+    gpPredefinedDevice = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
+#else
+    //Open files in same directory
+    gpTermSettings = new QSettings(QString("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
+    gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat); //Handle to error codes
+    gpPredefinedDevice = new QSettings(QString("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
+#endif
+
+    //Check settings
+#if TARGET_OS_MAC
+    if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini")))
+#else
+    if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
+#endif
+    {
+        //No settings, or some config values not present defaults
+        if (gpTermSettings->value("LogFile").isNull())
+        {
+            gpTermSettings->setValue("LogFile", DefaultLogFile); //Default log file
+        }
+        if (gpTermSettings->value("LogMode").isNull())
+        {
+            gpTermSettings->setValue("LogMode", DefaultLogMode); //Clear log before opening, 0 = no, 1 = yes
+        }
+        if (gpTermSettings->value("LogEnable").isNull())
+        {
+            gpTermSettings->setValue("LogEnable", DefaultLogEnable); //0 = disabled, 1 = enable
+        }
+        if (gpTermSettings->value("CompilerDir").isNull())
+        {
+            gpTermSettings->setValue("CompilerDir", DefaultCompilerDir); //Directory that compilers go in
+        }
+        if (gpTermSettings->value("CompilerSubDirs").isNull())
+        {
+            gpTermSettings->setValue("CompilerSubDirs", DefaultCompilerSubDirs); //0 = normal, 1 = use BL600, BL620, BT900 etc. subdir
+        }
+        if (gpTermSettings->value("DelUWCAfterDownload").isNull())
+        {
+            gpTermSettings->setValue("DelUWCAfterDownload", DefaultDelUWCAfterDownload); //0 = no, 1 = yes (delets UWC file after it's been downloaded to the target device)
+        }
+        if (gpTermSettings->value("SysTrayIcon").isNull())
+        {
+            gpTermSettings->setValue("SysTrayIcon", DefaultSysTrayIcon); //0 = no, 1 = yes (Shows a system tray icon and provides balloon messages)
+        }
+        if (gpTermSettings->value("SerialSignalCheckInterval").isNull())
+        {
+            gpTermSettings->setValue("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval); //How often to check status of CTS, DSR, etc. signals in mS (lower = faster but more CPU usage)
+        }
+        if (gpTermSettings->value("PrePostXCompRun").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompRun", DefaultPrePostXCompRun); //If pre/post XCompiler executable is enabled: 1 = enable, 0 = disable
+        }
+        if (gpTermSettings->value("PrePostXCompFail").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompFail", DefaultPrePostXCompFail); //If post XCompiler executable should run if XCompilation fails: 1 = yes, 0 = no
+        }
+        if (gpTermSettings->value("PrePostXCompMode").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompMode", DefaultPrePostXCompMode); //If pre/post XCompiler command runs before or after XCompiler: 0 = before, 1 = after
+        }
+        if (gpTermSettings->value("PrePostXCompPath").isNull())
+        {
+            gpTermSettings->setValue("PrePostXCompPath", DefaultPrePostXCompPath); //Filename of pre/post XCompiler executable (with additional arguments)
+        }
+        if (gpTermSettings->value("OnlineXComp").isNull())
+        {
+            gpTermSettings->setValue("OnlineXComp", DefaultOnlineXComp); //If Online XCompiler support is enabled: 1 = enable, 0 = disable
+        }
+        if (gpTermSettings->value("OnlineXCompServer").isNull())
+        {
+            gpTermSettings->setValue("OnlineXCompServer", ServerHost); //Online XCompiler server IP/Hostname
+        }
+        if (gpTermSettings->value("TextUpdateInterval").isNull())
+        {
+            gpTermSettings->setValue("TextUpdateInterval", DefaultTextUpdateInterval); //Interval between screen updates in mS, lower = faster but can be problematic when receiving/sending large amounts of data (200 is good for this)
+        }
+        if (gpTermSettings->value("SkipDownloadDisplay").isNull())
+        {
+            gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
+        }
+        gpTermSettings->setValue("ConfigVersion", UwVersion);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_LogViewExternal_clicked(
+    )
+{
+    //View log in external editor
+    if (ui->list_LogFiles->currentRow() >= 0)
+    {
+        //Create the full filename
+        QString strFullFilename;
+
+        if (ui->combo_LogDirectory->currentIndex() == 1)
+        {
+            //Log file directory
+#if TARGET_OS_MAC
+            QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/")).append(ui->edit_LogFile->text()));
+#else
+            QFileInfo fiFileInfo(ui->edit_LogFile->text());
+#endif
+            strFullFilename = fiFileInfo.absolutePath();
+        }
+        else
+        {
+            //Application directory
+#if TARGET_OS_MAC
+            strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+#else
+            strFullFilename = "./";
+#endif
+        }
+        strFullFilename = strFullFilename.append("/").append(ui->list_LogFiles->currentItem()->text());
+
+        //
+        QDesktopServices::openUrl(QUrl::fromLocalFile(strFullFilename));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_LogViewFolder_clicked(
+    )
+{
+    //Open log folder
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_text_EditData_textChanged(
+    )
+{
+    //
+    gbEditFileModified = true;
 }
 
 /******************************************************************************/

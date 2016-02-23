@@ -57,6 +57,9 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QHostInfo>
+#if TARGET_OS_MAC
+#include "QStandardPaths"
+#endif
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
 #include "LrdLogger.h"
@@ -81,7 +84,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.03f" //Version string
+#define UwVersion "1.04" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -375,7 +378,29 @@ private slots:
     on_btn_WebBrowse_clicked(
         );
     void
-    on_btn_UwTerminalXOpen_clicked(
+    on_btn_EditViewFolder_clicked(
+        );
+    void
+    on_combo_EditFile_currentIndexChanged(
+        int
+        );
+    void
+    on_btn_EditSave_clicked(
+        );
+    void
+    on_btn_EditLoad_clicked(
+        );
+    void
+    on_btn_EditExternal_clicked(
+        );
+    void
+    on_btn_LogViewExternal_clicked(
+        );
+    void
+    on_btn_LogViewFolder_clicked(
+        );
+    void
+    on_text_EditData_textChanged(
         );
 
 private:
@@ -422,6 +447,9 @@ private:
     QString
     AtiToXCompName(
         QString strAtiResp
+        );
+    void
+    LoadSettings(
         );
 
     //Private variables
@@ -484,6 +512,8 @@ private:
     bool gbFileOpened; //True when a file on the module has been opened
     QString gstrLastFilename; //Holds the last filename of the last selected file
     QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
+    bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
+    int giEditFileType; //Type of file currently open in the editor
 #ifdef UseSSL
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif
