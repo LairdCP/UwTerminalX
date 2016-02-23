@@ -4949,7 +4949,19 @@ MainWindow::LoadSettings(
     if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #endif
     {
-        //No settings, or some config values not present defaults
+        //Extract old configuration version
+        if (!gpTermSettings->value("ConfigVersion").isNull())
+        {
+            QRegularExpression reTempRE("([0-9]+)\\.([0-9]+)([a-zA-Z]{0,1})");
+            QRegularExpressionMatch remTempREM = reTempRE.match(gpTermSettings->value("ConfigVersion").toString());
+            if (remTempREM.hasMatch() == true)
+            {
+                //Update configuration
+                UpdateSettings(remTempREM.captured(1).toInt(), remTempREM.captured(2).toInt(), remTempREM.captured(3).at(0));
+            }
+        }
+
+        //No settings, or some config values not present defaults;
         if (gpTermSettings->value("LogFile").isNull())
         {
             gpTermSettings->setValue("LogFile", DefaultLogFile); //Default log file
@@ -5015,6 +5027,53 @@ MainWindow::LoadSettings(
             gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
         }
         gpTermSettings->setValue("ConfigVersion", UwVersion);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::UpdateSettings(
+    int iMajor,
+    int iMinor,
+    QChar qcDelta
+    )
+{
+    //Adds new configuration options
+    if (iMajor <= 1)
+    {
+        if (iMinor <= 4)
+        {
+            //Add new RM186 and RM191 devices
+            int i = 0;
+            while (i < 255)
+            {
+                if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+                {
+                    break;
+                }
+            }
+
+            if (i < 253)
+            {
+                //RM186
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Name"), "RM186");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Flow"), "1");
+                ++i;
+
+                //RM191
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Name"), "RM191");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString("Port").append(QString::number(i)).append("Flow"), "1");
+            }
+        }
     }
 }
 
