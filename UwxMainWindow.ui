@@ -907,7 +907,7 @@
               </property>
               <property name="minimumSize">
                <size>
-                <width>176</width>
+                <width>154</width>
                 <height>160</height>
                </size>
               </property>
@@ -1018,37 +1018,43 @@
                <item>
                 <layout class="QGridLayout" name="gridLayout_16">
                  <property name="spacing">
-                  <number>3</number>
+                  <number>2</number>
                  </property>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_15">
-                   <property name="text">
-                    <string>AT+FWRH Line Size:</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="0" column="1">
-                  <widget class="QPlainTextEdit" name="edit_FWRH">
+                  <widget class="QLineEdit" name="edit_FWRH">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
+                     <width>20</width>
                      <height>0</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>40</width>
-                     <height>30</height>
+                     <height>16777215</height>
                     </size>
                    </property>
-                   <property name="plainText">
+                   <property name="inputMethodHints">
+                    <set>Qt::ImhDigitsOnly</set>
+                   </property>
+                   <property name="text">
                     <string>60</string>
+                   </property>
+                   <property name="maxLength">
+                    <number>3</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_15">
+                   <property name="text">
+                    <string>AT+FWRH Line Size:</string>
                    </property>
                   </widget>
                  </item>
@@ -1242,6 +1248,9 @@
                    <property name="text">
                     <string>This allows you to run a program/batch/bash file before/after a smartBASIC file is XCompiled/before the file is downloaded, %1 will be replaced with the sb/uwc file when the execution takes place.</string>
                    </property>
+                   <property name="alignment">
+                    <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                   </property>
                    <property name="wordWrap">
                     <bool>true</bool>
                    </property>
@@ -1353,6 +1362,9 @@
                      </property>
                      <property name="scaledContents">
                       <bool>false</bool>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignJustify|Qt::AlignVCenter</set>
                      </property>
                      <property name="wordWrap">
                       <bool>true</bool>
@@ -2869,7 +2881,6 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>radio_LLF</tabstop>
   <tabstop>radio_LCRLF</tabstop>
   <tabstop>radio_LLFCR</tabstop>
-  <tabstop>edit_FWRH</tabstop>
   <tabstop>check_SkipDL</tabstop>
   <tabstop>check_ShowCLRF</tabstop>
   <tabstop>check_PreXCompRun</tabstop>

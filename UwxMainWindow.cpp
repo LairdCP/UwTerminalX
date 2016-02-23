@@ -94,6 +94,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifndef __APPLE__
     //Increase Linux window size to cope with possible large Linux fonts
     resize(this->width()+20, this->height()+20);
+
+    //
+    ui->edit_FWRH->setText("54");
 #endif
 #endif
 
@@ -1325,7 +1328,7 @@ MainWindow::readData(
                     if (gstrHexData.length() > 0)
                     {
                         gtmrDownloadTimeoutTimer.stop();
-                        QByteArray baTmpBA = QString("AT+FWRH \"").append(gstrHexData.left(ui->edit_FWRH->toPlainText().toInt())).append("\"").toUtf8();
+                        QByteArray baTmpBA = QString("AT+FWRH \"").append(gstrHexData.left(ui->edit_FWRH->text().toInt())).append("\"").toUtf8();
                         gspSerialPort.write(baTmpBA);
                         gintQueuedTXBytes += baTmpBA.size();
                         DoLineEnd();
@@ -1350,7 +1353,7 @@ MainWindow::readData(
                             }
                         }
 
-                        if (gstrHexData.length() < ui->edit_FWRH->toPlainText().toInt())
+                        if (gstrHexData.length() < ui->edit_FWRH->text().toInt())
                         {
                             //Finished
                             gstrHexData = "";
@@ -1378,7 +1381,7 @@ MainWindow::readData(
                         else
                         {
                             //More data to send
-                            gstrHexData = gstrHexData.right(gstrHexData.length()-ui->edit_FWRH->toPlainText().toInt());
+                            gstrHexData = gstrHexData.right(gstrHexData.length()-ui->edit_FWRH->text().toInt());
                             --gchTermMode2;
                             gtmrDownloadTimeoutTimer.start();
                         }
