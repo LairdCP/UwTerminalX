@@ -4957,7 +4957,7 @@ MainWindow::LoadSettings(
             if (remTempREM.hasMatch() == true)
             {
                 //Update configuration
-                UpdateSettings(remTempREM.captured(1).toInt(), remTempREM.captured(2).toInt(), remTempREM.captured(3).at(0));
+                UpdateSettings(remTempREM.captured(1).toInt(), remTempREM.captured(2).toInt(), remTempREM.captured(3).isEmpty() || remTempREM.captured(3).isNull() ? 0 :  remTempREM.captured(3).at(0));
             }
         }
 
@@ -5045,13 +5045,14 @@ MainWindow::UpdateSettings(
         if (iMinor <= 4)
         {
             //Add new RM186 and RM191 devices
-            int i = 0;
+            int i = 1;
             while (i < 255)
             {
                 if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
                 {
                     break;
                 }
+                ++i;
             }
 
             if (i < 253)
