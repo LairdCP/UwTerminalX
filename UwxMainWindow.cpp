@@ -27,6 +27,7 @@
 #include "UwxMainWindow.h"
 #include "ui_UwxMainWindow.h"
 #include "UwxAutomation.h"
+#include "QStandardPaths"
 
 /******************************************************************************/
 // Conditional Compile Defines
@@ -59,7 +60,8 @@ UwxAutomation *guaAutomationForm; //Automation form
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow){
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+{
     //Setup the GUI
     ui->setupUi(this);
 
@@ -70,9 +72,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     BundleDir.cdUp();
     BundleDir.cdUp();
     gstrMacBundlePath = BundleDir.path().append("/");
-    gpTermSettings = new QSettings(QString(gstrMacBundlePath).append("UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
-    gpErrorMessages = new QSettings(QString(gstrMacBundlePath).append("codes.csv"), QSettings::IniFormat); //Handle to error codes
-    gpPredefinedDevice = new QSettings(QString(gstrMacBundlePath).append("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
+    if (!QDir().exists(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)))
+    {
+        //Create UwTerminalX directory in application support
+        QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    }
+    gpTermSettings = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini"), QSettings::IniFormat); //Handle to settings
+    gpErrorMessages = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"), QSettings::IniFormat); //Handle to error codes
+    gpPredefinedDevice = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 
     //Fix mac's resize
     resize(680, 380);
@@ -116,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Check settings
 #if TARGET_OS_MAC
-    if (!QFile::exists(QString(gstrMacBundlePath).append("UwTerminalX.ini")))
+    if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini")))
 #else
     if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #endif
@@ -263,8 +270,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Mac doesn't support basic file operatings like viewing ini files
 #if TARGET_OS_MAC
-    ui->btn_OpenDeviceFile->setEnabled(false);
-    ui->btn_OpenConfig->setEnabled(false);
+    //ui->btn_OpenDeviceFile->setEnabled(false);
+    //ui->btn_OpenConfig->setEnabled(false);
 #endif
 
     //Create menu items
@@ -2448,7 +2455,7 @@ MainWindow::OpenDevice(
             {
                 //Logging is enabled
 #if TARGET_OS_MAC
-                if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text())) == LOG_OK)
+                if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/").append(ui->edit_LogFile->text())) == LOG_OK)
 #else
                 if (gpMainLog->OpenLogFile(ui->edit_LogFile->text()) == LOG_OK)
 #endif
@@ -3943,10 +3950,10 @@ MainWindow::replyFinished(
                 //Got updated error code file
                 delete gpErrorMessages;
 #if TARGET_OS_MAC
-                if (!QFile::exists(QString(gstrMacBundlePath).append("codes.csv")))
+                if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv")))
                 {
                     //Remove file
-                    QFile::remove(QString(gstrMacBundlePath).append("codes.csv"));
+                    QFile::remove(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"));
                 }
 #else
                 if (!QFile::exists("codes.csv"))
@@ -3957,7 +3964,7 @@ MainWindow::replyFinished(
 #endif
 
 #if TARGET_OS_MAC
-                QFile file(QString(gstrMacBundlePath).append("codes.csv"));
+                QFile file(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"));
 #else
                 QFile file("codes.csv");
 #endif
@@ -3969,7 +3976,7 @@ MainWindow::replyFinished(
 
                     //Reopen error code file and update status
 #if TARGET_OS_MAC
-                    gpErrorMessages = new QSettings(QString(gstrMacBundlePath).append("codes.csv"), QSettings::IniFormat);
+                    gpErrorMessages = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv"), QSettings::IniFormat);
 #else
                     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat);
 #endif
@@ -4560,7 +4567,7 @@ MainWindow::on_btn_LogRefresh_clicked(
     {
         //Log file directory
 #if TARGET_OS_MAC
-        QFileInfo a(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text()));
+        QFileInfo a(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
         QFileInfo a(ui->edit_LogFile->text());
 #endif
@@ -4570,7 +4577,7 @@ MainWindow::on_btn_LogRefresh_clicked(
     {
         //Application directory
 #if TARGET_OS_MAC
-        strDirPath = gstrMacBundlePath;
+        strDirPath = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
 #else
         strDirPath = "./";
 #endif
@@ -4619,7 +4626,7 @@ MainWindow::on_list_LogFiles_currentRowChanged(
     {
         //Log file directory
 #if TARGET_OS_MAC
-        QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : gstrMacBundlePath).append(ui->edit_LogFile->text()));
+        QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
         QFileInfo fiFileInfo(ui->edit_LogFile->text());
 #endif
@@ -4629,7 +4636,7 @@ MainWindow::on_list_LogFiles_currentRowChanged(
     {
         //Application directory
 #if TARGET_OS_MAC
-        strFullFilename = gstrMacBundlePath;
+        strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
 #else
         strFullFilename = "./";
 #endif
