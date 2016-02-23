@@ -4944,7 +4944,7 @@ MainWindow::LoadSettings(
 
     //Check settings
 #if TARGET_OS_MAC
-    if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini")))
+    if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/UwTerminalX.ini")) || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #else
     if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #endif
