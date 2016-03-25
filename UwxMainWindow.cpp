@@ -269,41 +269,41 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Create menu items
     gpMenu = new QMenu(this);
-    gpMenu->addAction(new QAction("XCompile", this));
-    gpMenu->addAction(new QAction("XCompile + Load", this));
-    gpMenu->addAction(new QAction("XCompile + Load + Run", this));
-    gpMenu->addAction(new QAction("Load", this));
-    gpMenu->addAction(new QAction("Load + Run", this));
-    gpMenu->addAction(new QAction("Lookup Selected Error-Code (Hex)", this));
-    gpMenu->addAction(new QAction("Lookup Selected Error-Code (Int)", this));
-    gpMenu->addAction(new QAction("Enable Loopback (Rx->Tx)", this));
+    gpMenu->addAction("XCompile")->setData(1);
+    gpMenu->addAction("XCompile + Load")->setData(2);
+    gpMenu->addAction("XCompile + Load + Run")->setData(3);
+    gpMenu->addAction("Load")->setData(4);
+    gpMenu->addAction("Load + Run")->setData(5);
+    gpMenu->addAction("Lookup Selected Error-Code (Hex)")->setData(6);
+    gpMenu->addAction("Lookup Selected Error-Code (Int)")->setData(7);
+    gpMenu->addAction("Enable Loopback (Rx->Tx)")->setData(8);
     gpSMenu1 = gpMenu->addMenu("Download");
     gpSMenu2 = gpSMenu1->addMenu("BASIC");
-    gpSMenu2->addAction(new QAction("Load Precompiled BASIC", this));
-    gpSMenu2->addAction(new QAction("Erase File", this)); //AT+DEL (from file open)
-    gpSMenu2->addAction(new QAction("Dir", this)); //AT+DIR
-    gpSMenu2->addAction(new QAction("Run", this));
+    gpSMenu2->addAction("Load Precompiled BASIC")->setData(9);
+    gpSMenu2->addAction("Erase File")->setData(10); //AT+DEL (from file open)
+    gpSMenu2->addAction("Dir")->setData(11); //AT+DIR
+    gpSMenu2->addAction("Run")->setData(12);
     gpSMenu3 = gpSMenu1->addMenu("Data");
-    gpSMenu3->addAction(new QAction("Data File +", this));
-    gpSMenu3->addAction(new QAction("Erase File +", this));
-    gpSMenu3->addAction(new QAction("Multi Data File +", this)); //Downloads more than 1 data file
-    gpSMenu1->addAction(new QAction("Stream File Out", this));
-    gpMenu->addAction(new QAction("Font", this));
-    gpMenu->addAction(new QAction("Run", this));
-    gpMenu->addAction(new QAction("Automation", this));
-    gpMenu->addAction(new QAction("Batch", this));
-    gpMenu->addAction(new QAction("Clear Display", this));
-    gpMenu->addAction(new QAction("Clear RX/TX count", this));
+    gpSMenu3->addAction("Data File +")->setData(13);
+    gpSMenu3->addAction("Erase File +")->setData(14);
+    gpSMenu3->addAction("Multi Data File +")->setData(15); //Downloads more than 1 data file
+    gpSMenu1->addAction("Stream File Out")->setData(16);
+    gpMenu->addAction("Font")->setData(17);
+    gpMenu->addAction("Run")->setData(18);
+    gpMenu->addAction("Automation")->setData(19);
+    gpMenu->addAction("Batch")->setData(20);
+    gpMenu->addAction("Clear Display")->setData(21);
+    gpMenu->addAction("Clear RX/TX count")->setData(22);
     gpMenu->addSeparator();
-    gpMenu->addAction(new QAction("Copy", this));
-    gpMenu->addAction(new QAction("Copy All", this));
-    gpMenu->addAction(new QAction("Paste", this));
-    gpMenu->addAction(new QAction("Select All", this));
+    gpMenu->addAction("Copy")->setData(23);
+    gpMenu->addAction("Copy All")->setData(24);
+    gpMenu->addAction("Paste")->setData(25);
+    gpMenu->addAction("Select All")->setData(26);
 
     //Create balloon menu items
     gpBalloonMenu = new QMenu(this);
-    gpBalloonMenu->addAction(new QAction("Show UwTerminalX", this));
-    gpBalloonMenu->addAction(new QAction("Exit", this));
+    gpBalloonMenu->addAction("Show UwTerminalX")->setData(1);
+    gpBalloonMenu->addAction("Exit")->setData(2);
 
     //Disable unimplemented actions
     gpSMenu3->actions()[2]->setEnabled(false); //Multi Data File +
@@ -1446,10 +1446,11 @@ MainWindow::triggered
     )
 {
     //Runs when a menu item is selected
+    int intItem = qaAction->data().toInt();
     if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
     {
         //Serial is open, allow xcompile functions
-        if (qaAction->text() == "XCompile")
+        if (intItem == 1)
         {
             //Compiles SB applet
 #ifdef _WIN32
@@ -1458,7 +1459,7 @@ MainWindow::triggered
             CompileApp(MODE_SERVER_COMPILE);
 #endif
         }
-        else if (qaAction->text() == "XCompile + Load")
+        else if (intItem == 2)
         {
             //Compiles and loads a SB applet
 #ifdef _WIN32
@@ -1467,7 +1468,7 @@ MainWindow::triggered
             CompileApp(MODE_SERVER_COMPILE_LOAD);
 #endif
         }
-        else if (qaAction->text() == "XCompile + Load + Run")
+        else if (intItem == 3)
         {
             //Compiles, loads and runs a SB applet
 #ifdef _WIN32
@@ -1476,19 +1477,19 @@ MainWindow::triggered
             CompileApp(MODE_SERVER_COMPILE_LOAD_RUN);
 #endif
         }
-        else if (qaAction->text() == "Load" || qaAction->text() == "Load Precompiled BASIC" || qaAction->text() == "Data File +")
+        else if (intItem == 4 || intItem == 9 || intItem == 13)
         {
             //Just load an application
             CompileApp(MODE_LOAD);
         }
-        else if (qaAction->text() == "Load + Run")
+        else if (intItem == 5)
         {
             //Load and run an application
             CompileApp(MODE_LOAD_RUN);
         }
     }
 
-    if (qaAction->text() == "Lookup Selected Error-Code (Hex)")
+    if (intItem == 6)
     {
         //Shows a meaning for the error code selected (number in hex)
         bool bTmpBool;
@@ -1499,12 +1500,12 @@ MainWindow::triggered
             LookupErrorCode(uiErrCode);
         }
     }
-    else if (qaAction->text() == "Lookup Selected Error-Code (Int)")
+    else if (intItem == 7)
     {
         //Shows a meaning for the error code selected (number as int)
         LookupErrorCode(ui->text_TermEditData->textCursor().selection().toPlainText().toInt());
     }
-    else if (qaAction->text() == "Enable Loopback (Rx->Tx)" || qaAction->text() == "Disable Loopback (Rx->Tx)")
+    else if (intItem == 8)
     {
         //Enable/disable loopback mode
         gbLoopbackMode = !gbLoopbackMode;
@@ -1525,7 +1526,7 @@ MainWindow::triggered
             gtmrTextUpdateTimer.start();
         }
     }
-    else if (qaAction->text() == "Erase File" || qaAction->text() == "Erase File +")
+    else if (intItem == 10 || intItem == 14)
     {
         //Erase file
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1556,7 +1557,7 @@ MainWindow::triggered
                         }
                     }
                 }
-                QByteArray baTmpBA = QString("at+del \"").append(strFilename).append("\"").append((qaAction->text() == "Erase File +" ? " +" : "")).toUtf8();
+                QByteArray baTmpBA = QString("at+del \"").append(strFilename).append("\"").append((intItem == 14 ? " +" : "")).toUtf8();
                 gspSerialPort.write(baTmpBA);
                 gintQueuedTXBytes += baTmpBA.size();
                 DoLineEnd();
@@ -1569,7 +1570,7 @@ MainWindow::triggered
             }
         }
     }
-    else if (qaAction->text() == "Dir")
+    else if (intItem == 11)
     {
         //Dir
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1586,7 +1587,7 @@ MainWindow::triggered
             gpMainLog->WriteLogData("at+dir\n");
         }
     }
-    else if (qaAction->text() == "Run")
+    else if (intItem == 12)
     {
         //Run an application
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1630,7 +1631,7 @@ MainWindow::triggered
             }
         }
     }
-    else if (qaAction->text() == "Stream File Out")
+    else if (intItem == 16)
     {
         //Stream out a file
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1684,7 +1685,7 @@ MainWindow::triggered
             }
         }
     }
-    else if (qaAction->text() == "Font")
+    else if (intItem == 17)
     {
         //Change font
         bool bTmpBool;
@@ -1697,7 +1698,7 @@ MainWindow::triggered
             ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
         }
     }
-    else if (qaAction->text() == "Run")
+    else if (intItem == 18)
     {
         //Runs an application
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1743,12 +1744,12 @@ MainWindow::triggered
             }
         }
     }
-    else if (qaAction->text() == "Automation")
+    else if (intItem == 19)
     {
         //Show automation window
         guaAutomationForm->show();
     }
-    else if (qaAction->text() == "Batch")
+    else if (intItem == 20)
     {
         //Start a Batch file script
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1803,12 +1804,12 @@ MainWindow::triggered
             }
         }
     }
-    else if (qaAction->text() == "Clear Display")
+    else if (intItem == 21)
     {
         //Clear display
         ui->text_TermEditData->ClearDatIn();
     }
-    else if (qaAction->text() == "Clear RX/TX count")
+    else if (intItem == 22)
     {
         //Clear counts
         gintRXBytes = 0;
@@ -1816,22 +1817,22 @@ MainWindow::triggered
         ui->label_TermRx->setText(QString::number(gintRXBytes));
         ui->label_TermTx->setText(QString::number(gintTXBytes));
     }
-    else if (qaAction->text() == "Copy")
+    else if (intItem == 23)
     {
         //Copy selected data
         QApplication::clipboard()->setText(ui->text_TermEditData->textCursor().selection().toPlainText());
     }
-    else if (qaAction->text() == "Copy All")
+    else if (intItem == 24)
     {
         //Copy all data
         QApplication::clipboard()->setText(ui->text_TermEditData->toPlainText());
     }
-    else if (qaAction->text() == "Paste")
+    else if (intItem == 25)
     {
         //Paste data from clipboard
         ui->text_TermEditData->AddDatOutText(QApplication::clipboard()->text());
     }
-    else if (qaAction->text() == "Select All")
+    else if (intItem == 26)
     {
         //Select all text
         ui->text_TermEditData->selectAll();
@@ -1846,9 +1847,10 @@ MainWindow::balloontriggered(
     )
 {
     //Runs when a balloon menu item is selected
-    if (qaAction->text() == "Show UwTerminalX")
+    int intItem = qaAction->data().toInt();
+    if (intItem == 1)
     {
-        //Make active window
+        //Make UwTerminalX the active window
 #if TARGET_OS_MAC
         //Bugfix for mac (icon vanishes when clicked)
         gpSysTray->setIcon(QIcon(*gpUw16Pixmap));
@@ -1856,7 +1858,7 @@ MainWindow::balloontriggered(
         this->raise();
         this->activateWindow();
     }
-    else if (qaAction->text() == "Exit")
+    else if (intItem == 2)
     {
         //Exit
         QApplication::quit();
