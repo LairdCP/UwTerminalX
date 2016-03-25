@@ -4769,7 +4769,7 @@ void
 MainWindow::on_btn_WebBrowse_clicked(
     )
 {
-    //
+    //Browse applications/modules button clicked
     if (ui->combo_WebSelection->currentIndex() == 0)
     {
         //BL600 Github
@@ -4808,6 +4808,8 @@ void
 MainWindow::on_btn_EditViewFolder_clicked(
     )
 {
+    //
+#pragma warning("TODO")
 }
 
 //=============================================================================
@@ -4909,11 +4911,7 @@ void
 MainWindow::on_btn_EditExternal_clicked(
     )
 {
-    /*if (ui->combo_EditFile->currentIndex() == 0)
-    {
-        //Opens the UwTerminalX log file
-        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->edit_LogFile->text()).absoluteFilePath()));
-    }*/
+#pragma warning("TODO: Mac support")
     if (ui->combo_EditFile->currentIndex() == 0)
     {
         //Opens the UwTerminalX configuration file
@@ -5129,6 +5127,7 @@ MainWindow::on_btn_LogViewFolder_clicked(
     )
 {
     //Open log folder
+#pragma warning("TODO")
 }
 
 //=============================================================================
@@ -5137,7 +5136,7 @@ void
 MainWindow::on_text_EditData_textChanged(
     )
 {
-    //
+    //Mark file as edited
     gbEditFileModified = true;
 }
 
