@@ -124,6 +124,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbFileOpened = false;
     gbEditFileModified = false;
     giEditFileType = -1;
+    gbEditorViewSet = false;
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -775,6 +776,12 @@ MainWindow::on_selector_Tab_currentChanged(
     {
         //Not accepted the terms yet
         ui->selector_Tab->setCurrentIndex(3);
+    }
+    else if (intIndex == 5 && gbEditorViewSet == false)
+    {
+        //Load default item
+        on_combo_EditFile_currentIndexChanged(0);
+        gbEditorViewSet = true;
     }
 }
 
@@ -4810,48 +4817,45 @@ MainWindow::on_combo_EditFile_currentIndexChanged(
     int
     )
 {
-    if (ui->combo_EditFile->currentIndex() != giEditFileType)
+    if (gbEditFileModified == true)
     {
-        if (gbEditFileModified == true)
+        //Confirm if user wants to discard changes
+        if (QMessageBox::question(this, "Discard changes?", "You have unsaved changes to this file, do you wish to discard them and load another file?", QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
         {
-            //Confirm if user wants to discard changes
-            if (QMessageBox::question(this, "Discard changes?", "You have unsaved changes to this file, do you wish to discard them and load another file or continue editing your unsaved file?", QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
-            {
-                ui->combo_EditFile->setCurrentIndex(giEditFileType);
-                return;
-            }
+            ui->combo_EditFile->setCurrentIndex(giEditFileType);
+            return;
         }
+    }
 
-        //Load file data
-        QString strFullFilename;
+    //Load file data
+    QString strFullFilename;
 
 #if TARGET_OS_MAC
-        strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+    strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
 #else
-        strFullFilename = "./";
+    strFullFilename = "./";
 #endif
 
-        ui->text_LogData->clear();
-        ui->label_LogInfo->clear();
+    ui->text_LogData->clear();
+    ui->label_LogInfo->clear();
 
-        //Create the full filename
-        strFullFilename = strFullFilename.append("/").append(ui->combo_EditFile->currentIndex() == 0 ? "UwTerminalX.ini" : "Devices.ini");
+    //Create the full filename
+    strFullFilename = strFullFilename.append("/").append(ui->combo_EditFile->currentIndex() == 0 ? "UwTerminalX.ini" : "Devices.ini");
 
-        //Open the log file for reading
-        QFile fileLogFile(strFullFilename);
-        if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
-        {
-            //Get the contents of the log file
-            ui->text_EditData->setPlainText(fileLogFile.readAll());
-            fileLogFile.close();
-            gbEditFileModified = false;
-            giEditFileType = ui->combo_EditFile->currentIndex();
-        }
-        else
-        {
-            //Log file opening failed
-            ui->label_EditInfo->setText("Failed to open log file.");
-        }
+    //Open the log file for reading
+    QFile fileLogFile(strFullFilename);
+    if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
+    {
+        //Get the contents of the log file
+        ui->text_EditData->setPlainText(fileLogFile.readAll());
+        fileLogFile.close();
+        gbEditFileModified = false;
+        giEditFileType = ui->combo_EditFile->currentIndex();
+    }
+    else
+    {
+        //Configuration file opening failed
+        ui->label_EditInfo->setText("Failed to open file.");
     }
 }
 
