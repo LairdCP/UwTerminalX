@@ -84,7 +84,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.04e" //Version string
+#define UwVersion "1.04f" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -521,6 +521,7 @@ private:
     bool gbEditorViewSet; //True if the editor tab has been switched to
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor
+    bool gbErrorsLoaded; //True if error csv file has been loaded
 #ifdef UseSSL
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif

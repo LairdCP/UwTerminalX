@@ -125,6 +125,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbEditFileModified = false;
     giEditFileType = -1;
     gbEditorViewSet = false;
+    gbErrorsLoaded = false;
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -2778,7 +2779,17 @@ MainWindow::LookupErrorCode(
     )
 {
     //Looks up an error code and outputs it in the edit (does NOT store it to the log)
-    gbaDisplayBuffer.append(QString("\nError code 0x").append(QString::number(intErrorCode, 16)).append(": ").append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString()).append("\n"));
+    if (gbErrorsLoaded == true)
+    {
+        //Error file has been loaded
+        gbaDisplayBuffer.append(QString("\nError code 0x").append(QString::number(intErrorCode, 16)).append(": ").append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString()).append("\n"));
+    }
+    else
+    {
+        //Error file has not been loaded
+        gbaDisplayBuffer.append(QString("\nUnable to lookup error code: error file (codes.csv) not loaded. Check the Update tab to download the latest version.\n"));
+    }
+
     if (!gtmrTextUpdateTimer.isActive())
     {
         gtmrTextUpdateTimer.start();
@@ -3893,6 +3904,7 @@ MainWindow::replyFinished(
             {
                 //Got updated error code file
                 delete gpErrorMessages;
+                gbErrorsLoaded = false;
 #if TARGET_OS_MAC
                 if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv")))
                 {
@@ -3925,6 +3937,7 @@ MainWindow::replyFinished(
                     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat);
 #endif
                     ui->label_ErrorCodeUpdate->setText("Error code file updated!");
+                    gbErrorsLoaded = true;
                 }
                 else
                 {
@@ -4808,8 +4821,15 @@ void
 MainWindow::on_btn_EditViewFolder_clicked(
     )
 {
-    //
-#pragma warning("TODO")
+    //Open application folder
+#if TARGET_OS_MAC
+    QString strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+#else
+    QString strFullDirname = "./";
+#endif
+
+    //Open folder
+    QDesktopServices::openUrl(QUrl::fromLocalFile(strFullDirname));
 }
 
 //=============================================================================
@@ -4829,6 +4849,9 @@ MainWindow::on_combo_EditFile_currentIndexChanged(
         }
     }
 
+    //Clear the edit box
+    ui->text_EditData->clear();
+
     //Load file data
     QString strFullFilename;
 
@@ -4837,9 +4860,6 @@ MainWindow::on_combo_EditFile_currentIndexChanged(
 #else
     strFullFilename = "./";
 #endif
-
-    ui->text_LogData->clear();
-    ui->label_LogInfo->clear();
 
     //Create the full filename
     strFullFilename = strFullFilename.append("/").append(ui->combo_EditFile->currentIndex() == 0 ? "UwTerminalX.ini" : "Devices.ini");
@@ -4945,6 +4965,17 @@ MainWindow::LoadSettings(
     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat); //Handle to error codes
     gpPredefinedDevice = new QSettings(QString("Devices.ini"), QSettings::IniFormat); //Handle to predefined devices
 #endif
+
+    //Check if error code file exists
+#if TARGET_OS_MAC
+    if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/codes.csv")))
+#else
+    if (QFile::exists("codes.csv"))
+#endif
+    {
+        //Error code file has been loaded
+        gbErrorsLoaded = true;
+    }
 
     //Check settings
 #if TARGET_OS_MAC
@@ -5115,7 +5146,7 @@ MainWindow::on_btn_LogViewExternal_clicked(
         }
         strFullFilename = strFullFilename.append("/").append(ui->list_LogFiles->currentItem()->text());
 
-        //
+        //Open file
         QDesktopServices::openUrl(QUrl::fromLocalFile(strFullFilename));
     }
 }
@@ -5127,7 +5158,30 @@ MainWindow::on_btn_LogViewFolder_clicked(
     )
 {
     //Open log folder
-#pragma warning("TODO")
+    QString strFullDirname;
+
+    if (ui->combo_LogDirectory->currentIndex() == 1)
+    {
+        //Log file directory
+#if TARGET_OS_MAC
+        QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/")).append(ui->edit_LogFile->text()));
+#else
+        QFileInfo fiFileInfo(ui->edit_LogFile->text());
+#endif
+        strFullDirname = fiFileInfo.absolutePath();
+    }
+    else
+    {
+        //Application directory
+#if TARGET_OS_MAC
+        strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).append("/");
+#else
+        strFullDirname = "./";
+#endif
+    }
+
+    //Open folder
+    QDesktopServices::openUrl(QUrl::fromLocalFile(strFullDirname));
 }
 
 //=============================================================================
