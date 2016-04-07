@@ -2232,7 +2232,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
+                         <width>96</width>
                          <height>82</height>
                         </rect>
                        </property>
@@ -2779,7 +2779,7 @@ You should have received a copy of the GNU General Public License along with thi
                <widget class="QPushButton" name="btn_LogViewExternal">
                 <property name="maximumSize">
                  <size>
-                  <width>90</width>
+                  <width>100</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -2950,7 +2950,7 @@ You should have received a copy of the GNU General Public License along with thi
                <widget class="QPushButton" name="btn_EditExternal">
                 <property name="maximumSize">
                  <size>
-                  <width>90</width>
+                  <width>100</width>
                   <height>16777215</height>
                  </size>
                 </property>
