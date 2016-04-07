@@ -84,7 +84,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.04g" //Version string
+#define UwVersion "1.04h" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -355,13 +355,6 @@ private slots:
     on_btn_LogRefresh_clicked(
         );
     void
-    on_btn_ClearLog_clicked(
-        );
-    void
-    on_list_LogFiles_currentRowChanged(
-        int
-        );
-    void
     on_btn_Licenses_clicked(
         );
     void
@@ -390,9 +383,11 @@ private slots:
     void
     on_btn_EditLoad_clicked(
         );
+#ifndef __APPLE__
     void
     on_btn_EditExternal_clicked(
         );
+#endif
     void
     on_btn_LogViewExternal_clicked(
         );
@@ -401,6 +396,13 @@ private slots:
         );
     void
     on_text_EditData_textChanged(
+        );
+    void
+    on_combo_LogFile_currentIndexChanged(
+        int
+        );
+    void
+    on_btn_ReloadLog_clicked(
         );
 
 private:
@@ -518,7 +520,6 @@ private:
     bool gbFileOpened; //True when a file on the module has been opened
     QString gstrLastFilename; //Holds the last filename of the last selected file
     QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
-    bool gbEditorViewSet; //True if the editor tab has been switched to
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor
     bool gbErrorsLoaded; //True if error csv file has been loaded
