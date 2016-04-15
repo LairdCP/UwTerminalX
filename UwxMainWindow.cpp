@@ -4756,13 +4756,13 @@ MainWindow::on_btn_WebBrowse_clicked(
     }
     else if (ui->combo_WebSelection->currentIndex() == 3)
     {
-        //RM186 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM186-Applications"));
+        //RM186 (RM1xx) Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM1xx-Applications"));
     }
     else if (ui->combo_WebSelection->currentIndex() == 4)
     {
-        //RM191 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM191-Applications"));
+        //RM191 (RM1xx) Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM1xx-Applications"));
     }
     else if (ui->combo_WebSelection->currentIndex() == 5)
     {
