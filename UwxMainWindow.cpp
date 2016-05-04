@@ -90,9 +90,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifndef __APPLE__
     //Increase Linux window size to cope with possible large Linux fonts
     resize(this->width()+20, this->height()+20);
-
-    //Change at+fwrh limit for linux
-    ui->edit_FWRH->setText("54");
 #endif
 #endif
 
