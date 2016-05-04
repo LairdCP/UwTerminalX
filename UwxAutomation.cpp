@@ -54,10 +54,13 @@ UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxA
     connect(ui->edit_Line8, SIGNAL(returnPressed()), this, SLOT(EnterPressed()));
     connect(ui->edit_Line9, SIGNAL(returnPressed()), this, SLOT(EnterPressed()));
 
-    //
+    //Create status bar
     msbStatusBar = new QStatusBar;
     ui->StatusBarLayout->addWidget(msbStatusBar);
     msbStatusBar->showMessage("");
+
+    //Set always on top state
+    on_check_OnTop_stateChanged(0);
 }
 
 //=============================================================================

@@ -1890,7 +1890,7 @@
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="label_8">
+                  <widget class="QLabel" name="label_ErrorCodeText">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -1988,7 +1988,7 @@ As more error codes get added, newer releases of the error code lookup file will
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="label_9">
+                  <widget class="QLabel" name="label_UwTerminalXText">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -2083,7 +2083,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="label_10">
+                  <widget class="QLabel" name="label_AppFirmwareText1">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -2128,12 +2128,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                      </item>
                      <item>
                       <property name="text">
-                       <string>RM186</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>RM191</string>
+                       <string>RM186/RM191</string>
                       </property>
                      </item>
                      <item>
@@ -2159,7 +2154,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                   </layout>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_22">
+                  <widget class="QLabel" name="label_AppFirmwareText2">
                    <property name="font">
                     <font>
                      <family>Arial</family>
