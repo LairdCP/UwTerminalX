@@ -1902,6 +1902,9 @@
 
 As more error codes get added, newer releases of the error code lookup file will be made available which can be updated from within UwTerminalX using the buttons below.</string>
                    </property>
+                   <property name="alignment">
+                    <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                   </property>
                    <property name="wordWrap">
                     <bool>true</bool>
                    </property>
@@ -2000,6 +2003,9 @@ As more error codes get added, newer releases of the error code lookup file will
 
 You can also use the button below to check if there is a newer version of UwTerminalX available.</string>
                    </property>
+                   <property name="alignment">
+                    <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                   </property>
                    <property name="wordWrap">
                     <bool>true</bool>
                    </property>
@@ -2093,6 +2099,9 @@ You can also use the button below to check if there is a newer version of UwTerm
                    <property name="text">
                     <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below. Additional information can also be found on the Laird Bluetooth modules website.</string>
                    </property>
+                   <property name="alignment">
+                    <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                   </property>
                    <property name="wordWrap">
                     <bool>true</bool>
                    </property>
@@ -2163,6 +2172,9 @@ You can also use the button below to check if there is a newer version of UwTerm
                    </property>
                    <property name="text">
                     <string>The current firmware version of Laird modules can be retrieved below.</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignJustify|Qt::AlignVCenter</set>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -2330,7 +2342,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                            </font>
                           </property>
                           <property name="text">
-                           <string>RM191::</string>
+                           <string>RM191:</string>
                           </property>
                           <property name="alignment">
                            <set>Qt::AlignCenter</set>
