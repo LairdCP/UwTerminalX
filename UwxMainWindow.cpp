@@ -664,6 +664,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QFontMetrics tmTmpFM(fntTmpFnt2);
     ui->text_TermEditData->setFont(fntTmpFnt2);
     ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->text_LogData->setFont(fntTmpFnt2);
+    ui->text_LogData->setTabStopWidth(tmTmpFM.width(" ")*6);
 
     if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
     {

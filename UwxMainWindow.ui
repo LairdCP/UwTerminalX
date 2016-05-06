@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
+    <width>660</width>
     <height>382</height>
    </rect>
   </property>
@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>1</number>
         </property>
         <property name="elideMode">
          <enum>Qt::ElideNone</enum>
@@ -972,6 +972,9 @@
               <property name="title">
                <string>Port Settings</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
               <layout class="QVBoxLayout" name="verticalLayout_15">
                <property name="spacing">
                 <number>2</number>
@@ -1333,6 +1336,19 @@
                  </property>
                 </widget>
                </item>
+               <item>
+                <spacer name="verticalSpacer_9">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
              </widget>
             </item>
@@ -1346,6 +1362,9 @@
               </property>
               <property name="title">
                <string>Misc</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
                <property name="leftMargin">
@@ -1644,7 +1663,7 @@
               </property>
               <property name="minimumSize">
                <size>
-                <width>154</width>
+                <width>170</width>
                 <height>160</height>
                </size>
               </property>
@@ -1656,6 +1675,9 @@
               </property>
               <property name="title">
                <string>Terminal</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">
                <property name="spacing">
@@ -2242,7 +2264,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
+                         <width>186</width>
                          <height>82</height>
                         </rect>
                        </property>
