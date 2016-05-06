@@ -84,7 +84,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS 17
 #define MODE_CHECK_FIRMWARE_SUPPORT 18
 //Defines for version and functions
-#define UwVersion "1.04n" //Version string
+#define UwVersion "1.04o" //Version string
 #define FileReadBlock 512 //Number of bytes to read per block when streaming files
 #define StreamProgress 10000 //Number of bytes between streaming progress updates
 #define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
@@ -107,11 +107,9 @@
 #define DefaultOnlineXComp 1
 #define DefaultTextUpdateInterval 80
 #define DefaultSkipDownloadDisplay 1
+#define DefaultSSLEnable 1
 //Define the protocol
-#ifdef UseSSL
-    //HTTPS
-    #define WebProtocol "https"
-#else
+#ifndef UseSSL
     //HTTP
     #define WebProtocol "http"
 #endif
@@ -404,6 +402,12 @@ private slots:
     void
     on_btn_ReloadLog_clicked(
         );
+#ifdef UseSSL
+    void
+    on_check_EnableSSL_stateChanged(
+        int
+        );
+#endif
 
 private:
     Ui::MainWindow *ui;
@@ -524,6 +528,7 @@ private:
     int giEditFileType; //Type of file currently open in the editor
     bool gbErrorsLoaded; //True if error csv file has been loaded
 #ifdef UseSSL
+    QString WebProtocol; //Holds HTTP or HTTPS depending on options selected
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
 #endif
 

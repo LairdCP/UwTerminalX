@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifndef _WIN32
 #ifndef __APPLE__
     //Increase Linux window size to cope with possible large Linux fonts
-    resize(this->width()+20, this->height()+20);
+    resize(this->width()+50, this->height()+20);
 #endif
 #endif
 
@@ -160,6 +160,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Load PNGs for Linux/Mac
     gimUw16Image = QImage(":/images/UwTerminal16.png");
     gimUw32Image = QImage(":/images/UwTerminal32.png");
+#endif
+
+#ifndef UseSSL
+    //Disable SSL checkbox for non-SSL builds
+    ui->check_EnableSSL->setCheckable(false);
+    ui->check_EnableSSL->setChecked(false);
+    ui->check_EnableSSL->setEnabled(false);
 #endif
 
     //Create pixmaps
@@ -350,6 +357,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->edit_LogFile->setText(gpTermSettings->value("LogFile", DefaultLogFile).toString());
     ui->check_LogEnable->setChecked(gpTermSettings->value("LogEnable", DefaultLogEnable).toBool());
     ui->check_LogAppend->setChecked(gpTermSettings->value("LogMode", DefaultLogMode).toBool());
+
+#ifdef UseSSL
+    //Set SSL status
+    ui->check_EnableSSL->setChecked(gpTermSettings->value("SSLEnable", DefaultSSLEnable).toBool());
+    if (ui->check_EnableSSL->isChecked() == true)
+    {
+        //HTTPS
+        WebProtocol = "https";
+    }
+    else
+    {
+        //HTTP
+        WebProtocol = "http";
+    }
+#endif
 
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
@@ -5073,6 +5095,22 @@ MainWindow::LoadSettings(
         {
             gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
         }
+#ifdef UseSSL
+        if (gpTermSettings->value("SSLEnable").isNull())
+        {
+            gpTermSettings->setValue("SSLEnable", DefaultSSLEnable); //If SSL should be used for online functionality or not (1 = use SSL, 0 = use HTTP)
+            if (DefaultSSLEnable == true)
+            {
+                //HTTPS
+                WebProtocol = "https";
+            }
+            else
+            {
+                //HTTP
+                WebProtocol = "http";
+            }
+        }
+#endif
         gpTermSettings->setValue("ConfigVersion", UwVersion);
     }
 }
@@ -5313,6 +5351,29 @@ MainWindow::on_btn_ReloadLog_clicked(
     //Reload log
     on_combo_LogFile_currentIndexChanged(ui->combo_LogFile->currentIndex());
 }
+
+//=============================================================================
+//=============================================================================
+#ifdef UseSSL
+void
+MainWindow::on_check_EnableSSL_stateChanged(
+    int
+    )
+{
+    //Update SSL preference
+    gpTermSettings->setValue("SSLEnable", ui->check_EnableSSL->isChecked());
+    if (ui->check_EnableSSL->isChecked() == true)
+    {
+        //HTTPS
+        WebProtocol = "https";
+    }
+    else
+    {
+        //HTTP
+        WebProtocol = "http";
+    }
+}
+#endif
 
 /******************************************************************************/
 // END OF FILE
