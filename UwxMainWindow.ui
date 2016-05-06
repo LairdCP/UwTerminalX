@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>660</width>
-    <height>382</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>3</number>
         </property>
         <property name="elideMode">
          <enum>Qt::ElideNone</enum>
@@ -827,7 +827,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>40</height>
+              <height>10</height>
              </size>
             </property>
            </spacer>
@@ -1344,7 +1344,7 @@
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
-                   <height>40</height>
+                   <height>10</height>
                   </size>
                  </property>
                 </spacer>
@@ -1622,7 +1622,7 @@
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
-                   <height>40</height>
+                   <height>10</height>
                   </size>
                  </property>
                 </spacer>
@@ -1844,7 +1844,7 @@
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
-                   <height>40</height>
+                   <height>10</height>
                   </size>
                  </property>
                 </spacer>
@@ -2264,7 +2264,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>186</width>
+                         <width>202</width>
                          <height>82</height>
                         </rect>
                        </property>

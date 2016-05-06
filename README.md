@@ -6,13 +6,15 @@ UwTerminalX is a cross-platform utility for communicating and downloading applic
 
 ##Downloading
 
-Pre-compiled builds can be found by clicking the [Releases](https://github.com/LairdCP/UwTerminalX/releases) tab on Github, builds are available for Linux (32 bit build), Mac (64 bit build) and Windows (32 bit build).
+Pre-compiled builds can be found by clicking the [Releases](https://github.com/LairdCP/UwTerminalX/releases) tab on Github, builds are available for Linux (32 bit build), Mac (64 bit build) and Windows (32 bit build). Please note that the SSL builds include encryption when using online functionality and should only be used in countries where encryption is legal, non-SSL builds are also available from the release page.
 
 ##Setup
 
 ###Windows:
 
 Download and open the zip file, extract the files to a folder on your computer and double click 'UwTerminalX.exe' to run UwTerminalX.
+
+If using the SSL version of UwTerminalX, then the Visual Studio 2015 runtime files are required which are available on the [Microsoft site](https://www.microsoft.com/en-gb/download/details.aspx?id=48145).
 
 ###Mac:
 

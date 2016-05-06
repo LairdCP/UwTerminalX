@@ -78,10 +78,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     //Fix mac's resize
-    resize(720, 380);
+    resize(720, 360);
 
     //Disable viewing files externally for mac
     ui->btn_EditExternal->setEnabled(false);
+
+    //Increase duplicate button size for mac
+    ui->btn_Duplicate->setMinimumWidth(130);
 #endif
 
 #ifndef _WIN32
