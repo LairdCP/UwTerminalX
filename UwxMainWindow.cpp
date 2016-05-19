@@ -5151,7 +5151,7 @@ MainWindow::UpdateSettings(
                 if (i < 253)
                 {
                     //RM186
-                    QString strTmpStr = QString("Port").append(QString::number(i);
+                    QString strTmpStr = QString("Port").append(QString::number(i));
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM186");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
@@ -5161,7 +5161,7 @@ MainWindow::UpdateSettings(
                     ++i;
 
                     //RM191
-                    strTmpStr = QString("Port").append(QString::number(i);
+                    strTmpStr = QString("Port").append(QString::number(i));
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM191");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
