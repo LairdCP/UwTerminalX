@@ -34,6 +34,7 @@ UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxA
     //On dialogue creation
     this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
+    this->hide();
 
     //Default values
     mchItemPosition = 0;
@@ -105,6 +106,7 @@ UwxAutomation::SetMainHandle(
     this->setParent(mMainAuto);
     this->setWindowFlags((Qt::WindowCloseButtonHint | Qt::Window));
     this->setModal(false);
+    this->hide();
 }
 
 //=============================================================================
