@@ -32,9 +32,7 @@
 /******************************************************************************/
 UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxAutomation){
     //On dialogue creation
-    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
     ui->setupUi(this);
-    this->hide();
 
     //Default values
     mchItemPosition = 0;
@@ -103,10 +101,9 @@ UwxAutomation::SetMainHandle(
 {
     //Sets the main window handle
     mMainAuto = mwNewHandle;
-    this->setParent(mMainAuto);
-    this->setWindowFlags((Qt::WindowCloseButtonHint | Qt::Window));
+    //Commented out to allow window to appear behind main window
+    //this->setParent(mMainAuto);
     this->setModal(false);
-    this->hide();
 }
 
 //=============================================================================
@@ -664,6 +661,8 @@ UwxAutomation::on_check_OnTop_stateChanged(
     )
 {
     //Always on-top state changed
+    bool bReShow = this->isVisible();
+
     if (ui->check_OnTop->isChecked())
     {
         //Always on top
@@ -672,9 +671,14 @@ UwxAutomation::on_check_OnTop_stateChanged(
     else
     {
         //Not always on top
-        this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
+        this->setWindowFlags((Qt::Window | Qt::WindowCloseButtonHint));
     }
-    this->show();
+
+    if (bReShow == true)
+    {
+        //Repaint (show) window
+        this->show();
+    }
 }
 
 /******************************************************************************/
