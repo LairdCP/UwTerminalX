@@ -404,8 +404,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString("Port3Data"), "8");
         gpPredefinedDevice->setValue(QString("Port3Flow"), "0");
 
-        //WT-100
-        gpPredefinedDevice->setValue(QString("Port4Name"), "WT-100");
+        //BL652
+        gpPredefinedDevice->setValue(QString("Port4Name"), "BL652");
         gpPredefinedDevice->setValue(QString("Port4Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port4Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port4Stop"), "1");
@@ -4070,6 +4070,7 @@ MainWindow::replyFinished(
                     //Update version list
                     ui->label_BL600Firmware->setText(QString("BL600: ").append(joJsonObject["BL600r2"].toString()));
                     ui->label_BL620Firmware->setText(QString("BL620: ").append(joJsonObject["BL620"].toString()));
+                    ui->label_BL652Firmware->setText(QString("BL652: ").append(joJsonObject["BL652"].toString()));
                     ui->label_BT900Firmware->setText(QString("BT900: ").append(joJsonObject["BT900"].toString()));
                     ui->label_RM186Firmware->setText(QString("RM186: ").append(joJsonObject["RM186"].toString()));
                     ui->label_RM191Firmware->setText(QString("RM191: ").append(joJsonObject["RM191"].toString()));
@@ -4079,6 +4080,7 @@ MainWindow::replyFinished(
                     palBGColour.setColor(QPalette::Disabled, QPalette::WindowText, Qt::darkGreen);
                     ui->label_BL600Firmware->setPalette(palBGColour);
                     ui->label_BL620Firmware->setPalette(palBGColour);
+                    ui->label_BL652Firmware->setPalette(palBGColour);
                     ui->label_BT900Firmware->setPalette(palBGColour);
                     ui->label_RM186Firmware->setPalette(palBGColour);
                     ui->label_RM191Firmware->setPalette(palBGColour);
@@ -4788,15 +4790,20 @@ MainWindow::on_btn_WebBrowse_clicked(
     }
     else if (ui->combo_WebSelection->currentIndex() == 2)
     {
+        //BL652 Github
+        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL652-Applications"));
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 3)
+    {
         //BT900 Github
         QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
     }
-    else if (ui->combo_WebSelection->currentIndex() == 3)
+    else if (ui->combo_WebSelection->currentIndex() == 4)
     {
         //RM186/RM191 (RM1xx) Github
         QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM1xx-Applications"));
     }
-    else if (ui->combo_WebSelection->currentIndex() == 4)
+    else if (ui->combo_WebSelection->currentIndex() == 5)
     {
         //Laird Bluetooth modules page
         QDesktopServices::openUrl(QUrl("http://www.lairdtech.com/products/category/741"));
@@ -5163,6 +5170,35 @@ MainWindow::UpdateSettings(
                     //RM191
                     strTmpStr = QString("Port").append(QString::number(i));
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM191");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
+                }
+            }
+        }
+
+        if (iMinor <= 5)
+        {
+            if (qcDelta == 0)
+            {
+                //Add new BL652 device
+                int i = 1;
+                while (i < 255)
+                {
+                    if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+                    {
+                        break;
+                    }
+                    ++i;
+                }
+
+                if (i < 254)
+                {
+                    //BL652
+                    QString strTmpStr = QString("Port").append(QString::number(i));
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "BL652");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");

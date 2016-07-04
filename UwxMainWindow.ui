@@ -2164,6 +2164,11 @@ You can also use the button below to check if there is a newer version of UwTerm
                      </item>
                      <item>
                       <property name="text">
+                       <string>BL652</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
                        <string>BT900</string>
                       </property>
                      </item>
@@ -2274,8 +2279,8 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
-                         <height>82</height>
+                         <width>186</width>
+                         <height>98</height>
                         </rect>
                        </property>
                        <property name="sizePolicy">
@@ -2330,6 +2335,21 @@ You can also use the button below to check if there is a newer version of UwTerm
                           </property>
                           <property name="text">
                            <string>BL620:</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_BL652Firmware">
+                          <property name="font">
+                           <font>
+                            <family>Arial</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>BL652:</string>
                           </property>
                           <property name="alignment">
                            <set>Qt::AlignCenter</set>
