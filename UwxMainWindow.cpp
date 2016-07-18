@@ -1583,12 +1583,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            gstrLastFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
-            if (gstrLastFilename.length() > 1)
+            if (strFilename.length() > 1)
             {
                 //Set last directory config
-                QString strFilename = gstrLastFilename;
+                gstrLastFilename = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Delete file
@@ -1644,12 +1644,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            gstrLastFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
-            if (gstrLastFilename.length() > 1)
+            if (strFilename.length() > 1)
             {
                 //Set last directory config
-                QString strFilename = gstrLastFilename;
+                gstrLastFilename  = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Delete file
@@ -1688,21 +1688,21 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            gstrLastFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
+            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
 
-            if (gstrLastFilename.length() > 1)
+            if (strFilename.length() > 1)
             {
                 //Set last directory config
-                QString strDataFilename = gstrLastFilename;
-                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strDataFilename)[0]);
+                gstrLastFilename = strFilename;
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //File was selected - start streaming it out
-                gpStreamFileHandle = new QFile(strDataFilename);
+                gpStreamFileHandle = new QFile(strFilename);
 
                 if (!gpStreamFileHandle->open(QIODevice::ReadOnly))
                 {
                     //Unable to open file
-                    QString strMessage = tr("Error during file streaming: Access to selected file is denied: ").append(strDataFilename);
+                    QString strMessage = tr("Error during file streaming: Access to selected file is denied: ").append(strFilename);
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                     return;
@@ -1755,12 +1755,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            gstrLastFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
-            if (gstrLastFilename.length() > 1)
+            if (strFilename.length() > 1)
             {
                 //Set last directory config
-                QString strFilename = gstrLastFilename;
+                gstrLastFilename = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Run file
@@ -1806,20 +1806,21 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            gstrLastFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
-            if (gstrLastFilename.length() > 1)
+            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
+
+            if (strFilename.length() > 1)
             {
                 //Set last directory config
-                QString strDataFilename = gstrLastFilename;
-                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strDataFilename)[0]);
+                gstrLastFilename = strFilename;
+                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //File selected
-                gpStreamFileHandle = new QFile(strDataFilename);
+                gpStreamFileHandle = new QFile(strFilename);
 
                 if (!gpStreamFileHandle->open(QIODevice::ReadOnly))
                 {
                     //Unable to open file
-                    QString strMessage = tr("Error during batch streaming: Access to selected file is denied: ").append(strDataFilename);
+                    QString strMessage = tr("Error during batch streaming: Access to selected file is denied: ").append(strFilename);
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                     return;
@@ -1962,11 +1963,12 @@ MainWindow::CompileApp(
 {
     //Runs when an application is to be compiled
     gchTermMode = chMode;
-    gstrLastFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename, (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
-    if (gstrLastFilename != "")
+    QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename, (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
+
+    if (strFilename != "")
     {
         //Set last directory config
-        gstrTermFilename = gstrLastFilename;
+        gstrTermFilename = strFilename;
         gpTermSettings->setValue("LastFileDirectory", SplitFilePath(gstrTermFilename)[0]);
 
         if (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN)
@@ -3379,12 +3381,12 @@ MainWindow::on_btn_PreXCompSelect_clicked(
     )
 {
     //Opens an executable selector
-    gstrLastFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename, "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
+    QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename, "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
 
-    if (gstrLastFilename.length() > 1)
+    if (strFilename.length() > 1)
     {
         //Set last directory config
-        QString strFilename = gstrLastFilename;
+        gstrLastFilename = strFilename;
         gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
         if ((unsigned int)(QFile(strFilename).permissions() & (QFileDevice::ExeOther | QFileDevice::ExeGroup | QFileDevice::ExeUser | QFileDevice::ExeOwner)) == 0)

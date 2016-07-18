@@ -1077,6 +1077,16 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="check_ShowFileSize">
+                 <property name="text">
+                  <string>Show Application filesize</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="check_ShowCLRF">
                  <property name="text">
                   <string>Escape CR/LF/Tab</string>
