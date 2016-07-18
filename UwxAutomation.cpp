@@ -101,8 +101,6 @@ UwxAutomation::SetMainHandle(
 {
     //Sets the main window handle
     mMainAuto = mwNewHandle;
-    //Commented out to allow window to appear behind main window
-    //this->setParent(mMainAuto);
     this->setModal(false);
 }
 

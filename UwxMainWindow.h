@@ -67,52 +67,56 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define ServerHost "uwterminalx.no-ip.org" //Hostname/IP of online xcompile server
+#define ServerHost                        "uwterminalx.no-ip.org" //Hostname/IP of online xcompile server
 //#define UseSSL //Define to use https/SSL (requires OpenSSL support in Qt and runtime libraries)
 //Defines for various file download functions
-#define MODE_COMPILE 1
-#define MODE_COMPILE_LOAD 2
-#define MODE_COMPILE_LOAD_RUN 3
-#define MODE_LOAD 4
-#define MODE_LOAD_RUN 5
-#define MODE_SERVER_COMPILE 9
-#define MODE_SERVER_COMPILE_LOAD 10
-#define MODE_SERVER_COMPILE_LOAD_RUN 11
-#define MODE_CHECK_ERROR_CODE_VERSIONS 14
-#define MODE_CHECK_UWTERMINALX_VERSIONS 15
-#define MODE_UPDATE_ERROR_CODE 16
-#define MODE_CHECK_FIRMWARE_VERSIONS 17
-#define MODE_CHECK_FIRMWARE_SUPPORT 18
+#define MODE_COMPILE                      1
+#define MODE_COMPILE_LOAD                 2
+#define MODE_COMPILE_LOAD_RUN             3
+#define MODE_LOAD                         4
+#define MODE_LOAD_RUN                     5
+#define MODE_SERVER_COMPILE               9
+#define MODE_SERVER_COMPILE_LOAD          10
+#define MODE_SERVER_COMPILE_LOAD_RUN      11
+#define MODE_CHECK_ERROR_CODE_VERSIONS    14
+#define MODE_CHECK_UWTERMINALX_VERSIONS   15
+#define MODE_UPDATE_ERROR_CODE            16
+#define MODE_CHECK_FIRMWARE_VERSIONS      17
+#define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion "1.05b" //Version string
-#define FileReadBlock 512 //Number of bytes to read per block when streaming files
-#define StreamProgress 10000 //Number of bytes between streaming progress updates
-#define BatchTimeout 4000 //Time (in mS) to wait for getting a response from a batch command for
-#define PrePostXCompTimeout 15000 //Time (in mS) to allow a pre/post XCompilation process to execute for
-#define ModuleTimeout 4000 //Time (in mS) that a download stage command/process times out (module)
-#define MaxDevNameSize 8 //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
+#define UwVersion                         "1.05c" //Version string
+#define FileReadBlock                     512     //Number of bytes to read per block when streaming files
+#define StreamProgress                    10000   //Number of bytes between streaming progress updates
+#define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
+#define PrePostXCompTimeout               15000   //Time (in mS) to allow a pre/post XCompilation process to execute for
+#define ModuleTimeout                     4000    //Time (in mS) that a download stage command/process times out (module)
+#define MaxDevNameSize                    8       //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
 //Defines for default config values
-#define DefaultLogFile "UwTerminalX.log"
-#define DefaultLogMode 0
-#define DefaultLogEnable 0
-#define DefaultCompilerDir "compilers/"
-#define DefaultCompilerSubDirs 0
-#define DefaultDelUWCAfterDownload 0
-#define DefaultSysTrayIcon 1
-#define DefaultSerialSignalCheckInterval 50
-#define DefaultPrePostXCompRun 0
-#define DefaultPrePostXCompFail 0
-#define DefaultPrePostXCompMode 0
-#define DefaultPrePostXCompPath ""
-#define DefaultOnlineXComp 1
-#define DefaultTextUpdateInterval 80
-#define DefaultSkipDownloadDisplay 1
-#define DefaultSSLEnable 1
+#define DefaultLogFile                    "UwTerminalX.log"
+#define DefaultLogMode                    0
+#define DefaultLogEnable                  0
+#define DefaultCompilerDir                "compilers/"
+#define DefaultCompilerSubDirs            0
+#define DefaultDelUWCAfterDownload        0
+#define DefaultSysTrayIcon                1
+#define DefaultSerialSignalCheckInterval  50
+#define DefaultPrePostXCompRun            0
+#define DefaultPrePostXCompFail           0
+#define DefaultPrePostXCompMode           0
+#define DefaultPrePostXCompPath           ""
+#define DefaultOnlineXComp                1
+#define DefaultTextUpdateInterval         80
+#define DefaultSkipDownloadDisplay        1
+#define DefaultSSLEnable                  1
+#define DefaultShowFileSize               1
 //Define the protocol
 #ifndef UseSSL
     //HTTP
     #define WebProtocol "http"
 #endif
+//Defines for array indexes
+#define FilenameIndexApplication          0
+#define FilenameIndexOthers               1
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -408,6 +412,10 @@ private slots:
         int
         );
 #endif
+    void
+    on_check_ShowFileSize_stateChanged(
+        int
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -522,7 +530,7 @@ private:
     QNetworkAccessManager *gnmManager; //Network access manager
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
-    QString gstrLastFilename; //Holds the last filename of the last selected file
+    QString gstrLastFilename[2]; //Holds the filenames of the last selected files
     QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor

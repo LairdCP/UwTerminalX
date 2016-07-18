@@ -32,7 +32,7 @@
 /******************************************************************************/
 PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage){
     //Setup window to be a dialog
-    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint));
+    this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint));
     ui->setupUi(this);
 }
 

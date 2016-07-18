@@ -202,7 +202,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpmErrorForm = new PopupMessage;
 
     //Initialise automation popup
-    guaAutomationForm = new UwxAutomation;
+    guaAutomationForm = new UwxAutomation(this);
 
     //Populate the list of devices
     RefreshSerialDevices();
@@ -377,6 +377,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 #endif
 
+    //Set showing filesize option
+    ui->check_ShowFileSize->setChecked(gpTermSettings->value("ShowFileSize", DefaultShowFileSize).toBool());
+
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
     {
@@ -454,6 +457,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_SkipDL->setToolTip("Enable this to skip displaying the commands sent/received to the module when downloading a file to it.");
     ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
     ui->check_EnableSSL->setToolTip("Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.");
+    ui->check_ShowFileSize->setToolTip("Enable this to see the filesize of compiled applications.");
 
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
@@ -511,7 +515,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
 
     //Load last directory path
-    gstrLastFilename = gpTermSettings->value("LastFileDirectory", "").toString();
+    gstrLastFilename[FilenameIndexApplication] = gpTermSettings->value("LastFileDirectory", "").toString();
+    gstrLastFilename[FilenameIndexOthers] = gpTermSettings->value("LastOtherFileDirectory", "").toString();
 
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
@@ -1583,12 +1588,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
                 //Set last directory config
-                gstrLastFilename = strFilename;
+                gstrLastFilename[FilenameIndexApplication] = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Delete file
@@ -1644,12 +1649,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
                 //Set last directory config
-                gstrLastFilename  = strFilename;
+                gstrLastFilename[FilenameIndexApplication]  = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Delete file
@@ -1688,13 +1693,13 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
+            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
 
             if (strFilename.length() > 1)
             {
                 //Set last directory config
-                gstrLastFilename = strFilename;
-                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+                gstrLastFilename[FilenameIndexOthers] = strFilename;
+                gpTermSettings->setValue("LastOtherFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //File was selected - start streaming it out
                 gpStreamFileHandle = new QFile(strFilename);
@@ -1755,12 +1760,12 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename, "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 
             if (strFilename.length() > 1)
             {
                 //Set last directory config
-                gstrLastFilename = strFilename;
+                gstrLastFilename[FilenameIndexApplication] = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //Run file
@@ -1806,13 +1811,13 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename, tr("Text Files (*.txt);;All Files (*.*)"));
+            QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
 
             if (strFilename.length() > 1)
             {
                 //Set last directory config
-                gstrLastFilename = strFilename;
-                gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+                gstrLastFilename[FilenameIndexOthers] = strFilename;
+                gpTermSettings->setValue("LastOtherFileDirectory", SplitFilePath(strFilename)[0]);
 
                 //File selected
                 gpStreamFileHandle = new QFile(strFilename);
@@ -1963,12 +1968,13 @@ MainWindow::CompileApp(
 {
     //Runs when an application is to be compiled
     gchTermMode = chMode;
-    QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename, (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
+    QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename[FilenameIndexApplication], (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
 
     if (strFilename != "")
     {
         //Set last directory config
         gstrTermFilename = strFilename;
+        gstrLastFilename[FilenameIndexApplication] = strFilename;
         gpTermSettings->setValue("LastFileDirectory", SplitFilePath(gstrTermFilename)[0]);
 
         if (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN)
@@ -2263,7 +2269,53 @@ MainWindow::process_finished(
             //XCompile complete
             gtmrDownloadTimeoutTimer.stop();
             gstrHexData = "";
-            gbaDisplayBuffer.append("\n-- XCompile complete --\n");
+            if (ui->check_ShowFileSize->isChecked())
+            {
+                //Display size
+                QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                QFile fileFileName(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
+                if (!fileFileName.exists())
+                {
+                    //File does not exist
+                    gbaDisplayBuffer.append("\n-- XCompile complete (Size not known) --\n");
+                }
+                else
+                {
+                    //File exists
+                    float intSize = fileFileName.size();
+                    QString strSizeString;
+                    if (intSize > 1073741824)
+                    {
+                        //GB (If this occurs then something went very, very wrong)
+                        intSize = intSize/1073741824;
+                        strSizeString = QString::number(intSize, 'g', 2).append("GB");
+                    }
+                    else if (intSize > 1048576)
+                    {
+                        //MB (This should never occur)
+                        intSize = intSize/1048576;
+                        strSizeString = QString::number(intSize, 'g', 2).append("MB");
+                    }
+                    else if (intSize > 1024)
+                    {
+                        //KB
+                        intSize = intSize/1024;
+                        strSizeString = QString::number(intSize, 'g', 2).append("KB");
+                    }
+                    else
+                    {
+                        //Bytes
+                        strSizeString = QString::number(intSize, 'g', 2).append("B");
+                    }
+
+                    gbaDisplayBuffer.append("\n-- XCompile complete (").append(strSizeString).append(") --\n");
+                }
+            }
+            else
+            {
+                //Normal message
+                gbaDisplayBuffer.append("\n-- XCompile complete --\n");
+            }
             if (!gtmrTextUpdateTimer.isActive())
             {
                 gtmrTextUpdateTimer.start();
@@ -3381,13 +3433,13 @@ MainWindow::on_btn_PreXCompSelect_clicked(
     )
 {
     //Opens an executable selector
-    QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename, "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
+    QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename[FilenameIndexOthers], "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
 
     if (strFilename.length() > 1)
     {
         //Set last directory config
-        gstrLastFilename = strFilename;
-        gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
+        gstrLastFilename[FilenameIndexOthers] = strFilename;
+        gpTermSettings->setValue("LastOtherFileDirectory", SplitFilePath(strFilename)[0]);
 
         if ((unsigned int)(QFile(strFilename).permissions() & (QFileDevice::ExeOther | QFileDevice::ExeGroup | QFileDevice::ExeUser | QFileDevice::ExeOwner)) == 0)
         {
@@ -3774,7 +3826,53 @@ MainWindow::replyFinished(
 
                 gstrTermFilename = QString(lstFI[0]).append(lstFI[1]).append(".uwc");
 
-                gbaDisplayBuffer.append("\n-- Online XCompile complete --\n");
+                if (ui->check_ShowFileSize->isChecked())
+                {
+                    //Display size
+                    QFile fileFileName(gstrTermFilename);
+                    if (!fileFileName.exists())
+                    {
+                        //File does not exist
+                        gbaDisplayBuffer.append("\n-- XCompile complete (Size not known) --\n");
+                    }
+                    else
+                    {
+                        //File exists
+                        float intSize = fileFileName.size();
+                        QString strSizeString;
+                        if (intSize > 1073741824)
+                        {
+                            //GB (If this occurs then something went very, very wrong)
+                            intSize = intSize/1073741824;
+                            strSizeString = QString::number(intSize, 'g', 2).append("GB");
+                        }
+                        else if (intSize > 1048576)
+                        {
+                            //MB (This should never occur)
+                            intSize = intSize/1048576;
+                            strSizeString = QString::number(intSize, 'g', 2).append("MB");
+                        }
+                        else if (intSize > 1024)
+                        {
+                            //KB
+                            intSize = intSize/1024;
+                            strSizeString = QString::number(intSize, 'g', 2).append("KB");
+                        }
+                        else
+                        {
+                            //Bytes
+                            strSizeString = QString::number(intSize, 'g', 2).append("B");
+                        }
+
+                        gbaDisplayBuffer.append("\n-- XCompile complete (").append(strSizeString).append(") --\n");
+                    }
+                }
+                else
+                {
+                    //Normal message
+                    gbaDisplayBuffer.append("\n-- XCompile complete --\n");
+                }
+
                 if (!gtmrTextUpdateTimer.isActive())
                 {
                     gtmrTextUpdateTimer.start();
@@ -5423,6 +5521,17 @@ MainWindow::on_check_EnableSSL_stateChanged(
     }
 }
 #endif
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_ShowFileSize_stateChanged(
+    int
+    )
+{
+    //Update show file size preference
+    gpTermSettings->setValue("ShowFileSize", ui->check_ShowFileSize->isChecked());
+}
 
 /******************************************************************************/
 // END OF FILE
