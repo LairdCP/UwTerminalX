@@ -69,6 +69,9 @@ public:
     void ConnectionChange(
         bool bEnabled
         );
+    void TempAlwaysOnTop(
+        bool bEnabled
+        );
 
 private slots:
     void on_btn_Load_clicked(

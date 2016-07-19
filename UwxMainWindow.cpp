@@ -1588,7 +1588,9 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
+            guaAutomationForm->TempAlwaysOnTop(0);
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            guaAutomationForm->TempAlwaysOnTop(1);
 
             if (strFilename.length() > 1)
             {
@@ -1649,7 +1651,9 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
+            guaAutomationForm->TempAlwaysOnTop(0);
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            guaAutomationForm->TempAlwaysOnTop(1);
 
             if (strFilename.length() > 1)
             {
@@ -1693,7 +1697,9 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
+            guaAutomationForm->TempAlwaysOnTop(0);
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
+            guaAutomationForm->TempAlwaysOnTop(1);
 
             if (strFilename.length() > 1)
             {
@@ -1760,7 +1766,9 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
+            guaAutomationForm->TempAlwaysOnTop(0);
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
+            guaAutomationForm->TempAlwaysOnTop(1);
 
             if (strFilename.length() > 1)
             {
@@ -1811,7 +1819,9 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
+            guaAutomationForm->TempAlwaysOnTop(0);
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
+            guaAutomationForm->TempAlwaysOnTop(1);
 
             if (strFilename.length() > 1)
             {
@@ -1968,7 +1978,9 @@ MainWindow::CompileApp(
 {
     //Runs when an application is to be compiled
     gchTermMode = chMode;
+    guaAutomationForm->TempAlwaysOnTop(0);
     QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename[FilenameIndexApplication], (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
+    guaAutomationForm->TempAlwaysOnTop(1);
 
     if (strFilename != "")
     {
@@ -3433,7 +3445,9 @@ MainWindow::on_btn_PreXCompSelect_clicked(
     )
 {
     //Opens an executable selector
+    guaAutomationForm->TempAlwaysOnTop(0);
     QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename[FilenameIndexOthers], "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
+    guaAutomationForm->TempAlwaysOnTop(1);
 
     if (strFilename.length() > 1)
     {
@@ -4618,7 +4632,9 @@ MainWindow::on_btn_LogFileSelect_clicked(
     )
 {
     //Updates the log file
+    guaAutomationForm->TempAlwaysOnTop(0);
     QString strLogFilename = QFileDialog::getSaveFileName(this, "Select Log File", ui->edit_LogFile->text(), "Log Files (*.log);;All Files (*.*)");
+    guaAutomationForm->TempAlwaysOnTop(1);
     if (!strLogFilename.isEmpty())
     {
         //Update log file
