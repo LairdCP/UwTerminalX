@@ -2285,43 +2285,7 @@ MainWindow::process_finished(
             {
                 //Display size
                 QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                QFile fileFileName(QString(lstFI[0]).append(lstFI[1]).append(".uwc"));
-                if (!fileFileName.exists())
-                {
-                    //File does not exist
-                    gbaDisplayBuffer.append("\n-- XCompile complete (Size not known) --\n");
-                }
-                else
-                {
-                    //File exists
-                    float intSize = fileFileName.size();
-                    QString strSizeString;
-                    if (intSize > 1073741824)
-                    {
-                        //GB (If this occurs then something went very, very wrong)
-                        intSize = intSize/1073741824;
-                        strSizeString = QString::number(intSize, 'g', 2).append("GB");
-                    }
-                    else if (intSize > 1048576)
-                    {
-                        //MB (This should never occur)
-                        intSize = intSize/1048576;
-                        strSizeString = QString::number(intSize, 'g', 2).append("MB");
-                    }
-                    else if (intSize > 1024)
-                    {
-                        //KB
-                        intSize = intSize/1024;
-                        strSizeString = QString::number(intSize, 'g', 2).append("KB");
-                    }
-                    else
-                    {
-                        //Bytes
-                        strSizeString = QString::number(intSize, 'g', 2).append("B");
-                    }
-
-                    gbaDisplayBuffer.append("\n-- XCompile complete (").append(strSizeString).append(") --\n");
-                }
+                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc"))).append(") --\n");
             }
             else
             {
@@ -2342,6 +2306,13 @@ MainWindow::process_finished(
             //Load the file
             LoadFile(true);
             gchTermMode2 = MODE_COMPILE;
+
+            if (ui->check_ShowFileSize->isChecked())
+            {
+                //Display size of application
+                QList<QString> lstFI = SplitFilePath(gstrTermFilename);
+                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc"))).append(") Downloading --\n");
+            }
 
             //Download to the device
             QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
@@ -3843,43 +3814,7 @@ MainWindow::replyFinished(
                 if (ui->check_ShowFileSize->isChecked())
                 {
                     //Display size
-                    QFile fileFileName(gstrTermFilename);
-                    if (!fileFileName.exists())
-                    {
-                        //File does not exist
-                        gbaDisplayBuffer.append("\n-- XCompile complete (Size not known) --\n");
-                    }
-                    else
-                    {
-                        //File exists
-                        float intSize = fileFileName.size();
-                        QString strSizeString;
-                        if (intSize > 1073741824)
-                        {
-                            //GB (If this occurs then something went very, very wrong)
-                            intSize = intSize/1073741824;
-                            strSizeString = QString::number(intSize, 'g', 2).append("GB");
-                        }
-                        else if (intSize > 1048576)
-                        {
-                            //MB (This should never occur)
-                            intSize = intSize/1048576;
-                            strSizeString = QString::number(intSize, 'g', 2).append("MB");
-                        }
-                        else if (intSize > 1024)
-                        {
-                            //KB
-                            intSize = intSize/1024;
-                            strSizeString = QString::number(intSize, 'g', 2).append("KB");
-                        }
-                        else
-                        {
-                            //Bytes
-                            strSizeString = QString::number(intSize, 'g', 2).append("B");
-                        }
-
-                        gbaDisplayBuffer.append("\n-- XCompile complete (").append(strSizeString).append(") --\n");
-                    }
+                    gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(gstrTermFilename)).append(") --\n");
                 }
                 else
                 {
@@ -5547,6 +5482,76 @@ MainWindow::on_check_ShowFileSize_stateChanged(
 {
     //Update show file size preference
     gpTermSettings->setValue("ShowFileSize", ui->check_ShowFileSize->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+QString
+MainWindow::CleanFilesize(
+    QString strFilename
+    )
+{
+    //Cleanly calculates the filesize of an application rounding up
+    QFile fileFileName(strFilename);
+    if (!fileFileName.exists())
+    {
+        //File does not exist
+        return "Size not known";
+    }
+    else
+    {
+        //File exists
+        float intSize = fileFileName.size();
+        if (intSize > 1073741824)
+        {
+            //GB (If this occurs then something went very, very wrong)
+            intSize = ceil(intSize/10737418.24)/100;
+            return RemoveZeros(QString::number(intSize, 'f', 2)).append("GB");
+        }
+        else if (intSize > 1048576)
+        {
+            //MB (This should never occur)
+            intSize = ceil(intSize/10485.76)/100;
+            return RemoveZeros(QString::number(intSize, 'f', 2)).append("MB");
+        }
+        else if (intSize > 1024)
+        {
+            //KB
+            intSize = ceil(intSize/10.24)/100;
+            return RemoveZeros(QString::number(intSize, 'f', 2)).append("KB");
+        }
+        else
+        {
+            //Bytes
+            intSize = ceil(intSize*100)/100;
+            return RemoveZeros(QString::number(intSize, 'f', 2)).append("B");
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+QString
+MainWindow::RemoveZeros(
+    QString strData
+    )
+{
+    //Removes trailing zeros and decimal point
+    if (strData.right(2) == "00")
+    {
+        //Remove trailing zeros and decimal point
+        return strData.left(strData.size()-3);
+    }
+    else if (strData.right(1) == "0")
+    {
+        //Remove trailing zero
+        return strData.left(strData.size()-1);
+    }
+    else
+    {
+        //Nothing to remove
+        return strData;
+    }
 }
 
 /******************************************************************************/

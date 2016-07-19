@@ -84,7 +84,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05d" //Version string
+#define UwVersion                         "1.05e" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
@@ -470,6 +470,12 @@ private:
         int iMajor,
         int iMinor,
         QChar qcDelta
+        );
+    QString CleanFilesize(
+        QString strFilename
+        );
+    QString RemoveZeros(
+        QString strData
         );
 
     //Private variables
