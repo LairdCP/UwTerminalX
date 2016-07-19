@@ -698,7 +698,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Change terminal font to a monospaced font
 #ifdef _WIN32 OR __APPLE__
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#elif
+#else
     //Fix for qt bug
     QFont fntTmpFnt2 = QFont("monospace");
 #endif
