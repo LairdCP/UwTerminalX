@@ -696,7 +696,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     on_btn_LogRefresh_clicked();
 
     //Change terminal font to a monospaced font
+#ifdef _WIN32 OR __APPLE__
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#elif
+    //Fix for qt bug
+    QFont fntTmpFnt2 = QFont("monospace");
+#endif
     QFontMetrics tmTmpFM(fntTmpFnt2);
     ui->text_TermEditData->setFont(fntTmpFnt2);
     ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
