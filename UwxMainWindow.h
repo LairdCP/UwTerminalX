@@ -59,6 +59,8 @@
 #include <QHostInfo>
 #if TARGET_OS_MAC
 #include "QStandardPaths"
+//Need cmath for std::ceil function
+#include <cmath>
 #endif
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
@@ -84,7 +86,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05f" //Version string
+#define UwVersion                         "1.05g" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for

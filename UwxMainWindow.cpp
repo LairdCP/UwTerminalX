@@ -696,7 +696,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     on_btn_LogRefresh_clicked();
 
     //Change terminal font to a monospaced font
-#ifdef _WIN32 OR __APPLE__
+#ifdef _WIN32
+    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#elif __APPLE__
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 #else
     //Fix for qt bug
@@ -2952,7 +2954,7 @@ MainWindow::SerialBytesWritten(
         else if (gintStreamBytesRead > gintStreamBytesProgress)
         {
             //Progress output
-            gbaDisplayBuffer.append(QString("Streamed ").append(QString::number(gintStreamBytesRead)).append(" bytes.\n"));
+            gbaDisplayBuffer.append(QString("Streamed ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(gintStreamBytesRead*100/gintStreamBytesSize)).append("%).\n"));
             if (!gtmrTextUpdateTimer.isActive())
             {
                 gtmrTextUpdateTimer.start();
@@ -2969,7 +2971,7 @@ MainWindow::SerialBytesWritten(
         else
         {
             //Still streaming
-            ui->statusBar->showMessage(QString("Streamed ").append(QString::number(gintStreamBytesRead).append(" bytes of ").append(QString::number(gintStreamBytesSize))));
+            ui->statusBar->showMessage(QString("Streamed ").append(QString::number(gintStreamBytesRead).append(" bytes of ").append(QString::number(gintStreamBytesSize))).append(" (").append(QString::number(gintStreamBytesRead*100/gintStreamBytesSize)).append("%)"));
         }
     }
     else if (gbStreamingBatch == true)
@@ -5510,25 +5512,25 @@ MainWindow::CleanFilesize(
         if (intSize > 1073741824)
         {
             //GB (If this occurs then something went very, very wrong)
-            intSize = ceil(intSize/10737418.24)/100;
+            intSize = std::ceil(intSize/10737418.24)/100;
             return RemoveZeros(QString::number(intSize, 'f', 2)).append("GB");
         }
         else if (intSize > 1048576)
         {
             //MB (This should never occur)
-            intSize = ceil(intSize/10485.76)/100;
+            intSize = std::ceil(intSize/10485.76)/100;
             return RemoveZeros(QString::number(intSize, 'f', 2)).append("MB");
         }
         else if (intSize > 1024)
         {
             //KB
-            intSize = ceil(intSize/10.24)/100;
+            intSize = std::ceil(intSize/10.24)/100;
             return RemoveZeros(QString::number(intSize, 'f', 2)).append("KB");
         }
         else
         {
             //Bytes
-            intSize = ceil(intSize*100)/100;
+            intSize = std::ceil(intSize*100)/100;
             return RemoveZeros(QString::number(intSize, 'f', 2)).append("B");
         }
     }
