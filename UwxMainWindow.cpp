@@ -2471,7 +2471,7 @@ MainWindow::OpenDevice(
         if (gspSerialPort.open(QIODevice::ReadWrite))
         {
             //Successful
-            ui->statusBar->showMessage(QString("[").append(ui->combo_COM->currentText()).append(":").append(ui->combo_Baud->currentText()).append(",").append((ui->combo_Parity->currentIndex() == 0 ? "N" : ui->combo_Parity->currentIndex() == 1 ? "O" : ui->combo_Parity->currentIndex() == 2 ? "E" : "")).append(",").append(ui->combo_Data->currentText()).append(",").append(ui->combo_Stop->currentText()).append(",").append((ui->combo_Handshake->currentIndex() == 0 ? "N" : ui->combo_Handshake->currentIndex() == 1 ? "S" : ui->combo_Handshake->currentIndex() == 2 ? "H" : "")).append("]{").append((ui->radio_LCR->isChecked() ? "cr" : (ui->radio_LLF->isChecked() ? "lf" : (ui->radio_LCRLF->isChecked() ? "cr lf" : (ui->radio_LLFCR->isChecked() ? "lf cr" : ""))))).append("}"));
+            ui->statusBar->showMessage(QString("[").append(ui->combo_COM->currentText()).append(":").append(ui->combo_Baud->currentText()).append(",").append((ui->combo_Parity->currentIndex() == 0 ? "N" : ui->combo_Parity->currentIndex() == 1 ? "O" : ui->combo_Parity->currentIndex() == 2 ? "E" : "")).append(",").append(ui->combo_Data->currentText()).append(",").append(ui->combo_Stop->currentText()).append(",").append((ui->combo_Handshake->currentIndex() == 0 ? "N" : ui->combo_Handshake->currentIndex() == 1 ? "H" : ui->combo_Handshake->currentIndex() == 2 ? "S" : "")).append("]{").append((ui->radio_LCR->isChecked() ? "cr" : (ui->radio_LLF->isChecked() ? "lf" : (ui->radio_LCRLF->isChecked() ? "cr lf" : (ui->radio_LLFCR->isChecked() ? "lf cr" : ""))))).append("}"));
             ui->label_TermConn->setText(ui->statusBar->currentMessage());
 
             //Switch to Terminal tab
@@ -2726,6 +2726,8 @@ MainWindow::SerialError(
         //No error. Why this is ever emitted is a mystery to me.
         return;
     }
+#if QT_VERSION < 0x050700
+    //As of Qt 5.7 these are now deprecated. It is being left in as a conditional compile for anyone using older versions of Qt to prevent these errors closing the serial port.
     else if (speErrorCode == QSerialPort::ParityError)
     {
         //Parity error
@@ -2734,6 +2736,7 @@ MainWindow::SerialError(
     {
         //Framing error
     }
+#endif
     else if (speErrorCode == QSerialPort::ResourceError || speErrorCode == QSerialPort::PermissionError)
     {
         //Resource error or permission error (device unplugged?)
