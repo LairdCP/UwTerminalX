@@ -141,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbEditFileModified = false;
     giEditFileType = -1;
     gbErrorsLoaded = false;
+    gbAutoBaud = false;
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -368,6 +369,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Setup timer for batch file timeout
     gtmrBatchTimeoutTimer.setSingleShot(true);
     connect(&gtmrBatchTimeoutTimer, SIGNAL(timeout()), this, SLOT(BatchTimeoutSlot()));
+
+    //Setup timer for automatic baud rate detection
+    gtmrBaudTimer.setSingleShot(true);
+    gtmrBaudTimer.setInterval(AutoBaudTimeout);
+    connect(&gtmrBaudTimer, SIGNAL(timeout()), this, SLOT(DetectBaudTimeout()));
 
     //Set logging options
     ui->edit_LogFile->setText(gpTermSettings->value("LogFile", DefaultLogFile).toString());
@@ -765,6 +771,7 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(SerialPortClosing()));
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
+    disconnect(this, SLOT(DetectBaudTimeout()));
 
     if (gspSerialPort.isOpen() == true)
     {
@@ -1135,6 +1142,36 @@ MainWindow::readData(
     //Update number of recieved bytes
     gintRXBytes = gintRXBytes + baOrigData.length();
     ui->label_TermRx->setText(QString::number(gintRXBytes));
+
+    if (gbAutoBaud == true)
+    {
+        //Append data to batch receive buffer to save memory instead of having another buffer
+        gbaBatchReceive += baOrigData;
+        if (gbaBatchReceive.indexOf("\n00\r") != -1)
+        {
+            //Baud rate found
+            gtmrBaudTimer.stop();
+            gbTermBusy = false;
+            gbAutoBaud = false;
+            gchTermMode = 0;
+            ui->btn_Cancel->setEnabled(false);
+
+            QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9]{3,12})\r");
+            QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
+            QString strMessage = tr("Successfully detected module on port ").append(ui->combo_COM->currentText()).append(" at baud rate: ").append(ui->combo_Baud->currentText());
+            if (remTempREM.hasMatch() == true)
+            {
+                //Device ID string returned successfully
+                strMessage.append("\r\nDevice detected: ").append(remTempREM.captured(1));
+            }
+            strMessage.append("\r\n\r\nThe port has been left open for you to communicate with the module.");
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+
+            //Clear buffer
+            gbaBatchReceive.clear();
+        }
+    }
 
     if (gbStreamingBatch == true)
     {
@@ -3046,6 +3083,15 @@ MainWindow::on_btn_Cancel_clicked(
         {
             //Cancel batch streaming
             FinishBatch(true);
+        }
+        else if (gbAutoBaud == true)
+        {
+            //
+            gtmrBaudTimer.stop();
+            gbTermBusy = false;
+            gbAutoBaud = false;
+            gchTermMode = 0;
+            ui->btn_Cancel->setEnabled(false);
         }
         else if (gchTermMode >= MODE_SERVER_COMPILE || gchTermMode <= MODE_SERVER_COMPILE_LOAD_RUN)
         {
@@ -5589,6 +5635,123 @@ MainWindow::RemoveZeros(
     {
         //Nothing to remove
         return strData;
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_DetectBaud_clicked(
+    )
+{
+    //Automatic baud rate detection button clicked
+    if (gbTermBusy == false && ui->combo_COM->currentText().length() > 0)
+    {
+        //Display message dialogue
+        QMessageBox mbAutoDetect;
+        mbAutoDetect.setWindowTitle("Automatic Module Baud Rate Detection");
+        mbAutoDetect.setText(QString("Are you sure you want to automatically detect the module baud rate? Please ensure you have selected the correct COM port before initiating this.\r\nAutomatically detect baud rate of module on port ").append(ui->combo_COM->currentText()));
+        mbAutoDetect.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mbAutoDetect.setDefaultButton(QMessageBox::Yes);
+
+        if (mbAutoDetect.exec() == QMessageBox::Yes)
+        {
+            if (gbLoopbackMode == false)
+            {
+                //Start at baud rate 2400: for a BREAK reset. It would be very unusual for anyone to be using baud rates 2400 or 4800 on modules
+                ui->combo_Baud->setCurrentIndex(1);
+                OpenDevice();
+
+                if (gspSerialPort.isOpen() == true)
+                {
+                    //Disable DTR as it is usually connected to the autorun pin on development boards
+                    ui->check_DTR->setChecked(false);
+                    gspSerialPort.setBreakEnabled(true);
+
+                    //This is a short time for a BREAK as modules should not be operating at 2400 baud.
+                    gtmrBaudTimer.start(500);
+
+                    //Use the batch receive buffer to reduce memory consumption
+                    gbaBatchReceive.clear();
+
+                    //We're now busy
+                    gbTermBusy = true;
+                    gbAutoBaud = true;
+                    gchTermMode = 50;
+                    ui->btn_Cancel->setEnabled(true);
+                }
+            }
+            else
+            {
+                //Busy or open, show message to user
+                QString strMessage = tr("Cannot automatically determine the module baud rate: loopback mode is enabled. Please disabled it and retry.");
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::DetectBaudTimeout(
+    )
+{
+    //Automatic baud rate detection timeout
+    if (ui->combo_Baud->currentIndex() == ui->combo_Baud->count()-1)
+    {
+        //Finished checking baud rates, module not detected. Tidy up
+        gbTermBusy = false;
+        gbAutoBaud = false;
+        gchTermMode = 0;
+        ui->btn_Cancel->setEnabled(false);
+
+        //Output failure message
+        QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected and switches are correctly set and that there is no autorun application running.");
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
+    }
+    else
+    {
+        //Move on to the next baud rate
+        if (gspSerialPort.isOpen() == true)
+        {
+            //Port is open so no error has occured
+            ui->combo_Baud->setCurrentIndex(ui->combo_Baud->currentIndex()+1);
+            OpenDevice();
+
+            if (gspSerialPort.isOpen() == true)
+            {
+                //Start module timer
+                gtmrBaudTimer.start();
+
+                //Send module identify command
+                QByteArray baTmpBA = "  AT I 0";
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+                DoLineEnd();
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+                DoLineEnd();
+            }
+            else
+            {
+                //Failed to open so clean up
+                gbTermBusy = false;
+                gbAutoBaud = false;
+                gchTermMode = 0;
+                ui->btn_Cancel->setEnabled(false);
+            }
+        }
+        else
+        {
+            //Port is not open, tidy up
+            gbTermBusy = false;
+            gbAutoBaud = false;
+            gchTermMode = 0;
+            ui->btn_Cancel->setEnabled(false);
+        }
     }
 }
 

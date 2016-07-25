@@ -88,13 +88,14 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05i" //Version string
+#define UwVersion                         "1.05j" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
 #define PrePostXCompTimeout               15000   //Time (in mS) to allow a pre/post XCompilation process to execute for
 #define ModuleTimeout                     4000    //Time (in mS) that a download stage command/process times out (module)
 #define MaxDevNameSize                    8       //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
+#define AutoBaudTimeout                   1500    //Time (in mS) to wait before checking the next baud rate when automatically detected the module's baud rate
 //Defines for default config values
 #define DefaultLogFile                    "UwTerminalX.log"
 #define DefaultLogMode                    0
@@ -420,6 +421,12 @@ private slots:
     on_check_ShowFileSize_stateChanged(
         int
         );
+    void
+    on_btn_DetectBaud_clicked(
+        );
+    void
+    DetectBaudTimeout(
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -545,6 +552,8 @@ private:
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor
     bool gbErrorsLoaded; //True if error csv file has been loaded
+    QTimer gtmrBaudTimer; //Timer for automatic baud rate detection timeout
+    bool gbAutoBaud; //True if automatic baud rate detection is in progress
 #ifdef UseSSL
     QString WebProtocol; //Holds HTTP or HTTPS depending on options selected
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate

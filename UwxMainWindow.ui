@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>650</width>
-    <height>384</height>
+    <height>372</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1533,11 +1533,34 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="btn_Refresh">
-                 <property name="text">
-                  <string>&amp;Refresh</string>
+                <layout class="QHBoxLayout" name="horizontalLayout_19">
+                 <property name="spacing">
+                  <number>2</number>
                  </property>
-                </widget>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="btn_Refresh">
+                   <property name="text">
+                    <string>&amp;Refresh</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_DetectBaud">
+                   <property name="maximumSize">
+                    <size>
+                     <width>56</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>&amp;Auto</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
                <item>
                 <layout class="QGridLayout" name="gridLayout_7">
