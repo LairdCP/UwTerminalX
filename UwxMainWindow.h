@@ -70,7 +70,9 @@
 // Defines
 /******************************************************************************/
 #define ServerHost                        "uwterminalx.no-ip.org" //Hostname/IP of online xcompile server
-//#define UseSSL //Define to use https/SSL (requires OpenSSL support in Qt and runtime libraries)
+#ifndef QT_NO_SSL
+    #define UseSSL //By default enable SSL if Qt supports it (requires OpenSSL runtime libraries). Comment this line out to build without SSL support or if you get errors when communicating with the server
+#endif
 //Defines for various file download functions
 #define MODE_COMPILE                      1
 #define MODE_COMPILE_LOAD                 2
@@ -86,7 +88,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05h" //Version string
+#define UwVersion                         "1.05i" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for

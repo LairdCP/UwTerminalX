@@ -95,15 +95,27 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
 
 #ifndef _WIN32
-    //Change size of text fonts for Mac/Linux
-    QFont fntTmpFnt(ui->label_PreXCompInfo->font());
-    fntTmpFnt.setPixelSize(12);
-    ui->label_PreXCompInfo->setFont(fntTmpFnt);
-    ui->label_OnlineXCompInfo->setFont(fntTmpFnt);
-    ui->label_UwTerminalXText->setFont(fntTmpFnt);
-    ui->label_ErrorCodeText->setFont(fntTmpFnt);
-    ui->label_AppFirmwareText1->setFont(fntTmpFnt);
-    ui->label_AppFirmwareText2->setFont(fntTmpFnt);
+    #ifdef __APPLE__
+        //Change size of text fonts for Mac
+        QFont fntTmpFnt(ui->label_PreXCompInfo->font());
+        fntTmpFnt.setPixelSize(12);
+        ui->label_PreXCompInfo->setFont(fntTmpFnt);
+        ui->label_OnlineXCompInfo->setFont(fntTmpFnt);
+        ui->label_UwTerminalXText->setFont(fntTmpFnt);
+        ui->label_ErrorCodeText->setFont(fntTmpFnt);
+        ui->label_AppFirmwareText1->setFont(fntTmpFnt);
+        ui->label_AppFirmwareText2->setFont(fntTmpFnt);
+    #else
+        //Change size of text fonts for Linux
+        QFont fntTmpFnt(ui->label_PreXCompInfo->font());
+        fntTmpFnt.setPixelSize(11);
+        ui->label_PreXCompInfo->setFont(fntTmpFnt);
+        ui->label_OnlineXCompInfo->setFont(fntTmpFnt);
+        ui->label_UwTerminalXText->setFont(fntTmpFnt);
+        ui->label_ErrorCodeText->setFont(fntTmpFnt);
+        ui->label_AppFirmwareText1->setFont(fntTmpFnt);
+        ui->label_AppFirmwareText2->setFont(fntTmpFnt);
+    #endif
 #endif
 
     //Define default variable values
@@ -3503,7 +3515,13 @@ MainWindow::on_btn_GitHub_clicked(
     )
 {
     //Open webpage at the UwTerminalX github page)
-    QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/UwTerminalX"));
+    if (QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/UwTerminalX")) == false)
+    {
+        //Failed to open URL
+        QString strMessage = tr("An error occured whilst attempting to open a web browser, please ensure you have a web browser installed and configured. URL: https://github.com/LairdCP/UwTerminalX");
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
+    }
 }
 
 //=============================================================================
@@ -4839,35 +4857,45 @@ MainWindow::on_btn_WebBrowse_clicked(
     )
 {
     //Browse applications/modules button clicked
+    QString strURL = "";
     if (ui->combo_WebSelection->currentIndex() == 0)
     {
         //BL600 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL600-Applications"));
+        strURL = "https://github.com/LairdCP/BL600-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 1)
     {
         //BL620 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL620-Applications"));
+        strURL = "https://github.com/LairdCP/BL620-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 2)
     {
         //BL652 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BL652-Applications"));
+        strURL = "https://github.com/LairdCP/BL652-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 3)
     {
         //BT900 Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/BT900-Applications"));
+        strURL = "https://github.com/LairdCP/BT900-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 4)
     {
         //RM186/RM191 (RM1xx) Github
-        QDesktopServices::openUrl(QUrl("https://github.com/LairdCP/RM1xx-Applications"));
+        strURL = "https://github.com/LairdCP/RM1xx-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 5)
     {
         //Laird Bluetooth modules page
-        QDesktopServices::openUrl(QUrl("http://www.lairdtech.com/products/category/741"));
+        strURL = "http://www.lairdtech.com/products/category/741";
+    }
+
+    //Open URL
+    if (QDesktopServices::openUrl(QUrl(strURL)) == false)
+    {
+        //Failed to open URL
+        QString strMessage = tr("An error occured whilst attempting to open a web browser, please ensure you have a web browser installed and configured. URL: ").append(strURL);
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
     }
 }
 
