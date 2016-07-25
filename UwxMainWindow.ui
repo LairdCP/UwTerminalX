@@ -2215,6 +2215,11 @@ You can also use the button below to check if there is a newer version of UwTerm
                        <string>Laird Bluetooth Modules</string>
                       </property>
                      </item>
+                     <item>
+                      <property name="text">
+                       <string>Laird EWS Support</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                    <item>

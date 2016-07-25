@@ -433,21 +433,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString("Port4Data"), "8");
         gpPredefinedDevice->setValue(QString("Port4Flow"), "1");
 
-        //RM186
-        gpPredefinedDevice->setValue(QString("Port5Name"), "RM186");
+        //RM186/RM191
+        gpPredefinedDevice->setValue(QString("Port5Name"), "RM186/RM191");
         gpPredefinedDevice->setValue(QString("Port5Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port5Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port5Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port5Data"), "8");
         gpPredefinedDevice->setValue(QString("Port5Flow"), "1");
-
-        //RM191
-        gpPredefinedDevice->setValue(QString("Port6Name"), "RM191");
-        gpPredefinedDevice->setValue(QString("Port6Baud"), "115200");
-        gpPredefinedDevice->setValue(QString("Port6Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port6Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port6Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port6Flow"), "1");
 
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
@@ -4932,7 +4924,13 @@ MainWindow::on_btn_WebBrowse_clicked(
     else if (ui->combo_WebSelection->currentIndex() == 5)
     {
         //Laird Bluetooth modules page
-        strURL = "http://www.lairdtech.com/products/category/741";
+        strURL = "http://www.lairdtech.com/product-categories/embedded-wireless/bluetooth-modules";
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 6)
+    {
+        //Laird EWS support page
+//TODO
+        strURL = "https://ews-support.lairdtech.com";
     }
 
     //Open URL
@@ -5290,21 +5288,11 @@ MainWindow::UpdateSettings(
                     ++i;
                 }
 
-                if (i < 253)
+                if (i < 254)
                 {
-                    //RM186
+                    //RM186/RM191
                     QString strTmpStr = QString("Port").append(QString::number(i));
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM186");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
-                    ++i;
-
-                    //RM191
-                    strTmpStr = QString("Port").append(QString::number(i));
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM191");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM186/RM191");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
