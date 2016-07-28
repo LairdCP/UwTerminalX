@@ -831,6 +831,8 @@ MainWindow::~MainWindow(){
     delete gpEmptyCirclePixmap;
     delete gpRedCirclePixmap;
     delete gpGreenCirclePixmap;
+    delete gpUw16Pixmap;
+    delete gpUw32Pixmap;
     delete gpmErrorForm;
     delete guaAutomationForm;
     delete gnmManager;
