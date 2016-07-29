@@ -1067,6 +1067,16 @@
                 </layout>
                </item>
                <item>
+                <widget class="QCheckBox" name="check_ConfirmClear">
+                 <property name="text">
+                  <string>Confirm module clearing</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="check_SkipDL">
                  <property name="text">
                   <string>Skip download display</string>
@@ -2317,7 +2327,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>186</width>
+                         <width>96</width>
                          <height>98</height>
                         </rect>
                        </property>

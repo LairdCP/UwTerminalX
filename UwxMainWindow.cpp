@@ -315,19 +315,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSMenu3 = gpSMenu1->addMenu("Data");
     gpSMenu3->addAction("Data File +")->setData(13);
     gpSMenu3->addAction("Erase File +")->setData(14);
-    gpSMenu3->addAction("Multi Data File +")->setData(15); //Downloads more than 1 data file
-    gpSMenu1->addAction("Stream File Out")->setData(16);
-    gpMenu->addAction("Font")->setData(17);
-    gpMenu->addAction("Run")->setData(18);
-    gpMenu->addAction("Automation")->setData(19);
-    gpMenu->addAction("Batch")->setData(20);
-    gpMenu->addAction("Clear Display")->setData(21);
-    gpMenu->addAction("Clear RX/TX count")->setData(22);
+    gpSMenu3->addAction("Clear Filesystem")->setData(15);
+    gpSMenu3->addAction("Multi Data File +")->setData(16); //Downloads more than 1 data file
+    gpSMenu1->addAction("Stream File Out")->setData(17);
+    gpMenu->addAction("Font")->setData(18);
+    gpMenu->addAction("Run")->setData(19);
+    gpMenu->addAction("Automation")->setData(20);
+    gpMenu->addAction("Batch")->setData(21);
+    gpMenu->addAction("Clear module")->setData(22);
+    gpMenu->addAction("Clear Display")->setData(23);
+    gpMenu->addAction("Clear RX/TX count")->setData(24);
     gpMenu->addSeparator();
-    gpMenu->addAction("Copy")->setData(23);
-    gpMenu->addAction("Copy All")->setData(24);
-    gpMenu->addAction("Paste")->setData(25);
-    gpMenu->addAction("Select All")->setData(26);
+    gpMenu->addAction("Copy")->setData(25);
+    gpMenu->addAction("Copy All")->setData(26);
+    gpMenu->addAction("Paste")->setData(27);
+    gpMenu->addAction("Select All")->setData(28);
 
     //Create balloon menu items
     gpBalloonMenu = new QMenu(this);
@@ -335,7 +337,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpBalloonMenu->addAction("Exit")->setData(2);
 
     //Disable unimplemented actions
-    gpSMenu3->actions()[2]->setEnabled(false); //Multi Data File +
+    gpSMenu3->actions()[3]->setEnabled(false); //Multi Data File +
 
     //Connect the menu actions
     connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(triggered(QAction*)), Qt::AutoConnection);
@@ -397,6 +399,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Set showing filesize option
     ui->check_ShowFileSize->setChecked(gpTermSettings->value("ShowFileSize", DefaultShowFileSize).toBool());
+
+    //Set clearing confirmation option
+    ui->check_ConfirmClear->setChecked(gpTermSettings->value("ConfirmClear", DefaultConfirmClear).toBool());
 
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
@@ -468,6 +473,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
     ui->check_EnableSSL->setToolTip("Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.");
     ui->check_ShowFileSize->setToolTip("Enable this to see the filesize of compiled applications.");
+    ui->check_ConfirmClear->setToolTip("Enable this in order to confirm clearing the filesystem or resetting the module configuration to factory settings.");
 
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
@@ -1711,7 +1717,7 @@ MainWindow::triggered
                 gstrLastFilename[FilenameIndexApplication]  = strFilename;
                 gpTermSettings->setValue("LastFileDirectory", SplitFilePath(strFilename)[0]);
 
-                //Delete file
+                //Get the application name
                 if (strFilename.lastIndexOf(".") >= 0)
                 {
                     //Get up until the first dot
@@ -1741,7 +1747,28 @@ MainWindow::triggered
             }
         }
     }
-    else if (intItem == 16)
+    else if (intItem == 15)
+    {
+        //Clear filesystem
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+        {
+            if (!ui->check_ConfirmClear->isChecked() || QMessageBox::question(this, "Clear module filesystem and configuration keys?", "You are about to clear the filesystem of the module, including the values of configuration keys. This process is irreversible!\r\n\r\nClick yes to proceed ot no to cancel.", QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes)
+            {
+                //Send command
+                QByteArray baTmpBA = QString("at&f 1").toUtf8();
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+                DoLineEnd();
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+                gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            }
+        }
+    }
+    else if (intItem == 17)
     {
         //Stream out a file
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1797,7 +1824,7 @@ MainWindow::triggered
             }
         }
     }
-    else if (intItem == 17)
+    else if (intItem == 18)
     {
         //Change font
         bool bTmpBool;
@@ -1810,7 +1837,7 @@ MainWindow::triggered
             ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
         }
     }
-    else if (intItem == 18)
+    else if (intItem == 19)
     {
         //Runs an application
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1858,12 +1885,12 @@ MainWindow::triggered
             }
         }
     }
-    else if (intItem == 19)
+    else if (intItem == 20)
     {
         //Show automation window
         guaAutomationForm->show();
     }
-    else if (intItem == 20)
+    else if (intItem == 21)
     {
         //Start a Batch file script
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1921,12 +1948,32 @@ MainWindow::triggered
             }
         }
     }
-    else if (intItem == 21)
+    else if (intItem == 22)
+    {
+        //Clear module
+        if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+        {
+            if (!ui->check_ConfirmClear->isChecked() || QMessageBox::question(this, "Clear module and return to default settings?", "You are about to clear the whole module including configuration keys and applications. This process is irreversible!\r\n\r\nClick yes to proceed ot no to cancel.", QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes)
+            {
+                QByteArray baTmpBA = QString("at&f*").toUtf8();
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+                DoLineEnd();
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+                gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            }
+        }
+    }
+    else if (intItem == 23)
     {
         //Clear display
         ui->text_TermEditData->ClearDatIn();
     }
-    else if (intItem == 22)
+    else if (intItem == 24)
     {
         //Clear counts
         gintRXBytes = 0;
@@ -1934,22 +1981,22 @@ MainWindow::triggered
         ui->label_TermRx->setText(QString::number(gintRXBytes));
         ui->label_TermTx->setText(QString::number(gintTXBytes));
     }
-    else if (intItem == 23)
+    else if (intItem == 25)
     {
         //Copy selected data
         QApplication::clipboard()->setText(ui->text_TermEditData->textCursor().selection().toPlainText());
     }
-    else if (intItem == 24)
+    else if (intItem == 26)
     {
         //Copy all data
         QApplication::clipboard()->setText(ui->text_TermEditData->toPlainText());
     }
-    else if (intItem == 25)
+    else if (intItem == 27)
     {
         //Paste data from clipboard
         ui->text_TermEditData->AddDatOutText(QApplication::clipboard()->text());
     }
-    else if (intItem == 26)
+    else if (intItem == 28)
     {
         //Select all text
         ui->text_TermEditData->selectAll();
@@ -5743,6 +5790,17 @@ MainWindow::DetectBaudTimeout(
             ui->btn_Cancel->setEnabled(false);
         }
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_ConfirmClear_stateChanged(
+    int
+    )
+{
+    //Update clearing confirmation setting
+    gpTermSettings->setValue("ConfirmClear", (ui->check_ConfirmClear->isChecked() == true ? 1 : 0));
 }
 
 /******************************************************************************/

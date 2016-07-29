@@ -88,7 +88,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05l" //Version string
+#define UwVersion                         "1.05m" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
@@ -114,6 +114,7 @@
 #define DefaultSkipDownloadDisplay        1
 #define DefaultSSLEnable                  1
 #define DefaultShowFileSize               1
+#define DefaultConfirmClear               1
 //Define the protocol
 #ifndef UseSSL
     //HTTP
@@ -426,6 +427,10 @@ private slots:
         );
     void
     DetectBaudTimeout(
+        );
+    void
+    on_check_ConfirmClear_stateChanged(
+        int
         );
 
 private:
