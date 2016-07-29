@@ -1147,12 +1147,14 @@ MainWindow::readData(
     {
         //Append data to batch receive buffer to save memory instead of having another buffer
         gbaBatchReceive += baOrigData;
-        if (gbaBatchReceive.indexOf("\n00\r") != -1)
+        qDebug() << gbaBatchReceive.indexOf("\n00\r") << ", " << gbaBatchReceive.indexOf("\n10\t0\t");
+        qDebug() << gbaBatchReceive;
+        if (gbaBatchReceive.indexOf("\n00\r") != -1 || gbaBatchReceive.indexOf("\n10\t0\t") != -1)
         {
             //Baud rate found
+            gbAutoBaud = false;
             gtmrBaudTimer.stop();
             gbTermBusy = false;
-            gbAutoBaud = false;
             gchTermMode = 0;
             ui->btn_Cancel->setEnabled(false);
 
@@ -3127,7 +3129,7 @@ MainWindow::on_btn_Cancel_clicked(
         }
         else if (gbAutoBaud == true)
         {
-            //
+            //Canacel auto baud-rate detection
             gtmrBaudTimer.stop();
             gbTermBusy = false;
             gbAutoBaud = false;
@@ -5736,58 +5738,63 @@ MainWindow::DetectBaudTimeout(
     )
 {
     //Automatic baud rate detection timeout
-    if (ui->combo_Baud->currentIndex() == ui->combo_Baud->count()-1)
+    if (gbAutoBaud == true)
     {
-        //Finished checking baud rates, module not detected. Tidy up
-        gbTermBusy = false;
-        gbAutoBaud = false;
-        gchTermMode = 0;
-        ui->btn_Cancel->setEnabled(false);
-
-        //Output failure message
-        QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected and switches are correctly set and that there is no autorun application running.");
-        gpmErrorForm->show();
-        gpmErrorForm->SetMessage(&strMessage);
-    }
-    else
-    {
-        //Move on to the next baud rate
-        if (gspSerialPort.isOpen() == true)
+        if (ui->combo_Baud->currentIndex() == ui->combo_Baud->count()-1)
         {
-            //Port is open so no error has occured
-            ui->combo_Baud->setCurrentIndex(ui->combo_Baud->currentIndex()+1);
-            OpenDevice();
+            //Finished checking baud rates, module not detected. Tidy up
+            gbTermBusy = false;
+            gbAutoBaud = false;
+            gchTermMode = 0;
+            ui->btn_Cancel->setEnabled(false);
 
+            //Output failure message
+            QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected and switches are correctly set and that there is no autorun application running.");
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+        }
+        else
+        {
+            //Move on to the next baud rate
             if (gspSerialPort.isOpen() == true)
             {
-                //Start module timer
-                gtmrBaudTimer.start();
+                //Port is open so no error has occured
+                gspSerialPort.close();
+                gpSignalTimer->stop();
+                ui->combo_Baud->setCurrentIndex(ui->combo_Baud->currentIndex()+1);
+                OpenDevice();
 
-                //Send module identify command
-                QByteArray baTmpBA = "  AT I 0";
-                gspSerialPort.write(baTmpBA);
-                gintQueuedTXBytes += baTmpBA.size();
-                DoLineEnd();
-                gspSerialPort.write(baTmpBA);
-                gintQueuedTXBytes += baTmpBA.size();
-                DoLineEnd();
+                if (gspSerialPort.isOpen() == true)
+                {
+                    //Start module timer
+                    gtmrBaudTimer.start();
+
+                    //Send module identify command
+                    QByteArray baTmpBA = "  AT I 0";
+                    gspSerialPort.write(baTmpBA);
+                    gintQueuedTXBytes += baTmpBA.size();
+                    DoLineEnd();
+                    gspSerialPort.write(baTmpBA);
+                    gintQueuedTXBytes += baTmpBA.size();
+                    DoLineEnd();
+                }
+                else
+                {
+                    //Failed to open so clean up
+                    gbTermBusy = false;
+                    gbAutoBaud = false;
+                    gchTermMode = 0;
+                    ui->btn_Cancel->setEnabled(false);
+                }
             }
             else
             {
-                //Failed to open so clean up
+                //Port is not open, tidy up
                 gbTermBusy = false;
                 gbAutoBaud = false;
                 gchTermMode = 0;
                 ui->btn_Cancel->setEnabled(false);
             }
-        }
-        else
-        {
-            //Port is not open, tidy up
-            gbTermBusy = false;
-            gbAutoBaud = false;
-            gchTermMode = 0;
-            ui->btn_Cancel->setEnabled(false);
         }
     }
 }
