@@ -1158,15 +1158,9 @@ MainWindow::readData(
             gchTermMode = 0;
             ui->btn_Cancel->setEnabled(false);
 
-            QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9]{3,12})\r");
+            QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9]{3,20})\r");
             QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
-            QString strMessage = tr("Successfully detected module on port ").append(ui->combo_COM->currentText()).append(" at baud rate: ").append(ui->combo_Baud->currentText());
-            if (remTempREM.hasMatch() == true)
-            {
-                //Device ID string returned successfully
-                strMessage.append("\r\nDevice detected: ").append(remTempREM.captured(1));
-            }
-            strMessage.append("\r\n\r\nThe port has been left open for you to communicate with the module.");
+            QString strMessage = tr("Successfully detected module ").append((remTempREM.hasMatch() == true ? QString(remTempREM.captured(1)).append(" ") : "")).append("on port ").append(ui->combo_COM->currentText()).append(" at baud rate: ").append(ui->combo_Baud->currentText()).append("\r\n\r\nThe port has been left open for you to communicate with the module.");
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
 
