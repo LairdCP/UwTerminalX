@@ -1147,9 +1147,7 @@ MainWindow::readData(
     {
         //Append data to batch receive buffer to save memory instead of having another buffer
         gbaBatchReceive += baOrigData;
-        qDebug() << gbaBatchReceive.indexOf("\n00\r") << ", " << gbaBatchReceive.indexOf("\n10\t0\t");
-        qDebug() << gbaBatchReceive;
-        if (gbaBatchReceive.indexOf("\n00\r") != -1 || gbaBatchReceive.indexOf("\n10\t0\t") != -1)
+        if (gbaBatchReceive.indexOf("\n00\r") != -1 || (gbaBatchReceive.indexOf("\n10\t0\t") != -1 && gbaBatchReceive.indexOf("\r", gbaBatchReceive.indexOf("\n10\t0\t")) != -1))
         {
             //Baud rate found
             gbAutoBaud = false;
@@ -1158,9 +1156,10 @@ MainWindow::readData(
             gchTermMode = 0;
             ui->btn_Cancel->setEnabled(false);
 
+            //Show success message to user
             QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9]{3,20})\r");
             QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
-            QString strMessage = tr("Successfully detected module ").append((remTempREM.hasMatch() == true ? QString(remTempREM.captured(1)).append(" ") : "")).append("on port ").append(ui->combo_COM->currentText()).append(" at baud rate: ").append(ui->combo_Baud->currentText()).append("\r\n\r\nThe port has been left open for you to communicate with the module.");
+            QString strMessage = tr("Successfully detected ").append((remTempREM.hasMatch() == true ? QString(remTempREM.captured(1)).append(" ") : "")).append("module on port ").append(ui->combo_COM->currentText()).append(" at baud rate ").append(ui->combo_Baud->currentText()).append(".\r\n\r\nThe port has been left open for you to communicate with the module.\r\n\r\n(Please note that it is possible to change the default module baud rate with newer firmware versions using AT+CFG 520 <baud>. Please check the smartBASIC extension manual for your module to see if this is supported and how to configure it)");
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
 
