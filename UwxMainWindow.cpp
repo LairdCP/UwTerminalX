@@ -474,6 +474,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_EnableSSL->setToolTip("Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.");
     ui->check_ShowFileSize->setToolTip("Enable this to see the filesize of compiled applications.");
     ui->check_ConfirmClear->setToolTip("Enable this in order to confirm clearing the filesystem or resetting the module configuration to factory settings.");
+    ui->check_LineSeparator->setToolTip("When enabled, pressing shit+enter in the terminal will create a line separator allowing for multiple lines to be sent when enter is pressed. If disabled then shift+enter will behave the same as pressing enter and send the line.");
 
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
@@ -510,16 +511,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Load skip download display setting
     ui->check_SkipDL->setChecked(gpTermSettings->value("SkipDownloadDisplay", DefaultSkipDownloadDisplay).toBool());
 
+    //Load line separator setting
+    ui->check_LineSeparator->setChecked(gpTermSettings->value("ShiftEnterLineSeparator", DefaultShiftEnterLineSeparator).toBool());
+
+    //Notify scroll edit area of line separator value
+    ui->text_TermEditData->mbLineSeparator = ui->check_LineSeparator->isChecked();
+
     //Update GUI for pre/post XComp executable
     on_check_PreXCompRun_stateChanged(ui->check_PreXCompRun->isChecked()*2);
 
     //Set Online XCompilation mode
 #ifdef _WIN32
     //Windows
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found when attempting to compile an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found the source code will be uploaded and compiled remotely on a Laird cloud server. Uploaded data is not stored by Laird.");
 #else
     //Mac or Linux
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploaded to a Laird cloud server, compiled remotely and downloaded. Uploaded data is not stored by Laird.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploadeda and compiled remotely on a Laird cloud server. Uploaded data is not stored by Laird.");
 #endif
     ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", DefaultOnlineXComp).toBool());
 
@@ -2404,6 +2411,10 @@ MainWindow::process_finished(
                 //Display size of application
                 QList<QString> lstFI = SplitFilePath(gstrTermFilename);
                 gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc"))).append(") Downloading --\n");
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
             }
 
             //Download to the device
@@ -5285,6 +5296,10 @@ MainWindow::LoadSettings(
         {
             gpTermSettings->setValue("SkipDownloadDisplay", DefaultSkipDownloadDisplay); //If the at+fwrh download display should be skipped or not (1 = skip, 0 = show)
         }
+        if (gpTermSettings->value("ShiftEnterLineSeparator").isNull())
+        {
+            gpTermSettings->setValue("ShiftEnterLineSeparator", DefaultShiftEnterLineSeparator); //Shift+enter input (1 = line separater, 0 = newline character)
+        }
 #ifdef UseSSL
         if (gpTermSettings->value("SSLEnable").isNull())
         {
@@ -5801,6 +5816,19 @@ MainWindow::on_check_ConfirmClear_stateChanged(
 {
     //Update clearing confirmation setting
     gpTermSettings->setValue("ConfirmClear", (ui->check_ConfirmClear->isChecked() == true ? 1 : 0));
+}
+
+//=============================================================================
+//=============================================================================
+void MainWindow::on_check_LineSeparator_stateChanged(
+    int
+    )
+{
+    //Update line separator setting
+    gpTermSettings->setValue("ShiftEnterLineSeparator", (ui->check_LineSeparator->isChecked() == true ? 1 : 0));
+
+    //Notify scroll edit
+    ui->text_TermEditData->mbLineSeparator = ui->check_LineSeparator->isChecked();
 }
 
 /******************************************************************************/

@@ -953,22 +953,6 @@
                 </widget>
                </item>
                <item>
-                <spacer name="verticalSpacer_7">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Minimum</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>2</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
                 <widget class="QRadioButton" name="radio_LLF">
                  <property name="text">
                   <string>LF</string>
@@ -976,43 +960,11 @@
                 </widget>
                </item>
                <item>
-                <spacer name="verticalSpacer_6">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Minimum</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>2</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
                 <widget class="QRadioButton" name="radio_LCRLF">
                  <property name="text">
                   <string>CR LF</string>
                  </property>
                 </widget>
-               </item>
-               <item>
-                <spacer name="verticalSpacer_8">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Minimum</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>2</height>
-                  </size>
-                 </property>
-                </spacer>
                </item>
                <item>
                 <widget class="QRadioButton" name="radio_LLFCR">
@@ -1100,6 +1052,13 @@
                 <widget class="QCheckBox" name="check_ShowCLRF">
                  <property name="text">
                   <string>Escape CR/LF/Tab</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_LineSeparator">
+                 <property name="text">
+                  <string>Shift+enter line seperator</string>
                  </property>
                 </widget>
                </item>
@@ -2327,7 +2286,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>96</width>
+                         <width>186</width>
                          <height>98</height>
                         </rect>
                        </property>

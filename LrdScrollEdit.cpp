@@ -90,7 +90,7 @@ LrdScrollEdit::eventFilter(
                 this->UpdateDisplay();
                 return true;
             }
-            else if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && !(keyEvent->modifiers() & Qt::ShiftModifier) && !(keyEvent->modifiers() & Qt::ControlModifier))
+            else if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && !(keyEvent->modifiers() & Qt::ControlModifier) && (!(keyEvent->modifiers() & Qt::ShiftModifier) || mbLineSeparator == false))
             {
                 //Enter pressed
                 if (mbSerialOpen == true)
