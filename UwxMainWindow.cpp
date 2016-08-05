@@ -742,6 +742,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Set resolved hostname to be empty
     gstrResolvedServer = "";
 
+#if __APPLE__
+    //Show a warning to Mac users with the FTDI driver installed
+    if ((QFile::exists("/System/Library/Extensions/FTDIUSBSerialDriver.kext") || QFile::exists("/Library/Extensions/FTDIUSBSerialDriver.kext")) && gpTermSettings->value("MacFTDIDriverWarningShown").isNull())
+    {
+        //FTDI driver detected and warning has not been shown, show warning
+        gpTermSettings->setValue("MacFTDIDriverWarningShown", 1);
+        QString strMessage = tr("Warning: The Mac FTDI VCP driver has been detected on your system. There is a known issue with this driver that can cause your system to crash if the serial port is closed and the buffer is not empty.\r\n\r\nIf you experience this issue, it is recommended that you remove the FTDI driver and use the apple VCP driver instead. Instructions to do this are available from the FTDI website (follow the uninstall section): http://www.ftdichip.com/Support/Documents/AppNotes/AN_134_FTDI_Drivers_Installation_Guide_for_MAC_OSX.pdf\r\n\r\nThis message will not be shown again.");
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
+    }
+#endif
+
 #ifdef UseSSL
     //Load SSL certificate
     QFile certFile(":/certificates/UwTerminalX.crt");
