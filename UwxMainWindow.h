@@ -88,7 +88,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05r" //Version string
+#define UwVersion                         "1.05s" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
@@ -124,6 +124,39 @@
 //Defines for array indexes
 #define FilenameIndexApplication          0
 #define FilenameIndexOthers               1
+//Defines for right click menu options
+#define MenuActionXCompile                1
+#define MenuActionXCompileLoad            2
+#define MenuActionXCompileLoadRun         3
+#define MenuActionLoad                    4
+#define MenuActionLoadRun                 5
+#define MenuActionErrorHex                6
+#define MenuActionErrorInt                7
+#define MenuActionLoopback                8
+#define MenuActionLoad2                   9
+#define MenuActionEraseFile               10
+#define MenuActionDir                     11
+#define MenuActionRun                     12
+#define MenuActionDebug                   13
+#define MenuActionDataFile                14
+#define MenuActionEraseFile2              15
+#define MenuActionClearFilesystem         16
+#define MenuActionMultiDataFile           17
+#define MenuActionStreamFile              18
+#define MenuActionFont                    19
+#define MenuActionRun2                    20
+#define MenuActionAutomation              21
+#define MenuActionBatch                   22
+#define MenuActionClearModule             23
+#define MenuActionClearDisplay            24
+#define MenuActionClearRxTx               25
+#define MenuActionCopy                    26
+#define MenuActionCopyAll                 27
+#define MenuActionPaste                   28
+#define MenuActionSelectAll               29
+//Defines for balloon (notification area) icon options
+#define BalloonActionShow                 1
+#define BalloonActionExit                 2
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
