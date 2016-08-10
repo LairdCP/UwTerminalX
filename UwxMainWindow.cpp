@@ -2505,10 +2505,14 @@ MainWindow::SerialStatus(
     }
     else
     {
+        //Port isn't open, display empty circles
         ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
         ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
         ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
         ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+
+        //Disable timer
+        gpSignalTimer->stop();
     }
     return;
 }
@@ -2853,9 +2857,6 @@ MainWindow::SerialError(
         gpmErrorForm->show();
         gpmErrorForm->SetMessage(&strMessage);
         ui->text_TermEditData->SetSerialOpen(false);
-
-        //Disable timer
-        gpSignalTimer->stop();
 
         if (gspSerialPort.isOpen() == true)
         {
