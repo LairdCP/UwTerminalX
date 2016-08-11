@@ -2613,7 +2613,7 @@ LOG=filename
 SHOWCRLF
     When displaying a TX or RX text on screen, show \t,\r,\n as well
 
-Copyright © Laird Technologies 2015
+Copyright © Laird Technologies 2015-2016
 For updates and source code licensed under GPLv3, check https://github.com/LairdCP/UwTerminalX or the 'Update' tab.
 Plus and Minus images obtained from http://www.clker.com
 
