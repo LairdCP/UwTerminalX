@@ -30,7 +30,8 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage){
+PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMessage)
+{
     //Setup window to be a dialog
     this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint));
     ui->setupUi(this);

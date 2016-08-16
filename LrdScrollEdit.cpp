@@ -29,7 +29,8 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent){
+LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
+{
     //Enable an event filter
     installEventFilter(this);
     installEventFilter(this->verticalScrollBar());
@@ -40,7 +41,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent){
     mbLocalEcho = true; //Local echo mode on by default
     mstrDatIn = ""; //Data in is an empty string
     mstrDatOut = ""; //Data out is empty string
-    muintCurPos = 0; //Current cursor position is 0
+    mintCurPos = 0; //Current cursor position is 0
     mbContextMenuOpen = false; //Context menu not currently open
 }
 
@@ -140,9 +141,9 @@ LrdScrollEdit::eventFilter(
                 {
                     //Delete character
                     mstrDatOut = mstrDatOut.left(mstrDatOut.length()-1);
-                    if (muintCurPos > mstrDatOut.length())
+                    if (mintCurPos > mstrDatOut.length())
                     {
-                        --muintCurPos;
+                        --mintCurPos;
                     }
                 }
                 this->UpdateDisplay();
@@ -155,10 +156,10 @@ LrdScrollEdit::eventFilter(
                 {
                     //
                 }
-                else if (muintCurPos > 0)
+                else if (mintCurPos > 0)
                 {
                     //
-                    --muintCurPos;
+                    --mintCurPos;
                     this->UpdateCursor();
                 }
                 return true;
@@ -169,10 +170,10 @@ LrdScrollEdit::eventFilter(
                 {
                     //
                 }
-                else if (muintCurPos < mstrDatOut.length())
+                else if (mintCurPos < mstrDatOut.length())
                 {
                     //
-                    ++muintCurPos;
+                    ++mintCurPos;
                     this->UpdateCursor();
                 }
                 return true;
@@ -422,9 +423,9 @@ LrdScrollEdit::UpdateDisplay(
         //Update previous text size variable
         mbPrevTextSize = mstrDatIn.size();
 
-        if (muintCurPos == mstrDatOut.length()-1)
+        if (mintCurPos == mstrDatOut.length()-1)
         {
-            ++muintCurPos;
+            ++mintCurPos;
         }
         this->UpdateCursor();
 
@@ -476,11 +477,11 @@ LrdScrollEdit::UpdateCursor(
     QTextCursor tcTmpCur = this->textCursor();
     if (mstrDatIn.length() > 0)
     {
-        tcTmpCur.setPosition(mstrDatIn.length()+1+muintCurPos);
+        tcTmpCur.setPosition(mstrDatIn.length()+1+mintCurPos);
     }
     else
     {
-        tcTmpCur.setPosition(muintCurPos);
+        tcTmpCur.setPosition(mintCurPos);
     }
     this->setTextCursor(tcTmpCur);*/
 

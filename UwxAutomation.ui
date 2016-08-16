@@ -3,7 +3,7 @@
  <class>UwxAutomation</class>
  <widget class="QDialog" name="UwxAutomation">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::NonModal</enum>
   </property>
   <property name="geometry">
    <rect>

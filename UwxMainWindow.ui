@@ -1100,12 +1100,12 @@
                <widget class="QPushButton" name="btn_Duplicate">
                 <property name="minimumSize">
                  <size>
-                  <width>100</width>
+                  <width>0</width>
                   <height>0</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>&amp;Duplicate Session</string>
+                 <string>&amp;Duplicate</string>
                 </property>
                </widget>
               </item>
@@ -1863,6 +1863,13 @@
                </size>
               </property>
              </spacer>
+            </item>
+            <item row="0" column="2">
+             <widget class="QPushButton" name="btn_Error">
+              <property name="text">
+               <string>&amp;Error Codes</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>

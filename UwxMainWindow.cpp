@@ -26,7 +26,6 @@
 /******************************************************************************/
 #include "UwxMainWindow.h"
 #include "ui_UwxMainWindow.h"
-#include "UwxAutomation.h"
 
 /******************************************************************************/
 // Conditional Compile Defines
@@ -49,12 +48,6 @@
     //Assume linux
     #define OS "Linux"
 #endif
-
-/******************************************************************************/
-// Global/Static Variable Declarations
-/******************************************************************************/
-PopupMessage *gpmErrorForm; //Error message form
-UwxAutomation *guaAutomationForm; //Automation form
 
 /******************************************************************************/
 // Local Functions or Private Members
@@ -142,6 +135,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     giEditFileType = -1;
     gbErrorsLoaded = false;
     gbAutoBaud = false;
+    gnmManager = 0;
+    gbTestingEnabled = false;
+
+#ifndef SKIPAUTOMATIONFORM
+    guaAutomationForm = 0;
+#endif
+#ifndef SKIPERRORCODEFORM
+    gecErrorCodeForm = 0;
+#else
+    ui->btn_Error->deleteLater();
+#endif
+#ifndef SKIPTESTINGFORM
+    gutTestingForm = 0;
+#endif
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -197,8 +204,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Enable custom context menu policy
     ui->text_TermEditData->setContextMenuPolicy(Qt::CustomContextMenu);
 
+#ifdef _WIN32
     //Connect process termination to signal
     connect(&gprocCompileProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(process_finished(int, QProcess::ExitStatus)));
+#endif
 
     //Connect quit signals
     connect(ui->btn_Decline, SIGNAL(clicked()), this, SLOT(close()));
@@ -213,9 +222,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Initialise popup message
     gpmErrorForm = new PopupMessage;
-
-    //Initialise automation popup
-    guaAutomationForm = new UwxAutomation(this);
 
     //Populate the list of devices
     RefreshSerialDevices();
@@ -322,6 +328,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMenu->addAction("Font")->setData(MenuActionFont);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
+    gpMenu->addAction("Testing")->setData(MenuActionTesting);
     gpMenu->addAction("Batch")->setData(MenuActionBatch);
     gpMenu->addAction("Clear module")->setData(MenuActionClearModule);
     gpMenu->addAction("Clear Display")->setData(MenuActionClearDisplay);
@@ -339,6 +346,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Disable unimplemented actions
     gpSMenu3->actions()[3]->setEnabled(false); //Multi Data File +
+#ifdef SKIPAUTOMATIONFORM
+    //Disable automation option
+    gpMenu->actions()[11]->setEnabled(false);
+#endif
+#ifdef SKIPTESTINGFORM
+    //Disable testing option
+    gpMenu->actions()[12]->setEnabled(false);
+#endif
 
     //Connect the menu actions
     connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(triggered(QAction*)), Qt::AutoConnection);
@@ -359,10 +374,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(&gspSerialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(SerialError(QSerialPort::SerialPortError)));
     connect(&gspSerialPort, SIGNAL(bytesWritten(qint64)), this, SLOT(SerialBytesWritten(qint64)));
     connect(&gspSerialPort, SIGNAL(aboutToClose()), this, SLOT(SerialPortClosing()));
-
-    //Populate window handles for automation object
-    guaAutomationForm->SetPopupHandle(gpmErrorForm);
-    guaAutomationForm->SetMainHandle(this);
 
     //Set update text display timer to be single shot only and connect to slot
     gtmrTextUpdateTimer.setSingleShot(true);
@@ -530,13 +541,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploadeda and compiled remotely on a Laird cloud server. Uploaded data is not stored by Laird.");
 #endif
     ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", DefaultOnlineXComp).toBool());
-
-    //Setup QNetwork for Online XCompiler
-    gnmManager = new QNetworkAccessManager();
-    connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
-#ifdef UseSSL
-    connect(gnmManager, SIGNAL(sslErrors(QNetworkReply*, QList<QSslError>)), this, SLOT(sslErrors(QNetworkReply*, QList<QSslError>)));
-#endif
 
     //Load last directory path
     gstrLastFilename[FilenameIndexApplication] = gpTermSettings->value("LastFileDirectory", "").toString();
@@ -765,6 +769,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         QSslSocket::addDefaultCaCertificate(*sslcLairdSSL);
         certFile.close();
     }
+    certFile.setFileName(":/certificates/UwTerminalX_new.crt");
+    if (certFile.open(QIODevice::ReadOnly))
+    {
+        //Load certificate data
+        sslcLairdSSLNew = new QSslCertificate(certFile.readAll());
+        QSslSocket::addDefaultCaCertificate(*sslcLairdSSLNew);
+        certFile.close();
+    }
 #endif
 }
 
@@ -772,7 +784,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 //=============================================================================
 MainWindow::~MainWindow(){
     //Disconnect all signals
+#ifdef _WIN32
     disconnect(this, SLOT(process_finished(int, QProcess::ExitStatus)));
+#endif
     disconnect(this, SLOT(close()));
     disconnect(this, SLOT(EnterPressed()));
     disconnect(this, SLOT(KeyPressed(QChar)));
@@ -790,6 +804,7 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
     disconnect(this, SLOT(DetectBaudTimeout()));
+    disconnect(this, SLOT(MessagePass(QString,bool)));
 
     if (gspSerialPort.isOpen() == true)
     {
@@ -810,11 +825,39 @@ MainWindow::~MainWindow(){
         //Close warning message
         gpmErrorForm->close();
     }
-    if (guaAutomationForm->isVisible())
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
     {
-        //Close automation form
-        guaAutomationForm->close();
+        if (guaAutomationForm->isVisible())
+        {
+            //Close automation form
+            guaAutomationForm->close();
+        }
+        delete guaAutomationForm;
     }
+#endif
+#ifndef SKIPTESTINGFORM
+    if (gutTestingForm != 0)
+    {
+        if (gutTestingForm->isVisible())
+        {
+            //Close testing form
+            gutTestingForm->close();
+        }
+        delete gutTestingForm;
+    }
+#endif
+#ifndef SKIPERRORCODEFORM
+    if (gecErrorCodeForm != 0)
+    {
+        if (gecErrorCodeForm->isVisible())
+        {
+            //Close error code form
+            gecErrorCodeForm->close();
+        }
+        delete gecErrorCodeForm;
+    }
+#endif
 
     //Delete system tray object
     if (gbSysTrayEnabled == true)
@@ -839,9 +882,21 @@ MainWindow::~MainWindow(){
 #ifdef UseSSL
     if (sslcLairdSSL != NULL)
     {
+        //Clear up SSL certificate
         delete sslcLairdSSL;
     }
+    if (sslcLairdSSLNew != NULL)
+    {
+        //Clear up (newer) SSL certificate
+        delete sslcLairdSSLNew;
+    }
 #endif
+
+    if (gnmManager != 0)
+    {
+        //Clear up network manager
+        delete gnmManager;
+    }
 
     //Delete variables
     delete gpMainLog;
@@ -860,8 +915,6 @@ MainWindow::~MainWindow(){
     delete gpUw16Pixmap;
     delete gpUw32Pixmap;
     delete gpmErrorForm;
-    delete guaAutomationForm;
-    delete gnmManager;
     delete ui;
 }
 
@@ -878,11 +931,27 @@ MainWindow::closeEvent(
         //Close warning message form
         gpmErrorForm->close();
     }
-    if (guaAutomationForm->isVisible())
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0 && guaAutomationForm->isVisible())
     {
         //Close automation form
         guaAutomationForm->close();
     }
+#endif
+#ifndef SKIPTESTINGFORM
+    if (gutTestingForm != 0 && gutTestingForm->isVisible())
+    {
+        //Close testing form
+        gutTestingForm->close();
+    }
+#endif
+#ifndef SKIPERRORCODEFORM
+    if (gecErrorCodeForm != 0 && gecErrorCodeForm->isVisible())
+    {
+        //Close error code form
+        gecErrorCodeForm->close();
+    }
+#endif
 
     //Close application
     QApplication::quit();
@@ -996,8 +1065,13 @@ MainWindow::on_btn_TermClose_clicked(
         //Change button text
         ui->btn_TermClose->setText("&Open Port");
 
+#ifndef SKIPAUTOMATIONFORM
         //Notify automation form
-        guaAutomationForm->ConnectionChange(false);
+        if (guaAutomationForm != 0)
+        {
+            guaAutomationForm->ConnectionChange(false);
+        }
+#endif
 
         //Disallow file drops
         setAcceptDrops(false);
@@ -1038,7 +1112,7 @@ MainWindow::RefreshSerialDevices(
     //Clears and refreshes the list of serial devices
     QString strPrev = "";
     QRegularExpression reTempRE("^(\\D*?)(\\d+)$");
-    QList<unsigned int> lstEntries;
+    QList<int> lstEntries;
     lstEntries.clear();
 
     if (ui->combo_COM->count() > 0)
@@ -1089,7 +1163,7 @@ MainWindow::RefreshSerialDevices(
     else
     {
         //Search for previos
-        unsigned int i = 0;
+        int i = 0;
         while (i < ui->combo_COM->count())
         {
             if (ui->combo_COM->itemText(i) == strPrev)
@@ -1124,6 +1198,13 @@ MainWindow::readData(
 {
     //Read the data into a buffer and copy it to edit for the display data
     QByteArray baOrigData = gspSerialPort.readAll();
+
+#ifndef SKIPTESTINGFORM
+    if (gbTestingEnabled == true)
+    {
+        gutTestingForm->SerialPortData(&baOrigData);
+    }
+#endif
 
     if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6) || (gbTermBusy == true && (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS || gchTermMode == MODE_UPDATE_ERROR_CODE || gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS || gchTermMode == 50))))
     {
@@ -1286,7 +1367,7 @@ MainWindow::readData(
                         //Check if online XCompiler supports this device
                         if (LookupDNSName() == true)
                         {
-                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                         }
                     }
                     else
@@ -1335,7 +1416,7 @@ MainWindow::readData(
                         //XCompiler not found, try Online XCompiler
                         if (LookupDNSName() == true)
                         {
-                            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                             ui->statusBar->showMessage("Device support request sent...", 2000);
 
                             if (gchTermMode == MODE_COMPILE)
@@ -1366,7 +1447,6 @@ MainWindow::readData(
                         .append(".exe")
 #endif
                         .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
-#pragma warning("Add full file path for XCompilers?")
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
                         gbTermBusy = false;
@@ -1659,9 +1739,19 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(0);
+            }
+#endif
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
-            guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(1);
+            }
+#endif
 
             if (strFilename.length() > 1)
             {
@@ -1722,9 +1812,19 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(0);
+            }
+#endif
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
-            guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(1);
+            }
+#endif
 
             if (strFilename.length() > 1)
             {
@@ -1789,9 +1889,19 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(0);
+            }
+#endif
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
-            guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(1);
+            }
+#endif
 
             if (strFilename.length() > 1)
             {
@@ -1858,9 +1968,19 @@ MainWindow::triggered
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(0);
+            }
+#endif
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
-            guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(1);
+            }
+#endif
 
             if (strFilename.length() > 1)
             {
@@ -1900,20 +2020,57 @@ MainWindow::triggered
             }
         }
     }
+#ifndef SKIPAUTOMATIONFORM
     else if (intItem == MenuActionAutomation)
     {
         //Show automation window
+        if (guaAutomationForm == 0)
+        {
+            //Initialise automation popup
+            guaAutomationForm = new UwxAutomation(this);
+
+            //Populate window handles for automation object
+            guaAutomationForm->SetPopupHandle(gpmErrorForm);
+
+            //Update automation forum with connection status
+            guaAutomationForm->ConnectionChange(gspSerialPort.isOpen());
+
+            connect(guaAutomationForm, SIGNAL(SendData(QString,bool)), this, SLOT(MessagePass(QString,bool)));
+        }
         guaAutomationForm->show();
     }
+#endif
+#ifndef SKIPTESTINGFORM
+    else if (intItem == MenuActionTesting)
+    {
+        //Show testing window
+        if (gutTestingForm == 0)
+        {
+            //Initialise testing form
+            gutTestingForm = new UwxTesting(this);
+        }
+        gutTestingForm->show();
+    }
+#endif
     else if (intItem == MenuActionBatch)
     {
         //Start a Batch file script
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
         {
             //Not currently busy
-            guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(0);
+            }
+#endif
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
-            guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->TempAlwaysOnTop(1);
+            }
+#endif
 
             if (strFilename.length() > 1)
             {
@@ -2090,9 +2247,19 @@ MainWindow::CompileApp(
 {
     //Runs when an application is to be compiled
     gchTermMode = chMode;
-    guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(0);
+    }
+#endif
     QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename[FilenameIndexApplication], (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
-    guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(1);
+    }
+#endif
 
     if (strFilename != "")
     {
@@ -2361,6 +2528,7 @@ MainWindow::DevRespTimeout(
     }
 }
 
+#ifdef _WIN32
 //=============================================================================
 //=============================================================================
 void
@@ -2468,6 +2636,7 @@ MainWindow::process_finished(
         ui->btn_Cancel->setEnabled(false);
     }
 }
+#endif
 
 //=============================================================================
 //=============================================================================
@@ -2554,8 +2723,13 @@ MainWindow::OpenDevice(
         //Change status message
         ui->statusBar->showMessage("");
 
+#ifndef SKIPAUTOMATIONFORM
         //Notify automation form
-        guaAutomationForm->ConnectionChange(false);
+        if (guaAutomationForm != 0)
+        {
+            guaAutomationForm->ConnectionChange(false);
+        }
+#endif
 
         //Update images
         UpdateImages();
@@ -2622,8 +2796,13 @@ MainWindow::OpenDevice(
             //Enable timer
             gpSignalTimer->start(gpTermSettings->value("SerialSignalCheckInterval", DefaultSerialSignalCheckInterval).toUInt());
 
+#ifndef SKIPAUTOMATIONFORM
             //Notify automation form
-            guaAutomationForm->ConnectionChange(true);
+            if (guaAutomationForm != 0)
+            {
+                guaAutomationForm->ConnectionChange(true);
+            }
+#endif
 
             //Notify scroll edit
             ui->text_TermEditData->SetSerialOpen(true);
@@ -2671,6 +2850,16 @@ MainWindow::OpenDevice(
 
             //Allow file drops for uploads
             setAcceptDrops(true);
+
+#ifndef SKIPTESTINGFORM
+//            if (gbTestingEnabled == true)
+//            {
+            if (gutTestingForm != 0)
+            {
+                gutTestingForm->SerialPortStatus(true);
+            }
+//            }
+#endif
         }
         else
         {
@@ -2682,6 +2871,7 @@ MainWindow::OpenDevice(
 #if !defined(_WIN32) && !defined( __APPLE__)
             .append(", please also ensure you have been granted permission to the serial device in /dev/")
 #endif
+            .append((ui->combo_Baud->currentText().toULong() > 115200 ? ", please also ensure that your serial device supports baud rates greater than 115200 (normal COM ports do not have support for these baud rates)" : ""))
             .append(" and try again.");
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
@@ -2834,6 +3024,13 @@ MainWindow::SerialError(
     QSerialPort::SerialPortError speErrorCode
     )
 {
+#ifndef SKIPTESTINGFORM
+    if (gbTestingEnabled == true)
+    {
+        gutTestingForm->SerialPortError(speErrorCode);
+    }
+#endif
+
     if (speErrorCode == QSerialPort::NoError)
     {
         //No error. Why this is ever emitted is a mystery to me.
@@ -2922,11 +3119,20 @@ MainWindow::SerialError(
         ui->check_LogAppend->setEnabled(true);
         ui->btn_LogFileSelect->setEnabled(true);
 
+#ifndef SKIPAUTOMATIONFORM
         //Notify automation form
-        guaAutomationForm->ConnectionChange(false);
+        if (guaAutomationForm != 0)
+        {
+            guaAutomationForm->ConnectionChange(false);
+        }
+#endif
 
         //Show disconnection balloon
-        if (gbSysTrayEnabled == true && !this->isActiveWindow() && !gpmErrorForm->isActiveWindow() && !guaAutomationForm->isActiveWindow())
+        if (gbSysTrayEnabled == true && !this->isActiveWindow() && !gpmErrorForm->isActiveWindow()
+#ifndef SKIPAUTOMATIONFORM
+           && (guaAutomationForm == 0 || (guaAutomationForm != 0 && !guaAutomationForm->isActiveWindow()))
+#endif
+           )
         {
             gpSysTray->showMessage(ui->combo_COM->currentText().append(" Removed"), QString("Connection to device ").append(ui->combo_COM->currentText()).append(" has been lost due to disconnection."), QSystemTrayIcon::Critical);
         }
@@ -3157,7 +3363,7 @@ MainWindow::on_btn_Cancel_clicked(
         else if (gchTermMode >= MODE_SERVER_COMPILE || gchTermMode <= MODE_SERVER_COMPILE_LOAD_RUN)
         {
             //Cancel network request and download
-#pragma warning("Cannot currently cancel network request")
+            gnmrReply->abort();
 
             //Change to just a compile
             if (gchTermMode != MODE_SERVER_COMPILE)
@@ -3168,10 +3374,10 @@ MainWindow::on_btn_Cancel_clicked(
             return;
 
         }
-        else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
+        else if (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS || gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS || gchTermMode == MODE_CHECK_FIRMWARE_SUPPORT)
         {
             //Cancel network request
-#pragma warning("Cannot currently cancel network request")
+            gnmrReply->abort();
             return;
         }
     }
@@ -3545,9 +3751,19 @@ MainWindow::on_btn_PreXCompSelect_clicked(
     )
 {
     //Opens an executable selector
-    guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(0);
+    }
+#endif
     QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename[FilenameIndexOthers], "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
-    guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(1);
+    }
+#endif
 
     if (strFilename.length() > 1)
     {
@@ -3658,10 +3874,14 @@ MainWindow::replyFinished(
         gchTermMode2 = 0;
         gbTermBusy = false;
 
-        //Display error message
-        QString strMessage = QString("An error occured during Online XCompilation: ").append(nrReply->errorString());
-        gpmErrorForm->show();
-        gpmErrorForm->SetMessage(&strMessage);
+        //Display error message if operation wasn't cancelled
+        if (nrReply->error() != QNetworkReply::OperationCanceledError)
+        {
+            //Output error message
+            QString strMessage = QString("An error occured during Online XCompilation: ").append(nrReply->errorString());
+            gpmErrorForm->show();
+            gpmErrorForm->SetMessage(&strMessage);
+        }
     }
     else
     {
@@ -3800,7 +4020,7 @@ MainWindow::replyFinished(
                             baPostData.append("\r\n-----------------------------17192614014659--\r\n");
                             nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
                             nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
-                            gnmManager->post(nrThisReq, baPostData);
+                            gnmrReply = gnmManager->post(nrThisReq, baPostData);
                             ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
                         }
                         else
@@ -4173,16 +4393,23 @@ MainWindow::replyFinished(
             if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
             {
                 //Got updated error code file
+#ifndef SKIPERRORCODEFORM
+                if (gecErrorCodeForm != 0)
+                {
+                    //Clear error code file
+                    gecErrorCodeForm->SetErrorObject(0);
+                }
+#endif
                 delete gpErrorMessages;
                 gbErrorsLoaded = false;
 #if TARGET_OS_MAC
-                if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv")))
+                if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv")))
                 {
                     //Remove file
                     QFile::remove(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv"));
                 }
 #else
-                if (!QFile::exists("codes.csv"))
+                if (QFile::exists("codes.csv"))
                 {
                     //Remove file
                     QFile::remove("codes.csv");
@@ -4208,6 +4435,14 @@ MainWindow::replyFinished(
 #endif
                     ui->label_ErrorCodeUpdate->setText("Error code file updated!");
                     gbErrorsLoaded = true;
+
+#ifndef SKIPERRORCODEFORM
+                    if (gecErrorCodeForm != 0)
+                    {
+                        //Update error code form
+                        gecErrorCodeForm->SetErrorObject(gpErrorMessages);
+                    }
+#endif
                 }
                 else
                 {
@@ -4331,7 +4566,7 @@ MainWindow::sslErrors(
     )
 {
     //Error detected with SSL
-    if (sslcLairdSSL != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSL)
+    if ((sslcLairdSSL != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSL) || (sslcLairdSSLNew != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSLNew))
     {
         //Server certificate matches
         nrReply->ignoreSslErrors(lstSSLErrors);
@@ -4396,7 +4631,7 @@ MainWindow::on_btn_ErrorCodeUpdate_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
             ui->statusBar->showMessage("Checking for Error Code file updates...");
         }
     }
@@ -4423,7 +4658,7 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
             ui->statusBar->showMessage("Checking for UwTerminalX updates...");
         }
     }
@@ -4461,7 +4696,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/codes.csv"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/codes.csv"))));
             ui->statusBar->showMessage("Downloading Error Code file...");
         }
     }
@@ -4650,7 +4885,7 @@ MainWindow::on_btn_ModuleFirmware_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/firmwares.php"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/firmwares.php"))));
             ui->statusBar->showMessage("Checking for latest firmware versions...");
         }
     }
@@ -4693,6 +4928,13 @@ MainWindow::SerialPortClosing(
     ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
     ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+
+#ifndef SKIPTESTINGFORM
+    if (gbTestingEnabled == true)
+    {
+        gutTestingForm->SerialPortStatus(false);
+    }
+#endif
 }
 
 //=============================================================================
@@ -4702,9 +4944,19 @@ MainWindow::on_btn_LogFileSelect_clicked(
     )
 {
     //Updates the log file
-    guaAutomationForm->TempAlwaysOnTop(0);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(0);
+    }
+#endif
     QString strLogFilename = QFileDialog::getSaveFileName(this, "Select Log File", ui->edit_LogFile->text(), "Log Files (*.log);;All Files (*.*)");
-    guaAutomationForm->TempAlwaysOnTop(1);
+#ifndef SKIPAUTOMATIONFORM
+    if (guaAutomationForm != 0)
+    {
+        guaAutomationForm->TempAlwaysOnTop(1);
+    }
+#endif
     if (!strLogFilename.isEmpty())
     {
         //Update log file
@@ -4826,7 +5078,7 @@ MainWindow::on_btn_LogRefresh_clicked(
     if (filFiles.count() > 0)
     {
         //At least one file was found
-        unsigned int i = 0;
+        int i = 0;
         while (i < filFiles.count())
         {
             //List all files
@@ -4869,7 +5121,7 @@ MainWindow::on_btn_OnlineXComp_Supported_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/compiler_list.php"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/compiler_list.php"))));
             ui->statusBar->showMessage("Checking for supported XCompilers...");
         }
     }
@@ -4912,6 +5164,13 @@ MainWindow::LookupDNSName(
             {
                 //Found the host
                 gstrResolvedServer = hiIP.addresses().first().toString();
+
+                //Setup QNetwork object
+                gnmManager = new QNetworkAccessManager();
+                connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+#ifdef UseSSL
+                connect(gnmManager, SIGNAL(sslErrors(QNetworkReply*, QList<QSslError>)), this, SLOT(sslErrors(QNetworkReply*, QList<QSslError>)));
+#endif
                 return true;
             }
         }
@@ -5844,6 +6103,22 @@ void MainWindow::on_check_LineSeparator_stateChanged(
     //Notify scroll edit
     ui->text_TermEditData->mbLineSeparator = ui->check_LineSeparator->isChecked();
 }
+
+//=============================================================================
+//=============================================================================
+#ifndef SKIPERRORCODEFORM
+void MainWindow::on_btn_Error_clicked()
+{
+    //Open error form dialogue
+    if (gecErrorCodeForm == 0)
+    {
+        //Initialise error code form
+        gecErrorCodeForm = new UwxErrorCode(this);
+        gecErrorCodeForm->SetErrorObject(gpErrorMessages);
+    }
+    gecErrorCodeForm->show();
+}
+#endif
 
 /******************************************************************************/
 // END OF FILE

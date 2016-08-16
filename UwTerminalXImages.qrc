@@ -10,5 +10,6 @@
         <file>certificates/UwTerminalX.crt</file>
         <file>images/MinusIcon.png</file>
         <file>images/PlusIcon.png</file>
+        <file>certificates/UwTerminalX_new.crt</file>
     </qresource>
 </RCC>

@@ -27,8 +27,8 @@
 // Include Files
 /******************************************************************************/
 #include <QMainWindow>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 #include <QMenu>
 #include <QClipboard>
 #include <QMimeData>
@@ -65,6 +65,15 @@
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
 #include "LrdLogger.h"
+#if SKIPAUTOMATIONFORM != 1
+#include "UwxAutomation.h"
+#endif
+#if SKIPERRORCODEFORM != 1
+#include "UwxErrorCode.h"
+#endif
+#if SKIPTESTINGFORM != 1
+#include "UwxTesting.h"
+#endif
 
 /******************************************************************************/
 // Defines
@@ -88,7 +97,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.05t" //Version string
+#define UwVersion                         "1.05u" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
@@ -146,14 +155,15 @@
 #define MenuActionFont                    19
 #define MenuActionRun2                    20
 #define MenuActionAutomation              21
-#define MenuActionBatch                   22
-#define MenuActionClearModule             23
-#define MenuActionClearDisplay            24
-#define MenuActionClearRxTx               25
-#define MenuActionCopy                    26
-#define MenuActionCopyAll                 27
-#define MenuActionPaste                   28
-#define MenuActionSelectAll               29
+#define MenuActionTesting                 22
+#define MenuActionBatch                   23
+#define MenuActionClearModule             24
+#define MenuActionClearDisplay            25
+#define MenuActionClearRxTx               26
+#define MenuActionCopy                    27
+#define MenuActionCopyAll                 28
+#define MenuActionPaste                   29
+#define MenuActionSelectAll               30
 //Defines for balloon (notification area) icon options
 #define BalloonActionShow                 1
 #define BalloonActionExit                 2
@@ -178,11 +188,6 @@ public:
         QWidget *parent = 0
         );
     ~MainWindow(
-        );
-    void
-    MessagePass(
-        QString strDataString,
-        bool bEscapeString
         );
 
 public slots:
@@ -223,9 +228,13 @@ public slots:
     SerialBytesWritten(
         qint64 intByteCount
         );
-
     void
     SerialPortClosing(
+        );
+    void
+    MessagePass(
+        QString strDataString,
+        bool bEscapeString
         );
 
 private slots:
@@ -470,6 +479,11 @@ private slots:
     on_check_LineSeparator_stateChanged(
         int
         );
+#if SKIPERRORCODEFORM != 1
+    void
+    on_btn_Error_clicked(
+        );
+#endif
 
 private:
     Ui::MainWindow *ui;
@@ -544,7 +558,9 @@ private:
     unsigned char gchTermMode2; //Current sub-mode of download
     QString gstrTermFilename; //Holds the filename of the file to load
     QString gstrTermBusyData; //Holds the recieved data for checking
+#ifdef _WIN32
     QProcess gprocCompileProcess; //Holds the data for the process to compile
+#endif
     QImage gimEmptyCircleImage; //Holder for empty circle image
     QImage gimRedCircleImage; //Holder for red circle image
     QImage gimGreenCircleImage; //Holder for green circle image
@@ -588,6 +604,7 @@ private:
     QSettings *gpErrorMessages; //Handle to error codes
     QSettings *gpPredefinedDevice; //Handle to predefined devices
     QNetworkAccessManager *gnmManager; //Network access manager
+    QNetworkReply *gnmrReply; //Network reply
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
     QString gstrLastFilename[2]; //Holds the filenames of the last selected files
@@ -600,7 +617,20 @@ private:
 #ifdef UseSSL
     QString WebProtocol; //Holds HTTP or HTTPS depending on options selected
     QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
+    QSslCertificate *sslcLairdSSLNew = NULL; //Holds the (newer) Laird SSL certificate
 #endif
+
+    PopupMessage *gpmErrorForm; //Error message form
+#if SKIPAUTOMATIONFORM != 1
+    UwxAutomation *guaAutomationForm; //Automation form
+#endif
+#if SKIPERRORCODEFORM != 1
+    UwxErrorCode *gecErrorCodeForm; //Error code lookup form
+#endif
+#if SKIPTESTINGFORM != 1
+    UwxTesting *gutTestingForm; //Testing form
+#endif
+    bool gbTestingEnabled; //
 
 protected:
     void dragEnterEvent(

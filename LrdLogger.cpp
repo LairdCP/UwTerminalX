@@ -29,7 +29,8 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-LrdLogger::LrdLogger(QWidget *parent) : QWidget(parent){
+LrdLogger::LrdLogger(QWidget *parent) : QWidget(parent)
+{
     //Initial values
     mbLogOpen = false;
 }
