@@ -208,11 +208,13 @@ public slots:
     void
     DevRespTimeout(
         );
+#ifdef _WIN32
     void
     process_finished(
         int intExitCode,
         QProcess::ExitStatus esExitStatus
         );
+#endif
     void
     SerialStatusSlot(
         );
