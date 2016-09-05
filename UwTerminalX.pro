@@ -1,12 +1,10 @@
 #UwTerminalX Qt project qmake file
+#By default all components are built for Github UwTerminalX releases
 
 #Uncomment to exclude building automation form
 #DEFINES += "SKIPAUTOMATIONFORM"
 #Uncomment to exclude building error code lookup form
-DEFINES += "SKIPERRORCODEFORM"
-#Uncomment to exclude building testing form
-DEFINES += "SKIPTESTINGFORM"
-
+#DEFINES += "SKIPERRORCODEFORM"
 
 QT       += core gui serialport network
 
@@ -40,23 +38,6 @@ RESOURCES += \
     SOURCES += UwxAutomation.cpp
     HEADERS += UwxAutomation.h
     FORMS += UwxAutomation.ui
-}
-
-#Testing form
-!contains(DEFINES, SKIPTESTINGFORM)
-{
-    SOURCES += \
-    QtCodeEditor.cpp \
-    UwxHighlighter.cpp \
-    UwxTesting.cpp
-
-    HEADERS += \
-    QtCodeEditor.h \
-    UwxHighlighter.h \
-    UwxTesting.h
-
-    FORMS += \
-    UwxTesting.ui
 }
 
 #Error code form

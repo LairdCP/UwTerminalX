@@ -136,7 +136,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbErrorsLoaded = false;
     gbAutoBaud = false;
     gnmManager = 0;
-    gbTestingEnabled = false;
 
 #ifndef SKIPAUTOMATIONFORM
     guaAutomationForm = 0;
@@ -145,9 +144,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gecErrorCodeForm = 0;
 #else
     ui->btn_Error->deleteLater();
-#endif
-#ifndef SKIPTESTINGFORM
-    gutTestingForm = 0;
 #endif
 
     //Clear display buffer byte array.
@@ -160,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMainLog = new LrdLogger;
 
     //Move to 'About' tab
-    ui->selector_Tab->setCurrentIndex(3);
+    ui->selector_Tab->setCurrentIndex(TabAbout);
 
     //Set default values for combo boxes on 'Config' tab
     ui->combo_Baud->setCurrentIndex(8);
@@ -250,9 +246,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             mbMoveFiles.setInformativeText("The UwTerminalX configuration is now stored in the Application Support directory (instead of in the same directory as UwTermiminalX).\r\nYou can either:\r\n    \u2022Migrate the old configuration (Yes, UwTerminalX will restart)\r\n    \u2022Ignore the old configuration and not be asked again (No)\r\n    \u2022Choose next time UwTerminalX is opened (Ignore).");
             mbMoveFiles.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Ignore);
             mbMoveFiles.setDefaultButton(QMessageBox::Yes);
-            int iBtnClicked = mbMoveFiles.exec();
+            int intBtnClicked = mbMoveFiles.exec();
 
-            if (iBtnClicked == QMessageBox::Yes)
+            if (intBtnClicked == QMessageBox::Yes)
             {
                 //Move files
                 delete gpTermSettings;
@@ -293,7 +289,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 //Reload settings
                 LoadSettings();
             }
-            else if (iBtnClicked == QMessageBox::No)
+            else if (intBtnClicked == QMessageBox::No)
             {
                 //Do not move files, mark as done in configuration
                 gpTermSettings->setValue(QString("OldConfigIgnore"), "1");
@@ -328,7 +324,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMenu->addAction("Font")->setData(MenuActionFont);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
-    gpMenu->addAction("Testing")->setData(MenuActionTesting);
     gpMenu->addAction("Batch")->setData(MenuActionBatch);
     gpMenu->addAction("Clear module")->setData(MenuActionClearModule);
     gpMenu->addAction("Clear Display")->setData(MenuActionClearDisplay);
@@ -350,13 +345,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Disable automation option
     gpMenu->actions()[11]->setEnabled(false);
 #endif
-#ifdef SKIPTESTINGFORM
-    //Disable testing option
-    gpMenu->actions()[12]->setEnabled(false);
-#endif
 
     //Connect the menu actions
-    connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(triggered(QAction*)), Qt::AutoConnection);
+    connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(MenuSelected(QAction*)), Qt::AutoConnection);
     connect(gpMenu, SIGNAL(aboutToHide()), this, SLOT(ContextMenuClosed()), Qt::AutoConnection);
     connect(gpBalloonMenu, SIGNAL(triggered(QAction*)), this, SLOT(balloontriggered(QAction*)), Qt::AutoConnection);
 
@@ -370,7 +361,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(gpSignalTimer, SIGNAL(timeout()), this, SLOT(SerialStatusSlot()));
 
     //Connect serial signals
-    connect(&gspSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
+    connect(&gspSerialPort, SIGNAL(readyRead()), this, SLOT(SerialRead()));
     connect(&gspSerialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(SerialError(QSerialPort::SerialPortError)));
     connect(&gspSerialPort, SIGNAL(bytesWritten(qint64)), this, SLOT(SerialBytesWritten(qint64)));
     connect(&gspSerialPort, SIGNAL(aboutToClose()), this, SLOT(SerialPortClosing()));
@@ -561,7 +552,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             ui->btn_Decline->setEnabled(false);
 
             //Switch to config tab
-            ui->selector_Tab->setCurrentIndex(1);
+            ui->selector_Tab->setCurrentIndex(TabConfig);
 
             //Default empty images
             ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
@@ -724,6 +715,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     on_btn_LogRefresh_clicked();
 
     //Change terminal font to a monospaced font
+#pragma warning("TODO: Revert manual font selection when QTBUG-54623 is fixed")
 #ifdef _WIN32
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 #elif __APPLE__
@@ -791,12 +783,12 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(EnterPressed()));
     disconnect(this, SLOT(KeyPressed(QChar)));
     disconnect(this, SLOT(DroppedFile(QString)));
-    disconnect(this, SLOT(triggered(QAction*)));
+    disconnect(this, SLOT(MenuSelected(QAction*)));
     disconnect(this, SLOT(balloontriggered(QAction*)));
     disconnect(this, SLOT(ContextMenuClosed()));
     disconnect(this, SLOT(DevRespTimeout()));
     disconnect(this, SLOT(SerialStatusSlot()));
-    disconnect(this, SLOT(readData()));
+    disconnect(this, SLOT(SerialRead()));
     disconnect(this, SLOT(SerialError(QSerialPort::SerialPortError)));
     disconnect(this, SLOT(SerialBytesWritten(qint64)));
     disconnect(this, SLOT(UpdateReceiveText()));
@@ -834,17 +826,6 @@ MainWindow::~MainWindow(){
             guaAutomationForm->close();
         }
         delete guaAutomationForm;
-    }
-#endif
-#ifndef SKIPTESTINGFORM
-    if (gutTestingForm != 0)
-    {
-        if (gutTestingForm->isVisible())
-        {
-            //Close testing form
-            gutTestingForm->close();
-        }
-        delete gutTestingForm;
     }
 #endif
 #ifndef SKIPERRORCODEFORM
@@ -938,13 +919,6 @@ MainWindow::closeEvent(
         guaAutomationForm->close();
     }
 #endif
-#ifndef SKIPTESTINGFORM
-    if (gutTestingForm != 0 && gutTestingForm->isVisible())
-    {
-        //Close testing form
-        gutTestingForm->close();
-    }
-#endif
 #ifndef SKIPERRORCODEFORM
     if (gecErrorCodeForm != 0 && gecErrorCodeForm->isVisible())
     {
@@ -968,7 +942,7 @@ MainWindow::on_btn_Accept_clicked(
     ui->btn_Decline->setEnabled(false);
 
     //Switch to config tab
-    ui->selector_Tab->setCurrentIndex(1);
+    ui->selector_Tab->setCurrentIndex(TabConfig);
 
     //Default empty images
     ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
@@ -984,10 +958,10 @@ MainWindow::on_selector_Tab_currentChanged(
     int intIndex
     )
 {
-    if (ui->btn_Accept->isEnabled() == true && intIndex != 3)
+    if (ui->btn_Accept->isEnabled() == true && intIndex != TabAbout)
     {
         //Not accepted the terms yet
-        ui->selector_Tab->setCurrentIndex(3);
+        ui->selector_Tab->setCurrentIndex(TabAbout);
     }
 }
 
@@ -1057,7 +1031,7 @@ MainWindow::on_btn_TermClose_clicked(
         ui->check_RTS->setEnabled(false);
 
         //Disable text entry
-        ui->text_TermEditData->setReadOnly(true);
+//        ui->text_TermEditData->setReadOnly(true);
 
         //Change status message
         ui->statusBar->showMessage("");
@@ -1162,7 +1136,7 @@ MainWindow::RefreshSerialDevices(
     }
     else
     {
-        //Search for previos
+        //Search for previous
         int i = 0;
         while (i < ui->combo_COM->count())
         {
@@ -1193,18 +1167,11 @@ MainWindow::on_btn_TermClear_clicked(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::readData(
+MainWindow::SerialRead(
     )
 {
     //Read the data into a buffer and copy it to edit for the display data
     QByteArray baOrigData = gspSerialPort.readAll();
-
-#ifndef SKIPTESTINGFORM
-    if (gbTestingEnabled == true)
-    {
-        gutTestingForm->SerialPortData(&baOrigData);
-    }
-#endif
 
     if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6) || (gbTermBusy == true && (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS || gchTermMode == MODE_UPDATE_ERROR_CODE || gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS || gchTermMode == 50))))
     {
@@ -1647,8 +1614,7 @@ MainWindow::on_text_TermEditData_customContextMenuRequested(
 }
 
 void
-MainWindow::triggered
-    (
+MainWindow::MenuSelected(
     QAction* qaAction
     )
 {
@@ -2040,18 +2006,6 @@ MainWindow::triggered
         guaAutomationForm->show();
     }
 #endif
-#ifndef SKIPTESTINGFORM
-    else if (intItem == MenuActionTesting)
-    {
-        //Show testing window
-        if (gutTestingForm == 0)
-        {
-            //Initialise testing form
-            gutTestingForm = new UwxTesting(this);
-        }
-        gutTestingForm->show();
-    }
-#endif
     else if (intItem == MenuActionBatch)
     {
         //Start a Batch file script
@@ -2208,34 +2162,40 @@ MainWindow::EnterPressed(
     )
 {
     //Enter pressed in line mode
-    if (/*gspSerialPort.isOpen() == true &&*/ gbTermBusy == false && gbLoopbackMode == false)
+    if (gspSerialPort.isOpen())
     {
-        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
-        gspSerialPort.write(baTmpBA);
-        gintQueuedTXBytes += baTmpBA.size();
-        DoLineEnd();
-
-        //Add to log
-        gpMainLog->WriteLogData(baTmpBA.append("\n"));
-    }
-    else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
-    {
-        //Loopback is enabled
-        gbaDisplayBuffer.append("\n[Cannot send: Loopback mode is enabled.]\n");
-        if (!gtmrTextUpdateTimer.isActive())
+        if (gbTermBusy == false)
         {
-            gtmrTextUpdateTimer.start();
+            if (gbLoopbackMode == false)
+            {
+                QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+                DoLineEnd();
+
+                //Add to log
+                gpMainLog->WriteLogData(baTmpBA.append("\n"));
+            }
+            else if (gbLoopbackMode == true)
+            {
+                //Loopback is enabled
+                gbaDisplayBuffer.append("\n[Cannot send: Loopback mode is enabled.]\n");
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
+
+            if (ui->check_Echo->isChecked() == true)
+            {
+                //Local echo
+                QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->toUtf8();
+                baTmpBA.append("\n");
+                ui->text_TermEditData->AddDatInText(&baTmpBA);
+            }
+            ui->text_TermEditData->ClearDatOut();
         }
     }
-
-    if (ui->check_Echo->isChecked() == true)
-    {
-        //Local echo
-        QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->toUtf8();
-        baTmpBA.append("\n");
-        ui->text_TermEditData->AddDatInText(&baTmpBA);
-    }
-    ui->text_TermEditData->ClearDatOut();
 }
 
 //=============================================================================
@@ -2394,79 +2354,82 @@ MainWindow::KeyPressed(
     )
 {
     //Key pressed, send it out
-    if (gbTermBusy == false && gbLoopbackMode == false)
+    if (gspSerialPort.isOpen())
     {
-        if (ui->check_Echo->isChecked() == true)
+        if (gbTermBusy == false && gbLoopbackMode == false)
         {
-            //Echo mode on
-            if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return)
+            if (ui->check_Echo->isChecked() == true)
             {
-                gbaDisplayBuffer.append("\n");
+                //Echo mode on
+                if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return)
+                {
+                    gbaDisplayBuffer.append("\n");
+                }
+                else
+                {
+                    /*if (ui->check_ShowCLRF->isChecked() == true)
+                    {
+                        //Escape \t, \r and \n in addition to normal escaping
+                        gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                    }
+                    else
+                    {
+                        //Normal escaping
+                        gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                    }*/
+                }
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
+
+            //Convert character to a byte array (in case it's UTF-8 and more than 1 byte)
+            QByteArray baTmpBA = QString(chrKeyValue).toUtf8();
+
+            //Character mode, send right on
+            if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return || chrKeyValue == '\r' || chrKeyValue == '\n')
+            {
+                //Return key or newline
+                gpMainLog->WriteLogData("\n");
+                DoLineEnd();
             }
             else
             {
-                /*if (ui->check_ShowCLRF->isChecked() == true)
+                //Not return
+                gspSerialPort.write(baTmpBA);
+                gintQueuedTXBytes += baTmpBA.size();
+            }
+
+            //Output back to screen buffer if echo mode is enabled
+            if (ui->check_Echo->isChecked())
+            {
+                if (ui->check_ShowCLRF->isChecked() == true)
                 {
                     //Escape \t, \r and \n in addition to normal escaping
-                    gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                    gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
                 }
                 else
                 {
                     //Normal escaping
-                    gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                }*/
-            }
-            if (!gtmrTextUpdateTimer.isActive())
-            {
-                gtmrTextUpdateTimer.start();
+                    gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
+                }
+
+                //Run display update timer
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+
+                //Output to log file
+                gpMainLog->WriteLogData(QString(chrKeyValue).toUtf8());
             }
         }
-
-        //Convert character to a byte array (in case it's UTF-8 and more than 1 byte)
-        QByteArray baTmpBA = QString(chrKeyValue).toUtf8();
-
-        //Character mode, send right on
-        if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return || chrKeyValue == '\r' || chrKeyValue == '\n')
+        else if (gbLoopbackMode == true)
         {
-            //Return key or newline
-            gpMainLog->WriteLogData("\n");
-            DoLineEnd();
+            //Loopback is enabled
+            gbaDisplayBuffer.append("[Cannot send: Loopback mode is enabled.]");
         }
-        else
-        {
-            //Not return
-            gspSerialPort.write(baTmpBA);
-            gintQueuedTXBytes += baTmpBA.size();
-        }
-
-        //Output back to screen buffer if echo mode is enabled
-        if (ui->check_Echo->isChecked())
-        {
-            if (ui->check_ShowCLRF->isChecked() == true)
-            {
-                //Escape \t, \r and \n in addition to normal escaping
-                gbaDisplayBuffer.append(baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-            }
-            else
-            {
-                //Normal escaping
-                gbaDisplayBuffer.append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-            }
-
-            //Run display update timer
-            if (!gtmrTextUpdateTimer.isActive())
-            {
-                gtmrTextUpdateTimer.start();
-            }
-
-            //Output to log file
-            gpMainLog->WriteLogData(QString(chrKeyValue).toUtf8());
-        }
-    }
-    else if (gbLoopbackMode == true)
-    {
-        //Loopback is enabled
-        gbaDisplayBuffer.append("[Cannot send: Loopback mode is enabled.]");
     }
 }
 
@@ -2762,7 +2725,7 @@ MainWindow::OpenDevice(
             ui->label_TermConn->setText(ui->statusBar->currentMessage());
 
             //Switch to Terminal tab
-            ui->selector_Tab->setCurrentIndex(0);
+            ui->selector_Tab->setCurrentIndex(TabTerminal);
 
             //Disable read-only mode
             ui->text_TermEditData->setReadOnly(false);
@@ -2850,16 +2813,6 @@ MainWindow::OpenDevice(
 
             //Allow file drops for uploads
             setAcceptDrops(true);
-
-#ifndef SKIPTESTINGFORM
-//            if (gbTestingEnabled == true)
-//            {
-            if (gutTestingForm != 0)
-            {
-                gutTestingForm->SerialPortStatus(true);
-            }
-//            }
-#endif
         }
         else
         {
@@ -3024,13 +2977,6 @@ MainWindow::SerialError(
     QSerialPort::SerialPortError speErrorCode
     )
 {
-#ifndef SKIPTESTINGFORM
-    if (gbTestingEnabled == true)
-    {
-        gutTestingForm->SerialPortError(speErrorCode);
-    }
-#endif
-
     if (speErrorCode == QSerialPort::NoError)
     {
         //No error. Why this is ever emitted is a mystery to me.
@@ -3173,12 +3119,11 @@ MainWindow::MessagePass
             while (remiESeqMatch.hasNext())
             {
                 //We have escape sequences
-                bool bSuccess;
                 QRegularExpressionMatch remThisESeqMatch = remiESeqMatch.next();
-                strDataString.replace(QString("\\").append(remThisESeqMatch.captured(1)), QString((char)remThisESeqMatch.captured(1).toInt(&bSuccess, 16)));
+                strDataString.replace(QString("\\").append(remThisESeqMatch.captured(1)), QString((char)remThisESeqMatch.captured(1).toInt(nullptr, 16)));
             }
 
-            //Replace newline characters
+            //Replace newline and tab characters
             strDataString.replace("\\r", "\r").replace("\\n", "\n").replace("\\t", "\t");
         }
         QByteArray baTmpBA = strDataString.toUtf8();
@@ -3207,6 +3152,7 @@ MainWindow::MessagePass
         {
             //Not escaping sequences so send line end
             DoLineEnd();
+            gpMainLog->WriteLogData("\n");
         }
     }
     else if (gspSerialPort.isOpen() == true && gbLoopbackMode == true)
@@ -3583,11 +3529,11 @@ MainWindow::dropEvent(
 //=============================================================================
 void
 MainWindow::on_check_PreXCompRun_stateChanged(
-    int iChecked
+    int intChecked
     )
 {
     //User has changed running pre/post XCompiler executable, update GUI
-    if (iChecked == 2)
+    if (intChecked == 2)
     {
         //Enabled
         ui->check_PreXCompFail->setDisabled(false);
@@ -3854,7 +3800,7 @@ MainWindow::replyFinished(
     QNetworkReply* nrReply
     )
 {
-    //Response received from server regarding online XCompilation
+    //Response received from online server
     if (nrReply->error() != QNetworkReply::NoError && nrReply->error() != QNetworkReply::ServiceUnavailableError)
     {
         //An error occured
@@ -3878,7 +3824,7 @@ MainWindow::replyFinished(
         if (nrReply->error() != QNetworkReply::OperationCanceledError)
         {
             //Output error message
-            QString strMessage = QString("An error occured during Online XCompilation: ").append(nrReply->errorString());
+            QString strMessage = QString("An error occured during an online request related to XCompilation or updates: ").append(nrReply->errorString());
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
         }
@@ -4487,22 +4433,24 @@ MainWindow::replyFinished(
                 if (joJsonObject["Result"].toString() == "1")
                 {
                     //Update version list
-                    ui->label_BL600Firmware->setText(QString("BL600: ").append(joJsonObject["BL600r2"].toString()));
-                    ui->label_BL620Firmware->setText(QString("BL620: ").append(joJsonObject["BL620"].toString()));
-                    ui->label_BL652Firmware->setText(QString("BL652: ").append(joJsonObject["BL652"].toString()));
-                    ui->label_BT900Firmware->setText(QString("BT900: ").append(joJsonObject["BT900"].toString()));
-                    ui->label_RM186Firmware->setText(QString("RM186: ").append(joJsonObject["RM186"].toString()));
-                    ui->label_RM191Firmware->setText(QString("RM191: ").append(joJsonObject["RM191"].toString()));
+                    QString strTmpStr;
+                    foreach (const QString &strKey, joJsonObject.keys())
+                    {
+                        if (strKey != "Result")
+                        {
+                            //Firmware version
+                            strTmpStr.append(strKey).append(": ").append(joJsonObject[strKey].toString()).append("\r\n");
+                        }
+                    }
+                    strTmpStr.remove(strTmpStr.length()-2, 2);
+                    ui->label_Firmware->setText(strTmpStr);
+
+                    //Change colour to green
                     QPalette palBGColour = QPalette();
                     palBGColour.setColor(QPalette::Active, QPalette::WindowText, Qt::darkGreen);
                     palBGColour.setColor(QPalette::Inactive, QPalette::WindowText, Qt::darkGreen);
                     palBGColour.setColor(QPalette::Disabled, QPalette::WindowText, Qt::darkGreen);
-                    ui->label_BL600Firmware->setPalette(palBGColour);
-                    ui->label_BL620Firmware->setPalette(palBGColour);
-                    ui->label_BL652Firmware->setPalette(palBGColour);
-                    ui->label_BT900Firmware->setPalette(palBGColour);
-                    ui->label_RM186Firmware->setPalette(palBGColour);
-                    ui->label_RM191Firmware->setPalette(palBGColour);
+                    ui->label_Firmware->setPalette(palBGColour);
                 }
                 else
                 {
@@ -4706,15 +4654,15 @@ MainWindow::on_btn_ErrorCodeDownload_clicked(
 //=============================================================================
 void
 MainWindow::on_combo_PredefinedDevice_currentIndexChanged(
-    int iIndex
+    int intIndex
     )
 {
     //Load settings for current device
-    ui->combo_Baud->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Baud")), "115200").toString());
-    ui->combo_Parity->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Parity")), "0").toInt());
-    ui->combo_Stop->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Stop")), "1").toString());
-    ui->combo_Data->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Data")), "8").toString());
-    ui->combo_Handshake->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(iIndex+1).append("Flow")), "1").toInt());
+    ui->combo_Baud->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Baud")), "115200").toString());
+    ui->combo_Parity->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Parity")), "0").toInt());
+    ui->combo_Stop->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Stop")), "1").toString());
+    ui->combo_Data->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Data")), "8").toString());
+    ui->combo_Handshake->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Flow")), "1").toInt());
 }
 
 //=============================================================================
@@ -4909,7 +4857,7 @@ MainWindow::event(
     QEvent *evtEvent
     )
 {
-    if (evtEvent->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == 0)
+    if (evtEvent->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == TabTerminal)
     {
         //Focus on the terminal
         ui->text_TermEditData->setFocus();
@@ -4928,13 +4876,6 @@ MainWindow::SerialPortClosing(
     ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
     ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
-
-#ifndef SKIPTESTINGFORM
-    if (gbTestingEnabled == true)
-    {
-        gutTestingForm->SerialPortStatus(false);
-    }
-#endif
 }
 
 //=============================================================================
@@ -5201,17 +5142,17 @@ MainWindow::AtiToXCompName(
     }
 
     //Only allow a-z, A-Z, 0-9 and underscores in device name
-    int iI = 0;
-    while (iI < strAtiResp.length())
+    int intI = 0;
+    while (intI < strAtiResp.length())
     {
         //Check each character
-        char cTmpC = strAtiResp.at(iI).toLatin1();
+        char cTmpC = strAtiResp.at(intI).toLatin1();
         if (!(cTmpC > 47 && cTmpC < 58) && !(cTmpC > 64 && cTmpC < 91) && !(cTmpC > 96 && cTmpC < 123) && cTmpC != 95)
         {
             //Replace non-alphanumeric character with an underscore
-            strAtiResp[iI] = '_';
+            strAtiResp[intI] = '_';
         }
-        ++iI;
+        ++intI;
     }
     return strAtiResp;
 }
@@ -5597,15 +5538,15 @@ MainWindow::LoadSettings(
 //=============================================================================
 void
 MainWindow::UpdateSettings(
-    int iMajor,
-    int iMinor,
+    int intMajor,
+    int intMinor,
     QChar qcDelta
     )
 {
     //Adds new configuration options
-    if (iMajor <= 1)
+    if (intMajor <= 1)
     {
-        if (iMinor <= 4)
+        if (intMinor <= 4)
         {
             if (qcDelta == 0 || (qcDelta >= 'a' && qcDelta <= 'b'))
             {
@@ -5634,7 +5575,7 @@ MainWindow::UpdateSettings(
             }
         }
 
-        if (iMinor <= 5)
+        if (intMinor <= 5)
         {
             if (qcDelta == 0)
             {
@@ -6004,7 +5945,7 @@ MainWindow::on_btn_DetectBaud_clicked(
             else
             {
                 //Busy or open, show message to user
-                QString strMessage = tr("Cannot automatically determine the module baud rate: loopback mode is enabled. Please disabled it and retry.");
+                QString strMessage = tr("Cannot automatically determine the module baud rate: loopback mode is enabled. Please disable it and retry.");
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -6030,7 +5971,7 @@ MainWindow::DetectBaudTimeout(
             ui->btn_Cancel->setEnabled(false);
 
             //Output failure message
-            QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected and switches are correctly set and that there is no autorun application running.");
+            QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected properly, switches are correctly set, VSP mode is disabled and that there is no autorun application running.");
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
         }
@@ -6048,7 +5989,7 @@ MainWindow::DetectBaudTimeout(
                 if (gspSerialPort.isOpen() == true)
                 {
                     //Start module timer
-                    gtmrBaudTimer.start();
+                    gtmrBaudTimer.start(AutoBaudTimeout);
 
                     //Send module identify command
                     QByteArray baTmpBA = "  AT I 0";
@@ -6093,7 +6034,8 @@ MainWindow::on_check_ConfirmClear_stateChanged(
 
 //=============================================================================
 //=============================================================================
-void MainWindow::on_check_LineSeparator_stateChanged(
+void
+MainWindow::on_check_LineSeparator_stateChanged(
     int
     )
 {
@@ -6107,7 +6049,9 @@ void MainWindow::on_check_LineSeparator_stateChanged(
 //=============================================================================
 //=============================================================================
 #ifndef SKIPERRORCODEFORM
-void MainWindow::on_btn_Error_clicked()
+void
+MainWindow::on_btn_Error_clicked(
+    )
 {
     //Open error form dialogue
     if (gecErrorCodeForm == 0)

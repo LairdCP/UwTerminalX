@@ -1109,6 +1109,13 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="btn_Error">
+                <property name="text">
+                 <string>&amp;Error Codes</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item row="2" column="3">
@@ -1864,13 +1871,6 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="2">
-             <widget class="QPushButton" name="btn_Error">
-              <property name="text">
-               <string>&amp;Error Codes</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </item>
          </layout>
@@ -2270,7 +2270,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>60</height>
+                        <height>80</height>
                        </size>
                       </property>
                       <property name="maximumSize">
@@ -2293,8 +2293,8 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>186</width>
-                         <height>98</height>
+                         <width>144</width>
+                         <height>32</height>
                         </rect>
                        </property>
                        <property name="sizePolicy">
@@ -2326,89 +2326,15 @@ You can also use the button below to check if there is a newer version of UwTerm
                          <number>2</number>
                         </property>
                         <item>
-                         <widget class="QLabel" name="label_BL600Firmware">
+                         <widget class="QLabel" name="label_Firmware">
                           <property name="font">
                            <font>
                             <family>Arial</family>
                            </font>
                           </property>
                           <property name="text">
-                           <string>BL600:</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_BL620Firmware">
-                          <property name="font">
-                           <font>
-                            <family>Arial</family>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>BL620:</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_BL652Firmware">
-                          <property name="font">
-                           <font>
-                            <family>Arial</family>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>BL652:</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_BT900Firmware">
-                          <property name="font">
-                           <font>
-                            <family>Arial</family>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>BT900:</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_RM191Firmware">
-                          <property name="font">
-                           <font>
-                            <family>Arial</family>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>RM186:</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_RM186Firmware">
-                          <property name="font">
-                           <font>
-                            <family>Arial</family>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>RM191:</string>
+                           <string>Click the button below to
+check for the latest firmware</string>
                           </property>
                           <property name="alignment">
                            <set>Qt::AlignCenter</set>
@@ -2582,7 +2508,7 @@ COM=n
     Mac: /dev/[device] specifies a TTY device
 
 BAUD=n
-    [1200..921600] Could be limited to 115200 depending on PC hardware (limited to 230400 on Mac)
+    [1200..921600] Could be limited to 115200 depending on PC hardware (limited to 230400 on most Macs)
 
 STOP=n
     [1..2]

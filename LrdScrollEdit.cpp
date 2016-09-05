@@ -383,7 +383,7 @@ LrdScrollEdit::UpdateDisplay(
         QTextCursor tcTmpCur;
         bool bShiftStart = false;
         bool bShiftEnd = false;
-        unsigned int uiCurrentSize;
+        unsigned int uiCurrentSize = 0;
         if (this->textCursor().anchor() != this->textCursor().position())
         {
             //Text is selected
