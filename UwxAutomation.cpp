@@ -302,7 +302,7 @@ UwxAutomation::on_btn_Send1_clicked(
     )
 {
     //Send button #1 pressed
-    emit SendData(ui->edit_Line1->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line1->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -312,7 +312,7 @@ UwxAutomation::on_btn_Send2_clicked(
     )
 {
     //Send button #2 pressed
-    emit SendData(ui->edit_Line2->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line2->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -322,7 +322,7 @@ UwxAutomation::on_btn_Send3_clicked(
     )
 {
     //Send button #3 pressed
-    emit SendData(ui->edit_Line3->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line3->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -332,7 +332,7 @@ UwxAutomation::on_btn_Send4_clicked(
     )
 {
     //Send button #4 pressed
-    emit SendData(ui->edit_Line4->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line4->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -342,7 +342,7 @@ UwxAutomation::on_btn_Send5_clicked(
     )
 {
     //Send button #5 pressed
-    emit SendData(ui->edit_Line5->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line5->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -352,7 +352,7 @@ UwxAutomation::on_btn_Send6_clicked(
     )
 {
     //Send button #6 pressed
-    emit SendData(ui->edit_Line6->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line6->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -362,7 +362,7 @@ UwxAutomation::on_btn_Send7_clicked(
     )
 {
     //Send button #7 pressed
-    emit SendData(ui->edit_Line7->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line7->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -372,7 +372,7 @@ UwxAutomation::on_btn_Send8_clicked(
     )
 {
     //Send button #8 pressed
-    emit SendData(ui->edit_Line8->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line8->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -382,7 +382,7 @@ UwxAutomation::on_btn_Send9_clicked(
     )
 {
     //Send button #9 pressed
-    emit SendData(ui->edit_Line9->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line9->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -392,7 +392,7 @@ UwxAutomation::on_btn_Send10_clicked(
     )
 {
     //Send button #10 pressed
-    emit SendData(ui->edit_Line10->text(), ui->check_Unescape->isChecked());
+    emit SendData(ui->edit_Line10->text(), ui->check_Unescape->isChecked(), false);
 }
 
 //=============================================================================
@@ -573,39 +573,39 @@ UwxAutomation::EnterPressed(
     //Enter has been pressed with a line edit selected
     if (ui->edit_Line1->hasFocus())
     {
-        emit SendData(ui->edit_Line1->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line1->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line2->hasFocus())
     {
-        emit SendData(ui->edit_Line2->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line2->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line3->hasFocus())
     {
-        emit SendData(ui->edit_Line3->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line3->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line4->hasFocus())
     {
-        emit SendData(ui->edit_Line4->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line4->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line5->hasFocus())
     {
-        emit SendData(ui->edit_Line5->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line5->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line6->hasFocus())
     {
-        emit SendData(ui->edit_Line6->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line6->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line7->hasFocus())
     {
-        emit SendData(ui->edit_Line7->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line7->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line8->hasFocus())
     {
-        emit SendData(ui->edit_Line8->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line8->text(), ui->check_Unescape->isChecked(), false);
     }
     else if (ui->edit_Line9->hasFocus())
     {
-        emit SendData(ui->edit_Line9->text(), ui->check_Unescape->isChecked());
+        emit SendData(ui->edit_Line9->text(), ui->check_Unescape->isChecked(), false);
     }
 }
 
@@ -690,6 +690,15 @@ void UwxAutomation::TempAlwaysOnTop(
             this->show();
         }
     }
+}
+
+//=============================================================================
+//=============================================================================
+void UwxAutomation::SetFirstLineFocus(
+    )
+{
+    //Sets the focus to the first line edit
+    ui->edit_Line1->setFocus();
 }
 
 /******************************************************************************/

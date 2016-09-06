@@ -145,6 +145,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #else
     ui->btn_Error->deleteLater();
 #endif
+#ifndef SKIPSCRIPTINGFORM
+    gbScriptingRunning = false;
+    gusScriptingForm = 0;
+#endif
 
     //Clear display buffer byte array.
     gbaDisplayBuffer.clear();
@@ -153,7 +157,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     LoadSettings();
 
     //Create logging handle
-    gpMainLog = new LrdLogger;
+    gpMainLog = new LrdLogger();
 
     //Move to 'About' tab
     ui->selector_Tab->setCurrentIndex(TabAbout);
@@ -324,6 +328,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMenu->addAction("Font")->setData(MenuActionFont);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
+    gpMenu->addAction("Scripting")->setData(MenuActionScripting);
     gpMenu->addAction("Batch")->setData(MenuActionBatch);
     gpMenu->addAction("Clear module")->setData(MenuActionClearModule);
     gpMenu->addAction("Clear Display")->setData(MenuActionClearDisplay);
@@ -344,6 +349,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifdef SKIPAUTOMATIONFORM
     //Disable automation option
     gpMenu->actions()[11]->setEnabled(false);
+#endif
+#ifdef SKIPSCRIPTINGFORM
+    //Disable scripting option
+    gpMenu->actions()[12]->setEnabled(false);
 #endif
 
     //Connect the menu actions
@@ -796,7 +805,7 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
     disconnect(this, SLOT(DetectBaudTimeout()));
-    disconnect(this, SLOT(MessagePass(QString,bool)));
+    disconnect(this, SLOT(MessagePass(QString,bool,bool)));
 
     if (gspSerialPort.isOpen() == true)
     {
@@ -826,6 +835,19 @@ MainWindow::~MainWindow(){
             guaAutomationForm->close();
         }
         delete guaAutomationForm;
+    }
+#endif
+#ifndef SKIPSCRIPTINGFORM
+    if (gusScriptingForm != 0)
+    {
+        if (gusScriptingForm->isVisible())
+        {
+            //Close scripting form
+            gusScriptingForm->close();
+        }
+        disconnect(this, SLOT(ScriptStartRequest()));
+        disconnect(this, SLOT(ScriptFinished()));
+        delete gusScriptingForm;
     }
 #endif
 #ifndef SKIPERRORCODEFORM
@@ -917,6 +939,13 @@ MainWindow::closeEvent(
     {
         //Close automation form
         guaAutomationForm->close();
+    }
+#endif
+#ifndef SKIPSCRIPTINGFORM
+    if (gusScriptingForm != 0 && gusScriptingForm->isVisible())
+    {
+        //Close scripting form
+        gusScriptingForm->close();
     }
 #endif
 #ifndef SKIPERRORCODEFORM
@@ -1172,6 +1201,13 @@ MainWindow::SerialRead(
 {
     //Read the data into a buffer and copy it to edit for the display data
     QByteArray baOrigData = gspSerialPort.readAll();
+
+#ifndef SKIPSCRIPTINGFORM
+        if (gusScriptingForm != 0 && gbScriptingRunning == true)
+        {
+            gusScriptingForm->SerialPortData(&baOrigData);
+        }
+#endif
 
     if (ui->check_SkipDL->isChecked() == false || (gbTermBusy == false || (gbTermBusy == true && baOrigData.length() > 6) || (gbTermBusy == true && (gchTermMode == MODE_CHECK_ERROR_CODE_VERSIONS || gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS || gchTermMode == MODE_UPDATE_ERROR_CODE || gchTermMode == MODE_CHECK_FIRMWARE_VERSIONS || gchTermMode == 50))))
     {
@@ -2001,9 +2037,43 @@ MainWindow::MenuSelected(
             //Update automation forum with connection status
             guaAutomationForm->ConnectionChange(gspSerialPort.isOpen());
 
-            connect(guaAutomationForm, SIGNAL(SendData(QString,bool)), this, SLOT(MessagePass(QString,bool)));
+            //Connect signals
+            connect(guaAutomationForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+
+            //Give focus to the first line
+            guaAutomationForm->SetFirstLineFocus();
         }
         guaAutomationForm->show();
+    }
+#endif
+#ifndef SKIPSCRIPTINGFORM
+    else if (intItem == MenuActionScripting)
+    {
+        //Show scripting window
+        if (gusScriptingForm == 0)
+        {
+            //Initialise scripting form
+            gusScriptingForm = new UwxScripting(this);
+
+            //Populate window handles for automation object
+            gusScriptingForm->SetPopupHandle(gpmErrorForm);
+
+            //Send the UwTerminalX version string
+            gusScriptingForm->SetUwTerminalXVersion(UwVersion);
+
+            //Connect the message passing signal and slot
+            connect(gusScriptingForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+            connect(gusScriptingForm, SIGNAL(ScriptStartRequest()), this, SLOT(ScriptStartRequest()));
+            connect(gusScriptingForm, SIGNAL(ScriptFinished()), this, SLOT(ScriptFinished()));
+
+            if (gspSerialPort.isOpen())
+            {
+                //Tell the form that the serial port is open
+                gusScriptingForm->SerialPortStatus(true);
+            }
+        }
+        gusScriptingForm->show();
+        gusScriptingForm->SetEditorFocus();
     }
 #endif
     else if (intItem == MenuActionBatch)
@@ -2813,6 +2883,13 @@ MainWindow::OpenDevice(
 
             //Allow file drops for uploads
             setAcceptDrops(true);
+
+#ifndef SKIPSCRIPTINGFORM
+            if (gusScriptingForm != 0)
+            {
+                gusScriptingForm->SerialPortStatus(true);
+            }
+#endif
         }
         else
         {
@@ -2977,6 +3054,13 @@ MainWindow::SerialError(
     QSerialPort::SerialPortError speErrorCode
     )
 {
+#ifndef SKIPSCRIPTINGFORM
+    if (gbScriptingRunning == true)
+    {
+        gusScriptingForm->SerialPortError(speErrorCode);
+    }
+#endif
+
     if (speErrorCode == QSerialPort::NoError)
     {
         //No error. Why this is ever emitted is a mystery to me.
@@ -3102,14 +3186,14 @@ MainWindow::on_btn_Duplicate_clicked(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::MessagePass
-    (
+MainWindow::MessagePass(
     QString strDataString,
-    bool bEscapeString
+    bool bEscapeString,
+    bool bFromScripting
     )
 {
     //Receive a command from the automation window
-    if (gspSerialPort.isOpen() == true && gbTermBusy == false && gbLoopbackMode == false)
+    if (gspSerialPort.isOpen() == true && (gbTermBusy == false || bFromScripting == true) && gbLoopbackMode == false)
     {
         if (bEscapeString == true)
         {
@@ -3148,9 +3232,9 @@ MainWindow::MessagePass
             }
         }
         gpMainLog->WriteLogData(strDataString);
-        if (bEscapeString == false)
+        if (bEscapeString == false && bFromScripting == false)
         {
-            //Not escaping sequences so send line end
+            //Not escaping sequences and not from scripting form so send line end
             DoLineEnd();
             gpMainLog->WriteLogData("\n");
         }
@@ -3203,6 +3287,13 @@ MainWindow::SerialBytesWritten(
     gintTXBytes += intByteCount;
     ui->label_TermTx->setText(QString::number(gintTXBytes));
 //    ui->label_TermQueue->setText(QString::number(gintQueuedTXBytes));
+
+#ifndef SKIPSCRIPTINGFORM
+        if (gusScriptingForm != 0 && gbScriptingRunning == true)
+        {
+            gusScriptingForm->SerialPortWritten(intByteCount);
+        }
+#endif
 
     if (gbStreamingFile == true)
     {
@@ -4876,6 +4967,13 @@ MainWindow::SerialPortClosing(
     ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
     ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
+#ifndef SKIPSCRIPTINGFORM
+    if (gusScriptingForm != 0)
+    {
+        //Notify scripting form
+        gusScriptingForm->SerialPortStatus(false);
+    }
+#endif
 }
 
 //=============================================================================
@@ -6061,6 +6159,51 @@ MainWindow::on_btn_Error_clicked(
         gecErrorCodeForm->SetErrorObject(gpErrorMessages);
     }
     gecErrorCodeForm->show();
+}
+#endif
+
+#ifndef SKIPSCRIPTINGFORM
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ScriptStartRequest(
+    )
+{
+    //Request from scripting form to start running script
+    unsigned char ucReason = ScriptingReasonOK;
+
+    if (!gspSerialPort.isOpen())
+    {
+        //Serial port is not open
+        ucReason = ScriptingReasonPortClosed;
+    }
+    else if (gbTermBusy == true)
+    {
+        //Terminal is busy
+        ucReason = ScriptingReasonTermBusy;
+    }
+    else
+    {
+        //Terminal is free: allow script execution
+        gbScriptingRunning = true;
+        gbTermBusy = true;
+        gchTermMode = 50;
+    }
+
+    //Return the result to the scripting form
+    gusScriptingForm->ScriptStartResult(gbScriptingRunning, ucReason);
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ScriptFinished(
+    )
+{
+    //Script execution has finished
+    gbTermBusy = false;
+    gbScriptingRunning = false;
+    gchTermMode = 0;
 }
 #endif
 

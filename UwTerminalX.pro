@@ -5,6 +5,9 @@
 #DEFINES += "SKIPAUTOMATIONFORM"
 #Uncomment to exclude building error code lookup form
 #DEFINES += "SKIPERRORCODEFORM"
+#Uncomment to exclude building scripting form
+#DEFINES += "SKIPSCRIPTINGFORM=1"
+
 
 QT       += core gui serialport network
 
@@ -38,6 +41,20 @@ RESOURCES += \
     SOURCES += UwxAutomation.cpp
     HEADERS += UwxAutomation.h
     FORMS += UwxAutomation.ui
+}
+
+#Scripting form
+!contains(DEFINES, SKIPSCRIPTINGFORM)
+{
+    SOURCES += LrdCodeEditor.cpp \
+    LrdHighlighter.cpp \
+    UwxScripting.cpp
+
+    HEADERS += LrdCodeEditor.h \
+    LrdHighlighter.h \
+    UwxScripting.h
+
+    FORMS += UwxScripting.ui
 }
 
 #Error code form

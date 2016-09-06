@@ -72,6 +72,9 @@ public:
     TempAlwaysOnTop(
         bool bEnabled
         );
+    void
+    SetFirstLineFocus(
+        );
 
 private slots:
     void
@@ -178,7 +181,8 @@ private slots:
 signals:
     void SendData(
         QString strDataString,
-        bool bEscapeString
+        bool bEscapeString,
+        bool bFromScripting
         );
 
 private:

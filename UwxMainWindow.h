@@ -71,6 +71,9 @@
 #if SKIPERRORCODEFORM != 1
 #include "UwxErrorCode.h"
 #endif
+#if SKIPSCRIPTINGFORM != 1
+#include "UwxScripting.h"
+#endif
 
 /******************************************************************************/
 // Defines
@@ -94,14 +97,14 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.06" //Version string
+#define UwVersion                         "1.07" //Version string
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
 #define PrePostXCompTimeout               15000   //Time (in mS) to allow a pre/post XCompilation process to execute for
 #define ModuleTimeout                     4000    //Time (in mS) that a download stage command/process times out (module)
 #define MaxDevNameSize                    8       //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
-#define AutoBaudTimeout                   1200    //Time (in mS) to wait before checking the next baud rate when automatically detected the module's baud rate
+#define AutoBaudTimeout                   1200    //Time (in mS) to wait before checking the next baud rate when automatically detecting the module's baud rate
 //Defines for default config values
 #define DefaultLogFile                    "UwTerminalX.log"
 #define DefaultLogMode                    0
@@ -152,14 +155,15 @@
 #define MenuActionFont                    19
 #define MenuActionRun2                    20
 #define MenuActionAutomation              21
-#define MenuActionBatch                   22
-#define MenuActionClearModule             23
-#define MenuActionClearDisplay            24
-#define MenuActionClearRxTx               25
-#define MenuActionCopy                    26
-#define MenuActionCopyAll                 27
-#define MenuActionPaste                   28
-#define MenuActionSelectAll               29
+#define MenuActionScripting               22
+#define MenuActionBatch                   23
+#define MenuActionClearModule             24
+#define MenuActionClearDisplay            25
+#define MenuActionClearRxTx               26
+#define MenuActionCopy                    27
+#define MenuActionCopyAll                 28
+#define MenuActionPaste                   29
+#define MenuActionSelectAll               30
 //Defines for balloon (notification area) icon options
 #define BalloonActionShow                 1
 #define BalloonActionExit                 2
@@ -208,7 +212,8 @@ public slots:
     void
     DevRespTimeout(
         );
-#ifdef _WIN32
+#if defined(_WIN32) || defined(WIN32)
+    //_WIN32 doesn't seem to be defined in the header files, contrary to what Qt creator would have you believe.
     void
     process_finished(
         int intExitCode,
@@ -239,7 +244,8 @@ public slots:
     void
     MessagePass(
         QString strDataString,
-        bool bEscapeString
+        bool bEscapeString,
+        bool bFromScripting
         );
 
 private slots:
@@ -489,6 +495,14 @@ private slots:
     on_btn_Error_clicked(
         );
 #endif
+#if SKIPSCRIPTINGFORM != 1
+    void
+    ScriptStartRequest(
+        );
+    void
+    ScriptFinished(
+        );
+#endif
 
 private:
     Ui::MainWindow *ui;
@@ -632,6 +646,10 @@ private:
 #endif
 #if SKIPERRORCODEFORM != 1
     UwxErrorCode *gecErrorCodeForm; //Error code lookup form
+#endif
+#if SKIPSCRIPTINGFORM != 1
+    UwxScripting *gusScriptingForm; //Scripting form
+    bool gbScriptingRunning; //True if a script is running
 #endif
 
 protected:
