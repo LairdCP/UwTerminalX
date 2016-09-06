@@ -57,10 +57,10 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QHostInfo>
-#if TARGET_OS_MAC
-#include "QStandardPaths"
 //Need cmath for std::ceil function
 #include <cmath>
+#if TARGET_OS_MAC
+#include "QStandardPaths"
 #endif
 #include "LrdScrollEdit.h"
 #include "UwxPopup.h"
