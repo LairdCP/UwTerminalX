@@ -546,6 +546,48 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gstrLastFilename[FilenameIndexApplication] = gpTermSettings->value("LastFileDirectory", "").toString();
     gstrLastFilename[FilenameIndexOthers] = gpTermSettings->value("LastOtherFileDirectory", "").toString();
 
+    //Refresh list of log files
+    on_btn_LogRefresh_clicked();
+
+    //Change terminal font to a monospaced font
+#pragma warning("TODO: Revert manual font selection when QTBUG-54623 is fixed")
+#ifdef _WIN32
+    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#elif __APPLE__
+    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#else
+    //Fix for qt bug
+    QFont fntTmpFnt2 = QFont("monospace");
+#endif
+    QFontMetrics tmTmpFM(fntTmpFnt2);
+    ui->text_TermEditData->setFont(fntTmpFnt2);
+    ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->text_LogData->setFont(fntTmpFnt2);
+    ui->text_LogData->setTabStopWidth(tmTmpFM.width(" ")*6);
+
+    //Set resolved hostname to be empty
+    gstrResolvedServer = "";
+
+#ifdef UseSSL
+    //Load SSL certificate
+    QFile certFile(":/certificates/UwTerminalX.crt");
+    if (certFile.open(QIODevice::ReadOnly))
+    {
+        //Load certificate data
+        sslcLairdSSL = new QSslCertificate(certFile.readAll());
+        QSslSocket::addDefaultCaCertificate(*sslcLairdSSL);
+        certFile.close();
+    }
+    certFile.setFileName(":/certificates/UwTerminalX_new.crt");
+    if (certFile.open(QIODevice::ReadOnly))
+    {
+        //Load certificate data
+        sslcLairdSSLNew = new QSslCertificate(certFile.readAll());
+        QSslSocket::addDefaultCaCertificate(*sslcLairdSSLNew);
+        certFile.close();
+    }
+#endif
+
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
     unsigned char chi = 1;
@@ -720,33 +762,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         ++chi;
     }
 
-    //Refresh list of log files
-    on_btn_LogRefresh_clicked();
-
-    //Change terminal font to a monospaced font
-#pragma warning("TODO: Revert manual font selection when QTBUG-54623 is fixed")
-#ifdef _WIN32
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#elif __APPLE__
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#else
-    //Fix for qt bug
-    QFont fntTmpFnt2 = QFont("monospace");
-#endif
-    QFontMetrics tmTmpFM(fntTmpFnt2);
-    ui->text_TermEditData->setFont(fntTmpFnt2);
-    ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
-    ui->text_LogData->setFont(fntTmpFnt2);
-    ui->text_LogData->setTabStopWidth(tmTmpFM.width(" ")*6);
-
     if (bArgAccept == true && bArgCom == true && bArgNoConnect == false)
     {
         //Enough information to connect!
         OpenDevice();
     }
-
-    //Set resolved hostname to be empty
-    gstrResolvedServer = "";
 
 #if __APPLE__
     //Show a warning to Mac users with the FTDI driver installed
@@ -757,26 +777,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         QString strMessage = tr("Warning: The Mac FTDI VCP driver has been detected on your system. There is a known issue with this driver that can cause your system to crash if the serial port is closed and the buffer is not empty.\r\n\r\nIf you experience this issue, it is recommended that you remove the FTDI driver and use the apple VCP driver instead. Instructions to do this are available from the FTDI website (follow the uninstall section): http://www.ftdichip.com/Support/Documents/AppNotes/AN_134_FTDI_Drivers_Installation_Guide_for_MAC_OSX.pdf\r\n\r\nThis message will not be shown again.");
         gpmErrorForm->show();
         gpmErrorForm->SetMessage(&strMessage);
-    }
-#endif
-
-#ifdef UseSSL
-    //Load SSL certificate
-    QFile certFile(":/certificates/UwTerminalX.crt");
-    if (certFile.open(QIODevice::ReadOnly))
-    {
-        //Load certificate data
-        sslcLairdSSL = new QSslCertificate(certFile.readAll());
-        QSslSocket::addDefaultCaCertificate(*sslcLairdSSL);
-        certFile.close();
-    }
-    certFile.setFileName(":/certificates/UwTerminalX_new.crt");
-    if (certFile.open(QIODevice::ReadOnly))
-    {
-        //Load certificate data
-        sslcLairdSSLNew = new QSslCertificate(certFile.readAll());
-        QSslSocket::addDefaultCaCertificate(*sslcLairdSSLNew);
-        certFile.close();
     }
 #endif
 }
@@ -2804,7 +2804,12 @@ MainWindow::OpenDevice(
             gspSerialPort.setDataTerminalReady(ui->check_DTR->isChecked());
 
             //Flow control
-            if (ui->combo_Handshake->currentIndex() != 1)
+            if (ui->combo_Handshake->currentIndex() == 1)
+            {
+                //Hardware handshaking
+                ui->check_RTS->setEnabled(false);
+            }
+            else
             {
                 //Not hardware handshaking - RTS
                 ui->check_RTS->setEnabled(true);
@@ -3582,6 +3587,11 @@ MainWindow::dragEnterEvent(
     {
         //Nothing is running, serial handle is open and a single file is being dragged - accept action
         dragEvent->acceptProposedAction();
+    }
+    else
+    {
+        //Terminal is busy, serial port is closed or more than 1 file was dropped
+        dragEvent->ignore();
     }
 }
 
@@ -4823,68 +4833,72 @@ MainWindow::DroppedFile(
     QString strFilename
     )
 {
-    //Check file extension
-    if (strFilename.right(3).toLower() == ".sb")
+    //File dragged for download
+    if (gbTermBusy == false)
     {
-        //smartBASIC source file - compile
-        gchTermMode = MODE_COMPILE_LOAD;
-        gstrTermFilename = strFilename;
-
-        //Get the version number
-        gbTermBusy = true;
-        gchTermMode2 = 0;
-        gchTermBusyLines = 0;
-        gstrTermBusyData = tr("");
-        gspSerialPort.write("at i 0");
-        gintQueuedTXBytes += 6;
-        DoLineEnd();
-        gpMainLog->WriteLogData("at i 0\n");
-        gspSerialPort.write("at i 13");
-        gintQueuedTXBytes += 7;
-        DoLineEnd();
-        gpMainLog->WriteLogData("at i 13\n");
-    }
-    else
-    {
-        //Normal download
-        gchTermMode = MODE_LOAD;
-        gstrTermFilename = strFilename;
-        gbTermBusy = true;
-        LoadFile(false);
-
-        //Download to the device
-        gchTermMode2 = 1;
-        QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
-        gspSerialPort.write(baTmpBA);
-        gintQueuedTXBytes += baTmpBA.size();
-        DoLineEnd();
-        gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
-        if (ui->check_SkipDL->isChecked() == false)
+        //Terminal not busy. Check file extension
+        if (strFilename.right(3).toLower() == ".sb")
         {
-            //Output download details
-            if (ui->check_ShowCLRF->isChecked() == true)
-            {
-                //Escape \t, \r and \n
-                baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
-            }
+            //smartBASIC source file - compile
+            gchTermMode = MODE_COMPILE_LOAD;
+            gstrTermFilename = strFilename;
 
-            //Replace unprintable characters
-            baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+            //Get the version number
+            gbTermBusy = true;
+            gchTermMode2 = 0;
+            gchTermBusyLines = 0;
+            gstrTermBusyData = tr("");
+            gspSerialPort.write("at i 0");
+            gintQueuedTXBytes += 6;
+            DoLineEnd();
+            gpMainLog->WriteLogData("at i 0\n");
+            gspSerialPort.write("at i 13");
+            gintQueuedTXBytes += 7;
+            DoLineEnd();
+            gpMainLog->WriteLogData("at i 13\n");
+        }
+        else
+        {
+            //Normal download
+            gchTermMode = MODE_LOAD;
+            gstrTermFilename = strFilename;
+            gbTermBusy = true;
+            LoadFile(false);
 
-            //Update display buffer
-            gbaDisplayBuffer.append(baTmpBA);
-            if (!gtmrTextUpdateTimer.isActive())
+            //Download to the device
+            gchTermMode2 = 1;
+            QByteArray baTmpBA = QString("AT+DEL \"").append(gstrDownloadFilename).append("\" +").toUtf8();
+            gspSerialPort.write(baTmpBA);
+            gintQueuedTXBytes += baTmpBA.size();
+            DoLineEnd();
+            gpMainLog->WriteLogData(QString(baTmpBA).append("\n"));
+            if (ui->check_SkipDL->isChecked() == false)
             {
-                gtmrTextUpdateTimer.start();
+                //Output download details
+                if (ui->check_ShowCLRF->isChecked() == true)
+                {
+                    //Escape \t, \r and \n
+                    baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                }
+
+                //Replace unprintable characters
+                baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+
+                //Update display buffer
+                gbaDisplayBuffer.append(baTmpBA);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
             }
         }
+
+        //Start the timeout timer
+        gtmrDownloadTimeoutTimer.start();
+
+        //Enable cancel button
+        ui->btn_Cancel->setEnabled(true);
     }
-
-    //Start the timeout timer
-    gtmrDownloadTimeoutTimer.start();
-
-    //Enable cancel button
-    ui->btn_Cancel->setEnabled(true);
 }
 
 //=============================================================================
