@@ -472,6 +472,9 @@
        </item>
        <item>
         <widget class="QCheckBox" name="check_Unescape">
+         <property name="toolTip">
+          <string>Check this to escape character codes (scroll down in the 'About' tab for information on this feature)</string>
+         </property>
          <property name="text">
           <string>Un-Escape Strings</string>
          </property>

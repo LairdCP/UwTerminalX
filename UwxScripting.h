@@ -42,6 +42,7 @@
 #include <QMenu>
 #include <QKeySequence>
 #include <QShortcut>
+#include "UwxEscape.h"
 
 /******************************************************************************/
 // Defines
@@ -124,6 +125,10 @@ public:
         bool bStatus,
         unsigned char ucReason
         );
+    void
+    LoadScriptFile(
+        const QString *strFilename
+        );
 
 private slots:
     void
@@ -161,10 +166,6 @@ private slots:
         bool
         );
     void
-    EscapeCharacters(
-        QString *strData
-        );
-    void
     UpdateStatusBar(
         );
     void
@@ -191,7 +192,6 @@ private:
     QByteArray mbaMatchData; //Buffer containing data that is matched against data received from the module (awating a match)
     QByteArray mbaRecvData; //Buffer containing data received from the module (awating a match)
     int mbBytesWriteRemain; //Number of bytes remaining to be written from the buffer (when specific mode is enabled)
-    QRegularExpression reESeq; //Regular expression used for escaping character codes
     QStatusBar *msbStatusBar; //Pointer to scripting status bar
     bool mbSerialStatus; //True if serial port is open in main window
     unsigned char ucLastAct; //Which action is currently being executed

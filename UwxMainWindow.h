@@ -74,6 +74,7 @@
 #if SKIPSCRIPTINGFORM != 1
 #include "UwxScripting.h"
 #endif
+#include "UwxEscape.h"
 
 /******************************************************************************/
 // Defines
@@ -97,7 +98,8 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.07a" //Version string
+#define UwVersion                         "1.08" //Version string
+//
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
 #define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
@@ -167,13 +169,28 @@
 //Defines for balloon (notification area) icon options
 #define BalloonActionShow                 1
 #define BalloonActionExit                 2
+//Defines for speed test menu
+#define SpeedMenuActionRecv               1
+#define SpeedMenuActionSend               2
+#define SpeedMenuActionSendRecv           3
+#define SpeedMenuActionSendRecv5Delay     4
+#define SpeedMenuActionSendRecv10Delay    5
+#define SpeedMenuActionSendRecv15Delay    6
+#define SpeedModeInactive                 0b00
+#define SpeedModeRecv                     0b01
+#define SpeedModeSend                     0b10
+#define SpeedModeSendRecv                 0b11
 //Defines for the selector tab
 #define TabTerminal                       0
 #define TabConfig                         1
-#define TabUpdate                         2
-#define TabAbout                          3
-#define TabLogs                           4
-#define TabEditor                         5
+#define TabSpeedTest                      2
+#define TabUpdate                         3
+#define TabAbout                          4
+#define TabLogs                           5
+#define TabEditor                         6
+//Defines for speed testing
+#define SpeedTestChunkSize                512  //Maximum number of bytes to send per chunk when speed testing
+#define SpeedTestMinBufSize               128  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -213,7 +230,7 @@ public slots:
     DevRespTimeout(
         );
 #if defined(_WIN32) || defined(WIN32)
-    //_WIN32 doesn't seem to be defined in the header files, contrary to what Qt creator would have you believe.
+    //_WIN32 isn't defined when MOC is ran but WIN32 is.
     void
     process_finished(
         int intExitCode,
@@ -246,6 +263,10 @@ public slots:
         QString strDataString,
         bool bEscapeString,
         bool bFromScripting
+        );
+    void
+    SpeedMenuSelected(
+        QAction* qaAction
         );
 
 private slots:
@@ -503,6 +524,48 @@ private slots:
     ScriptFinished(
         );
 #endif
+    void
+    on_check_SpeedRTS_stateChanged(
+        int
+        );
+    void
+    on_check_SpeedDTR_stateChanged(
+        int
+        );
+    void
+    on_btn_SpeedClear_clicked(
+        );
+    void
+    on_btn_SpeedClose_clicked(
+        );
+    void
+    on_btn_SpeedStart_clicked(
+        );
+    void
+    on_btn_SpeedStop_clicked(
+        );
+    void
+    OutputSpeedTestStats(
+        );
+    void
+    on_combo_SpeedDataType_currentIndexChanged(
+        int
+        );
+    void
+    on_btn_SpeedCopy_clicked(
+        );
+    void
+    UpdateSpeedTestValues(
+        );
+    void
+    SpeedTestStartTimer(
+        );
+    void
+    SpeedTestStopTimer(
+        );
+    void
+    UpdateDisplayText(
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -566,6 +629,21 @@ private:
     RemoveZeros(
         QString strData
         );
+    void
+    SendSpeedTestData(
+        int intMaxLength
+        );
+    void
+    SpeedTestBytesWritten(
+        qint64 intByteCount
+        );
+    void
+    SpeedTestReceive(
+        );
+    void
+    OutputSpeedTestAvgStats(
+        unsigned long nsec
+        );
 
     //Private variables
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
@@ -603,6 +681,7 @@ private:
     QMenu *gpSMenu2; //Submenu 2
     QMenu *gpSMenu3; //Submenu 3
     QMenu *gpBalloonMenu; //Balloon menu
+    QMenu *gpSpeedMenu; //Speed testing menu
     bool gbLoopbackMode; //True if loopback mode is enabled
     bool gbSysTrayEnabled; //True if system tray is enabled
     QSystemTrayIcon *gpSysTray; //Handle for system tray object
@@ -651,6 +730,27 @@ private:
     UwxScripting *gusScriptingForm; //Scripting form
     bool gbScriptingRunning; //True if a script is running
 #endif
+    bool gbSpeedTestRunning; //True if speed test is running
+    unsigned char gchSpeedTestMode; //What mode the speed test is (inactive, receive, send or send & receive)
+    QElapsedTimer gtmrSpeedTimer; //Used for timing how long a speed test has been running
+    QByteArray gbaSpeedDisplayBuffer; //Buffer of data to display for speed test mode
+    QByteArray gbaSpeedMatchData; //Expected data to match in speed test mode
+    QByteArray gbaSpeedReceivedData; //Received data from device in speed test mode
+    QTimer gtmrSpeedTestStats; //Timer that runs every 250ms to update stats for speed test
+    QTimer gtmrSpeedTestStats10s; //Timer that runs every 10 seconds to output 10s stats for speed test
+    QTimer gtmrSpeedUpdateTimer; //Timer for slower updating of speed test buffer (but less display freezing)
+    QTimer *gtmrSpeedTestDelayTimer; //Timer used for delay before sending data in speed test mode
+    quint32 gintSpeedBytesReceived; //Number of bytes received from device in speed test mode
+    quint32 gintSpeedBytesReceived10s; //Number of bytes received from device in the past 10 seconds in speed test mode
+    quint32 gintSpeedBytesSent; //Number of bytes sent to the device in speed test mode
+    quint32 gintSpeedBytesSent10s; //Number of bytes sent to the device in the past 10 seconds in speed test mode
+    quint32 gintSpeedBufferCount; //Number of bytes waiting to be sent to the device (waiting in the buffer) in speed test mode
+    quint32 gintSpeedTestMatchDataLength; //Length of MatchData
+    quint32 gintSpeedTestReceiveIndex; //Current index for RecData
+    quint32 gintSpeedTestStatErrors; //Number of errors in packets recieved in speed test mode
+    quint32 gintSpeedTestStatSuccess; //Number of successful packets received in speed test mode
+    quint32 gintSpeedTestStatPacketsSent; //Numbers of packets sent in speed test mode
+    quint32 gintSpeedTestStatPacketsReceived; //Number of packets received in speed test mode
 
 protected:
     void dragEnterEvent(

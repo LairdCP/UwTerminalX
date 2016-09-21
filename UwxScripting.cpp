@@ -67,7 +67,7 @@ UwxScripting::UwxScripting(QWidget *parent) : QDialog(parent), ui(new Ui::UwxScr
     mbWaitingForReceive = false;
 
     //Set pattern matching for character escaping
-    reESeq.setPattern("[\\\\]([0-9A-Fa-f]{2})");
+//    reESeq.setPattern("[\\\\]([0-9A-Fa-f]{2})");
 
     //Set the icons and tooltip of the buttons
     ui->btn_Load->setText("");
@@ -192,21 +192,7 @@ UwxScripting::on_btn_Load_clicked(
     if (strLoadFile.length() > 1)
     {
         //File was selected
-        ui->edit_Script->clear();
-        QFile fileLoad(strLoadFile);
-        if (fileLoad.open(QFile::ReadOnly | QFile::Text))
-        {
-            //File opened, read contents
-            ui->edit_Script->setPlainText(fileLoad.readAll());
-            fileLoad.close();
-        }
-        else
-        {
-            //Failed to open file
-            QString strMessage = tr("Error during scripting file load: Access to selected file is denied: ").append(strLoadFile);
-            mFormAuto->SetMessage(&strMessage);
-            mFormAuto->show();
-        }
+        LoadScriptFile(&strLoadFile);
     }
 }
 
@@ -560,7 +546,7 @@ UwxScripting::AdvanceLine(
                 //Clear receive buffer and send data out
                 mbaRecvData.clear();
                 QString strTmpDat(mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1));
-                EscapeCharacters(&strTmpDat);
+                UwxEscape::EscapeCharacters(&strTmpDat);
 
                 //Set the number of bytes remaining to be written to the length of the string (only used if the WaitForWrite checkout is enabled)
                 mbBytesWriteRemain = strTmpDat.length();
@@ -581,7 +567,7 @@ UwxScripting::AdvanceLine(
             {
                 //Receive
                 QString strTmpDat = mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1);
-                EscapeCharacters(&strTmpDat);
+                UwxEscape::EscapeCharacters(&strTmpDat);
                 mbaMatchData = strTmpDat.toUtf8();
                 ucLastAct = ScriptingActionDataIn;
                 if (!gtmrRecTimer.isValid())
@@ -795,25 +781,6 @@ UwxScripting::on_btn_Pause_toggled(
 //=============================================================================
 //=============================================================================
 void
-UwxScripting::EscapeCharacters(
-    QString *strData
-    )
-{
-    QRegularExpressionMatchIterator remiESeqMatch = reESeq.globalMatch(strData);
-    while (remiESeqMatch.hasNext())
-    {
-        //We have escape sequences
-        QRegularExpressionMatch remThisESeqMatch = remiESeqMatch.next();
-        strData->replace(QString("\\").append(remThisESeqMatch.captured(1)), QString((char)remThisESeqMatch.captured(1).toInt(nullptr, 16)));
-    }
-
-    //Replace newline and tab characters
-    strData->replace("\\r", "\r").replace("\\n", "\n").replace("\\t", "\t");
-}
-
-//=============================================================================
-//=============================================================================
-void
 UwxScripting::UpdateStatusBar(
     )
 {
@@ -1019,6 +986,31 @@ UwxScripting::ScriptStartResult(
     {
         //Terminal is busy or script cannot run now
         msbStatusBar->showMessage(QString("Failed to start script").append((ucReason == ScriptingReasonPortClosed ? ": Serial port is not open." : (ucReason == ScriptingReasonTermBusy ? ": Terminal currently busy." : QString(", error code: ").append(QString::number(ucReason))))));
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+UwxScripting::LoadScriptFile(
+    const QString *strFilename
+    )
+{
+    //Load file contents
+    ui->edit_Script->clear();
+    QFile fileLoad(*strFilename);
+    if (fileLoad.open(QFile::ReadOnly | QFile::Text))
+    {
+        //File opened, read contents
+        ui->edit_Script->setPlainText(fileLoad.readAll());
+        fileLoad.close();
+    }
+    else
+    {
+        //Failed to open file
+        QString strMessage = tr("Error during scripting file load: Access to selected file is denied: ").append(strFilename);
+        mFormAuto->SetMessage(&strMessage);
+        mFormAuto->show();
     }
 }
 

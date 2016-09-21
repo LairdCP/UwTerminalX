@@ -105,48 +105,7 @@ UwxAutomation::on_btn_Load_clicked(
     if (strLoadFile != "")
     {
         //We have a file to load!
-        QFile file(strLoadFile);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            //Unable to open file
-            QString strMessage = tr("Error during automation file open: Access to selected file is denied: ").append(strLoadFile);
-            mFormAuto->SetMessage(&strMessage);
-            mFormAuto->show();
-            return;
-        }
-
-        //Clear out the array
-        unsigned char i = 0;
-        while (i < AutoItemAllow)
-        {
-            mstrAutoItemArray[i] = "";
-            ++i;
-        }
-
-        //Read the file data
-        i = 0;
-        while (!file.atEnd())
-        {
-            QByteArray baThisLine = file.readLine();
-            mstrAutoItemArray[i] = baThisLine.replace("\r", "").replace("\n", "");
-            ++i;
-            if (i > AutoItemAllow)
-            {
-                //Maximum lines reached, stop processing
-                --i;
-                break;
-            }
-        }
-
-        //Close the file handle
-        file.close();
-
-        //Show number of lines loaded
-        msbStatusBar->showMessage(QString(strLoadFile).append(": ").append(QString::number(i)).append(" line").append((i == 1 ? " loaded." : "s loaded.")));
-
-        //Update the text boxes
-        mchItemPosition = 0;
-        LoadTextData();
+        LoadFile(strLoadFile);
     }
 }
 
@@ -670,7 +629,8 @@ UwxAutomation::on_check_OnTop_stateChanged(
 
 //=============================================================================
 //=============================================================================
-void UwxAutomation::TempAlwaysOnTop(
+void
+UwxAutomation::TempAlwaysOnTop(
     bool bEnabled
     )
 {
@@ -694,11 +654,63 @@ void UwxAutomation::TempAlwaysOnTop(
 
 //=============================================================================
 //=============================================================================
-void UwxAutomation::SetFirstLineFocus(
+void
+UwxAutomation::SetFirstLineFocus(
     )
 {
     //Sets the focus to the first line edit
     ui->edit_Line1->setFocus();
+}
+
+//=============================================================================
+//=============================================================================
+void
+UwxAutomation::LoadFile(
+    QString strLoadFile
+    )
+{
+    QFile file(strLoadFile);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        //Unable to open file
+        QString strMessage = tr("Error during automation file open: Access to selected file is denied: ").append(strLoadFile);
+        mFormAuto->SetMessage(&strMessage);
+        mFormAuto->show();
+        return;
+    }
+
+    //Clear out the array
+    unsigned char i = 0;
+    while (i < AutoItemAllow)
+    {
+        mstrAutoItemArray[i] = "";
+        ++i;
+    }
+
+    //Read the file data
+    i = 0;
+    while (!file.atEnd())
+    {
+        QByteArray baThisLine = file.readLine();
+        mstrAutoItemArray[i] = baThisLine.replace("\r", "").replace("\n", "");
+        ++i;
+        if (i > AutoItemAllow)
+        {
+            //Maximum lines reached, stop processing
+            --i;
+            break;
+        }
+    }
+
+    //Close the file handle
+    file.close();
+
+    //Show number of lines loaded
+    msbStatusBar->showMessage(QString(strLoadFile).append(": ").append(QString::number(i)).append(" line").append((i == 1 ? " loaded." : "s loaded.")));
+
+    //Update the text boxes
+    mchItemPosition = 0;
+    LoadTextData();
 }
 
 /******************************************************************************/

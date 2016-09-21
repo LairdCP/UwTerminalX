@@ -82,7 +82,7 @@ UwxErrorCode::on_combo_Code_currentTextChanged(
     )
 {
     //Error code entered into combo box
-    unsigned int uiErrCode = QString("0x").append(strComboText).toUInt(nullptr, 16);
+    unsigned int uiErrCode = QString("0x").append(strComboText).toUInt(NULL, 16);
     QString strErrorCode = QString::number(uiErrCode);
     if (mpErrorMessages->value(strErrorCode).isValid())
     {

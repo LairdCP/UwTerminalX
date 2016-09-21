@@ -75,6 +75,10 @@ public:
     void
     SetFirstLineFocus(
         );
+    void
+    LoadFile(
+        QString strLoadFile
+        );
 
 private slots:
     void

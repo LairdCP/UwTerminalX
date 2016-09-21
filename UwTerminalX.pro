@@ -20,13 +20,15 @@ SOURCES += main.cpp\
     LrdScrollEdit.cpp \
     UwxMainWindow.cpp \
     UwxPopup.cpp \
-    LrdLogger.cpp
+    LrdLogger.cpp \
+    UwxEscape.cpp
 
 HEADERS  += \
     LrdScrollEdit.h \
     UwxMainWindow.h \
     UwxPopup.h \
-    LrdLogger.h
+    LrdLogger.h \
+    UwxEscape.h
 
 FORMS    += \
     UwxPopup.ui \
