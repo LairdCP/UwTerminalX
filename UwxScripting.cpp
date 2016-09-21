@@ -294,7 +294,7 @@ UwxScripting::on_btn_Compile_clicked(
     }
 
     //Show status bar message
-    msbStatusBar->showMessage((bFailed == true ? "Script compile successful: no errors." : "Script compile failed due to syntax errors."));
+    msbStatusBar->showMessage((bFailed == false ? "Script compile successful: no errors." : "Script compile failed due to syntax errors."));
 
     //Repaint with line colours
     ui->edit_Script->repaint();

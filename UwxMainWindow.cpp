@@ -229,7 +229,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     RefreshSerialDevices();
 
     //Setup speed test mode timers
-    gtmrSpeedTestStats.setInterval(500);
+    gtmrSpeedTestStats.setInterval(SpeedTestStatUpdateTime);
     gtmrSpeedTestStats.setSingleShot(false);
     connect(&gtmrSpeedTestStats, SIGNAL(timeout()), this, SLOT(UpdateSpeedTestValues()));
     gtmrSpeedTestStats10s.setInterval(10000);
@@ -6838,10 +6838,16 @@ MainWindow::on_combo_SpeedDataType_currentIndexChanged(
     {
         //Throughput only
         ui->edit_SpeedTestData->setEnabled(false);
-        ui->edit_SpeedPacketsBad->setEnabled(false);
         ui->edit_SpeedPacketsSent->setEnabled(false);
         ui->edit_SpeedPacketsSent10s->setEnabled(false);
         ui->edit_SpeedPacketsSentAvg->setEnabled(false);
+        ui->edit_SpeedPacketsRec->setEnabled(false);
+        ui->edit_SpeedPacketsRec10s->setEnabled(false);
+        ui->edit_SpeedPacketsRecAvg->setEnabled(false);
+        ui->edit_SpeedPacketsGood->setEnabled(false);
+        ui->edit_SpeedPacketsBad->setEnabled(false);
+        ui->edit_SpeedPacketsErrorRate->setEnabled(false);
+
 
         //Disable sending modes
         gpSpeedMenu->actions()[1]->setEnabled(false);
@@ -6853,11 +6859,16 @@ MainWindow::on_combo_SpeedDataType_currentIndexChanged(
     else if (ui->combo_SpeedDataType->currentIndex() == 1)
     {
         //String
-        ui->edit_SpeedTestData->setEnabled(true);
-        ui->edit_SpeedPacketsBad->setEnabled(true);
         ui->edit_SpeedPacketsSent->setEnabled(true);
         ui->edit_SpeedPacketsSent10s->setEnabled(true);
         ui->edit_SpeedPacketsSentAvg->setEnabled(true);
+        ui->edit_SpeedPacketsRec->setEnabled(true);
+        ui->edit_SpeedPacketsRec10s->setEnabled(true);
+        ui->edit_SpeedPacketsRecAvg->setEnabled(true);
+        ui->edit_SpeedPacketsGood->setEnabled(true);
+        ui->edit_SpeedPacketsBad->setEnabled(true);
+        ui->edit_SpeedPacketsErrorRate->setEnabled(true);
+
 
         //Enable sending modes
         gpSpeedMenu->actions()[1]->setEnabled(true);

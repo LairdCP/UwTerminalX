@@ -2616,7 +2616,7 @@
                  <item row="0" column="4">
                   <widget class="QLabel" name="label_36">
                    <property name="text">
-                    <string>Sent/Average:</string>
+                    <string>Sent Average/1s:</string>
                    </property>
                   </widget>
                  </item>
@@ -2644,7 +2644,7 @@
                  <item row="1" column="4">
                   <widget class="QLabel" name="label_37">
                    <property name="text">
-                    <string>Received/Average:</string>
+                    <string>Received Average/1s:</string>
                    </property>
                   </widget>
                  </item>
@@ -2794,7 +2794,7 @@
                  <item row="0" column="4">
                   <widget class="QLabel" name="label_38">
                    <property name="text">
-                    <string>Sent/Average:</string>
+                    <string>Sent Average/1s:</string>
                    </property>
                   </widget>
                  </item>
@@ -2822,7 +2822,7 @@
                  <item row="1" column="4">
                   <widget class="QLabel" name="label_40">
                    <property name="text">
-                    <string>Received/Average:</string>
+                    <string>Received Average/1s:</string>
                    </property>
                   </widget>
                  </item>
@@ -3396,8 +3396,8 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>144</width>
-                         <height>32</height>
+                         <width>202</width>
+                         <height>80</height>
                         </rect>
                        </property>
                        <property name="sizePolicy">

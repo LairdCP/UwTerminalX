@@ -98,15 +98,15 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08" //Version string
+#define UwVersion                         "1.08a" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
-#define BatchTimeout                      4000    //Time (in mS) to wait for getting a response from a batch command for
-#define PrePostXCompTimeout               15000   //Time (in mS) to allow a pre/post XCompilation process to execute for
-#define ModuleTimeout                     4000    //Time (in mS) that a download stage command/process times out (module)
+#define BatchTimeout                      4000    //Time (in ms) to wait for getting a response from a batch command for
+#define PrePostXCompTimeout               15000   //Time (in ms) to allow a pre/post XCompilation process to execute for
+#define ModuleTimeout                     4000    //Time (in ms) that a download stage command/process times out (module)
 #define MaxDevNameSize                    8       //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
-#define AutoBaudTimeout                   1200    //Time (in mS) to wait before checking the next baud rate when automatically detecting the module's baud rate
+#define AutoBaudTimeout                   1200    //Time (in ms) to wait before checking the next baud rate when automatically detecting the module's baud rate
 //Defines for default config values
 #define DefaultLogFile                    "UwTerminalX.log"
 #define DefaultLogMode                    0
@@ -191,6 +191,7 @@
 //Defines for speed testing
 #define SpeedTestChunkSize                512  //Maximum number of bytes to send per chunk when speed testing
 #define SpeedTestMinBufSize               128  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
+#define SpeedTestStatUpdateTime           500  //Time (in ms) between status updates for speed test mode
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
