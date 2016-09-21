@@ -1208,11 +1208,15 @@ MainWindow::on_btn_TermClose_clicked(
             ui->btn_SpeedStop->setEnabled(false);
             ui->btn_SpeedStart->setEnabled(false);
             ui->combo_SpeedDataType->setEnabled(true);
-            ui->edit_SpeedTestData->setEnabled(true);
-            ui->check_SpeedStringUnescape->setEnabled(true);
+            if (ui->combo_SpeedDataType->currentIndex() == 1)
+            {
+                //Enable string options
+                ui->edit_SpeedTestData->setEnabled(true);
+                ui->check_SpeedStringUnescape->setEnabled(true);
+            }
 
             //Update values
-            OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
 
             //Set speed test as no longer running
             gchSpeedTestMode = SpeedModeInactive;
@@ -3364,11 +3368,15 @@ MainWindow::SerialError(
             ui->btn_SpeedStop->setEnabled(false);
             ui->btn_SpeedStart->setEnabled(false);
             ui->combo_SpeedDataType->setEnabled(true);
-            ui->edit_SpeedTestData->setEnabled(true);
-            ui->check_SpeedStringUnescape->setEnabled(true);
+            if (ui->combo_SpeedDataType->currentIndex() == 1)
+            {
+                //Enable string options
+                ui->edit_SpeedTestData->setEnabled(true);
+                ui->check_SpeedStringUnescape->setEnabled(true);
+            }
 
             //Update values
-            OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
 
             //Set speed test as no longer running
             gchSpeedTestMode = SpeedModeInactive;
@@ -6584,6 +6592,7 @@ MainWindow::on_btn_SpeedStop_clicked(
             gtmrSpeedTestDelayTimer->stop();
         }
         disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
+        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
         delete gtmrSpeedTestDelayTimer;
         gtmrSpeedTestDelayTimer = 0;
     }
@@ -6606,11 +6615,15 @@ MainWindow::on_btn_SpeedStop_clicked(
         ui->btn_SpeedStop->setEnabled(false);
         ui->btn_SpeedStart->setEnabled(true);
         ui->combo_SpeedDataType->setEnabled(true);
-        ui->edit_SpeedTestData->setEnabled(true);
-        ui->check_SpeedStringUnescape->setEnabled(true);
+        if (ui->combo_SpeedDataType->currentIndex() == 1)
+        {
+            //Enable string options
+            ui->edit_SpeedTestData->setEnabled(true);
+            ui->check_SpeedStringUnescape->setEnabled(true);
+        }
 
         //Update values
-        OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
+        OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
 
         //Set speed test as no longer running
         gchSpeedTestMode = SpeedModeInactive;
@@ -7159,8 +7172,12 @@ MainWindow::SpeedTestStopTimer(
     ui->btn_SpeedStop->setEnabled(false);
     ui->btn_SpeedStart->setEnabled(true);
     ui->combo_SpeedDataType->setEnabled(true);
-    ui->edit_SpeedTestData->setEnabled(true);
-    ui->check_SpeedStringUnescape->setEnabled(true);
+    if (ui->combo_SpeedDataType->currentIndex() == 1)
+    {
+        //Enable string options
+        ui->edit_SpeedTestData->setEnabled(true);
+        ui->check_SpeedStringUnescape->setEnabled(true);
+    }
 
     //Update values
     OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
