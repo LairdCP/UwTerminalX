@@ -622,6 +622,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     bool bArgCom = false;
     bool bArgAccept = false;
     bool bArgNoConnect = false;
+    bool bStartScript = false;
     while (chi < slArgs.length())
     {
         if (slArgs[chi].toUpper() == "ACCEPT")
@@ -884,8 +885,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             //Action for scripting form
             if (slArgs[chi].right(slArgs[chi].size()-13) == "1" && gusScriptingForm != 0)
             {
-                //Start script execution
-                ScriptStartRequest();
+                //Enable script execution
+                bStartScript = true;
             }
         }
 #endif
@@ -896,6 +897,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     {
         //Enough information to connect!
         OpenDevice();
+        if (bStartScript == true)
+        {
+            //Start script execution request
+            ScriptStartRequest();
+        }
     }
 
 #if __APPLE__
@@ -6609,6 +6615,18 @@ MainWindow::on_btn_SpeedStop_clicked(
         //Show message that test will end soon
         ui->statusBar->showMessage("Waiting 5 seconds for packets to be received... Click cancel again to stop instantly.");
     }
+    else if (gchSpeedTestMode == SpeedModeSendRecv || gchSpeedTestMode == SpeedModeSend)
+    {
+        //Delay for 5 seconds for buffer to clear
+        gchSpeedTestMode = SpeedModeInactive;
+        gtmrSpeedTestDelayTimer = new QTimer();
+        gtmrSpeedTestDelayTimer->setSingleShot(true);
+        connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+        gtmrSpeedTestDelayTimer->start(5000);
+
+        //Show message that test will end soon
+        ui->statusBar->showMessage("Waiting 5 seconds for buffers to empty... Click cancel again to stop instantly.");
+    }
     else
     {
         //Change control status
@@ -6725,6 +6743,31 @@ MainWindow::SpeedMenuSelected(
         ui->label_SpeedTx->setText("0");
         ui->label_SpeedTime->setText("00:00:00:00");
 
+        //Clear received buffer and data match buffer
+        gbaSpeedMatchData.clear();
+        gbaSpeedReceivedData.clear();
+
+        //Check if this is a string match or throughput-only test
+        if (ui->combo_SpeedDataType->currentIndex() != 0)
+        {
+            //Escape character codes if enabled
+            if (ui->check_SpeedStringUnescape->isChecked())
+            {
+                //Escape
+                QString strTmpDat = ui->edit_SpeedTestData->text();
+                UwxEscape::EscapeCharacters(&strTmpDat);
+                gbaSpeedMatchData = strTmpDat.toUtf8();
+            }
+            else
+            {
+                //Normal
+                gbaSpeedMatchData = ui->edit_SpeedTestData->text().toUtf8();
+            }
+
+            //Set length of match data
+            gintSpeedTestMatchDataLength = gbaSpeedMatchData.length();
+        }
+
         if (chItem == SpeedMenuActionRecv)
         {
             //Receive only test
@@ -6735,27 +6778,6 @@ MainWindow::SpeedMenuSelected(
             //Send only test
             gchSpeedTestMode = SpeedModeSend;
 
-            //Clear received buffer and data match buffer
-            gbaSpeedMatchData.clear();
-            gbaSpeedReceivedData.clear();
-
-            //Escape character codes if enabled
-            if (ui->check_SpeedStringUnescape->isChecked())
-            {
-                //Escape
-                QString strTmpDat = ui->edit_SpeedTestData->text();
-                UwxEscape::EscapeCharacters(&strTmpDat);
-                gbaSpeedMatchData = strTmpDat.toUtf8();
-            }
-            else
-            {
-                //Normal
-                gbaSpeedMatchData = ui->edit_SpeedTestData->text().toUtf8();
-            }
-
-            //Set length of match data
-            gintSpeedTestMatchDataLength = gbaSpeedMatchData.length();
-
             //Send data
             SendSpeedTestData(SpeedTestChunkSize);
         }
@@ -6763,27 +6785,6 @@ MainWindow::SpeedMenuSelected(
         {
             //Send and receive test
             gchSpeedTestMode = SpeedModeSendRecv;
-
-            //Clear received buffer and data match buffer
-            gbaSpeedMatchData.clear();
-            gbaSpeedReceivedData.clear();
-
-            //Escape character codes if enabled
-            if (ui->check_SpeedStringUnescape->isChecked())
-            {
-                //Escape
-                QString strTmpDat = ui->edit_SpeedTestData->text();
-                UwxEscape::EscapeCharacters(&strTmpDat);
-                gbaSpeedMatchData = strTmpDat.toUtf8();
-            }
-            else
-            {
-                //Normal
-                gbaSpeedMatchData = ui->edit_SpeedTestData->text().toUtf8();
-            }
-
-            //Set length of match data
-            gintSpeedTestMatchDataLength = gbaSpeedMatchData.length();
 
             if (chItem == SpeedMenuActionSendRecv5Delay || chItem == SpeedMenuActionSendRecv10Delay || chItem == SpeedMenuActionSendRecv15Delay)
             {
