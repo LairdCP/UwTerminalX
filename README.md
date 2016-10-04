@@ -2,7 +2,7 @@
 
 ##About
 
-UwTerminalX is a cross-platform utility for communicating and downloading applications onto Laird's range of wireless modules, and uses Qt 5. UwTerminalX has been tested on Windows, Mac, Arch Linux and Ubuntu Linux.
+UwTerminalX is a cross-platform utility for communicating and downloading applications onto Laird's range of wireless modules, and uses Qt 5. The code uses functionality only supported in Qt 5.5 or greater but with some slight modifications will compile and run fine on earlier versions of Qt 5 (with no loss of functionality). UwTerminalX has been tested on Windows, Mac, Arch Linux and Ubuntu Linux and can also be compiled for and run on the [Raspberry Pi](http://uwterminalx.no-ip.org/Github/rpi.png).
 
 ##Downloading
 
