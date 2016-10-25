@@ -3864,7 +3864,7 @@ MainWindow::on_combo_COM_currentIndexChanged(
         else
         {
             //No such port
-            ui->label_SerialInfo->setText("Invalid serisl port selected");
+            ui->label_SerialInfo->setText("Invalid serial port selected");
         }
     }
     else

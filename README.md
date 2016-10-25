@@ -32,7 +32,7 @@ Where '~/' is the location of where you want it extracted to, '~/' will extract 
 
 ##Help and contributing
 
-There are various instructions and help pages available on the [wiki site](https://github.com/LairdCP/UwTerminalX/wiki/), there is also a mailing list that you can subscribe to at uwterminalx@librelist.com
+There are various instructions and help pages available on the [wiki site](https://github.com/LairdCP/UwTerminalX/wiki/), due to problems with the service the UwTerminalX mailing list is currently unavailable.
 
 Laird encourages people to branch/fork UwTerminalX to modify the code and accepts pull requests to merge these changes back into the main repository.
 
