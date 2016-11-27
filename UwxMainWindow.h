@@ -98,7 +98,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08c" //Version string
+#define UwVersion                         "1.08d" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
@@ -567,6 +567,10 @@ private slots:
     void
     UpdateDisplayText(
         );
+    void
+    on_check_SpeedUseBits_toggled(
+        bool
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -752,6 +756,7 @@ private:
     quint32 gintSpeedTestStatSuccess; //Number of successful packets received in speed test mode
     quint32 gintSpeedTestStatPacketsSent; //Numbers of packets sent in speed test mode
     quint32 gintSpeedTestStatPacketsReceived; //Number of packets received in speed test mode
+    quint8 gintSpeedTestBits; //Number of bits (per byte) for speed testing
 
 protected:
     void dragEnterEvent(

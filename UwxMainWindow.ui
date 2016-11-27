@@ -2746,7 +2746,7 @@
              </widget>
             </item>
             <item row="7" column="0">
-             <widget class="QGroupBox" name="groupBox_9">
+             <widget class="QGroupBox" name="group_SpeedBytesBits">
               <property name="title">
                <string>Bytes</string>
               </property>
@@ -2935,6 +2935,13 @@
                </widget>
               </item>
               <item>
+               <widget class="Line" name="line_7b_5">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="check_SpeedStringUnescape">
                 <property name="enabled">
                  <bool>true</bool>
@@ -2950,6 +2957,26 @@
                 </property>
                 <property name="checked">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_7b_6">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="check_SpeedUseBits">
+                <property name="toolTip">
+                 <string>Check this box to display data in bits instead of bytes. Does not include start/stop bits.</string>
+                </property>
+                <property name="layoutDirection">
+                 <enum>Qt::RightToLeft</enum>
+                </property>
+                <property name="text">
+                 <string>Show Bits</string>
                 </property>
                </widget>
               </item>
