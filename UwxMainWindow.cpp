@@ -6695,7 +6695,9 @@ MainWindow::SpeedMenuSelected(
         }
 
         //Enable testing
-        gintSpeedTestBits = gspSerialPort.dataBits();
+        gintSpeedTestDataBits = gspSerialPort.dataBits();
+        gintSpeedTestStartStopParityBits = gspSerialPort.stopBits() + 1 + (gspSerialPort.parity() == QSerialPort::NoParity ? 0 : 1); //Odd/even parity is one bit and include start bit
+        gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
         gbSpeedTestRunning = true;
         ui->btn_SpeedStop->setEnabled(true);
         ui->btn_SpeedStart->setEnabled(false);
@@ -6821,10 +6823,15 @@ MainWindow::OutputSpeedTestStats(
     if (gintSpeedBytesSent > 0)
     {
         //Sending active
-        if (ui->check_SpeedUseBits->isChecked())
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
-            //Bits
-            ui->edit_SpeedBytesSent10s->setText(QString::number(gintSpeedBytesSent10s*gintSpeedTestBits));
+            //Data bits
+            ui->edit_SpeedBytesSent10s->setText(QString::number(gintSpeedBytesSent10s*gintSpeedTestDataBits));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesSent10s->setText(QString::number(gintSpeedBytesSent10s*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
         }
         else
         {
@@ -6837,10 +6844,15 @@ MainWindow::OutputSpeedTestStats(
     if ((gchSpeedTestMode & SpeedModeRecv) == SpeedModeRecv)
     {
         //Receiving active
-        if (ui->check_SpeedUseBits->isChecked())
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
-            //Bits
-            ui->edit_SpeedBytesRec10s->setText(QString::number(gintSpeedBytesReceived10s*gintSpeedTestBits));
+            //Data bits
+            ui->edit_SpeedBytesRec10s->setText(QString::number(gintSpeedBytesReceived10s*gintSpeedTestDataBits));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesRec10s->setText(QString::number(gintSpeedBytesReceived10s*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
         }
         else
         {
@@ -6921,32 +6933,85 @@ MainWindow::on_btn_SpeedCopy_clicked(
     //Copies some data to the clipboard about the test
     QString strTmpStr = ui->edit_SpeedTestData->text();
     QString strResultStr;
-    if (ui->check_SpeedUseBits->isChecked())
+//TODO: rx all bit (when in byte/data bit mode) is WRONG (too small)
+    if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
     {
-        //Bits
+        //Data bits
         strResultStr = QString("\r\n    > Tx (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Tx (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Tx (Data bits): ").
+        append(ui->edit_SpeedBytesSent->text()).
+        append("\r\n    > Tx (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits)).
+        append("\r\n    > Tx last 10s (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Tx last 10s (Data bits): ").
+        append(ui->edit_SpeedBytesSent10s->text()).
+        append("\r\n    > Tx last 10s (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits)).
+        append("\r\n    > Tx average (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Tx average (Data bits): ").
+        append(ui->edit_SpeedBytesSentAvg->text()).
+        append("\r\n    > Tx average (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits)).
+        append("\r\n    > Rx (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Rx (Data bits): ").
+        append(ui->edit_SpeedBytesRec->text()).
+        append("\r\n    > Rx (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits)).
+        append("\r\n    > Rx last 10s (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Rx last 10s (Data bits): ").
+        append(ui->edit_SpeedBytesRec10s->text()).
+        append("\r\n    > Rx last 10s (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits)).
+        append("\r\n    > Rx average (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/gintSpeedTestDataBits)).
+        append("\r\n    > Rx average (Data bits): ").
+        append(ui->edit_SpeedBytesRecAvg->text()).
+        append("\r\n    > Rx average (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+    }
+    else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+    {
+        //All bits
+        strResultStr = QString("\r\n    > Tx (Bytes): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx (All bits): ").
         append(ui->edit_SpeedBytesSent->text()).
         append("\r\n    > Tx last 10s (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Tx last 10s (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx last 10s (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx last 10s (All bits): ").
         append(ui->edit_SpeedBytesSent10s->text()).
         append("\r\n    > Tx average (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Tx average (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx average (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Tx average (All bits): ").
         append(ui->edit_SpeedBytesSentAvg->text()).
         append("\r\n    > Rx (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Rx (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx (All bits): ").
         append(ui->edit_SpeedBytesRec->text()).
         append("\r\n    > Rx last 10s (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Rx last 10s (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx last 10s (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx last 10s (All bits): ").
         append(ui->edit_SpeedBytesRec10s->text()).
         append("\r\n    > Rx average (Bytes): ").
-        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/gintSpeedTestBits)).
-        append("\r\n    > Rx average (Bits): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx average (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
+        append("\r\n    > Rx average (All bits): ").
         append(ui->edit_SpeedBytesRecAvg->text());
     }
     else
@@ -6954,28 +7019,40 @@ MainWindow::on_btn_SpeedCopy_clicked(
         //Bytes
         strResultStr = QString("\r\n    > Tx (Bytes): ").
         append(ui->edit_SpeedBytesSent->text()).
-        append("\r\n    > Tx (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestBits)).
+        append("\r\n    > Tx (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Tx (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
         append("\r\n    > Tx last 10s (Bytes): ").
         append(ui->edit_SpeedBytesSent10s->text()).
-        append("\r\n    > Tx last 10s (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestBits)).
+        append("\r\n    > Tx last 10s (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Tx last 10s (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
         append("\r\n    > Tx average (Bytes): ").
         append(ui->edit_SpeedBytesSentAvg->text()).
-        append("\r\n    > Tx average (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestBits)).
+        append("\r\n    > Tx average (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Tx average (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
         append("\r\n    > Rx (Bytes): ").
         append(ui->edit_SpeedBytesRec->text()).
-        append("\r\n    > Rx (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestBits)).
+        append("\r\n    > Rx (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Rx (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
         append("\r\n    > Rx last 10s (Bytes): ").
         append(ui->edit_SpeedBytesRec10s->text()).
-        append("\r\n    > Rx last 10s (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestBits)).
+        append("\r\n    > Rx last 10s (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Rx last 10s (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits))).
         append("\r\n    > Rx average (Bytes): ").
         append(ui->edit_SpeedBytesRecAvg->text()).
-        append("\r\n    > Rx average (Bits): ").
-        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestBits));
+        append("\r\n    > Rx average (Data bits): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits)).
+        append("\r\n    > Rx average (All bits): ").
+        append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
     }
     UwxEscape::EscapeCharacters(&strTmpStr);
     QApplication::clipboard()->setText(QString("=================================\r\n  UwTerminalX ").
@@ -7192,10 +7269,15 @@ MainWindow::UpdateSpeedTestValues(
     {
         //Update sent data
         ui->label_SpeedTx->setText(QString::number(gintSpeedBytesSent));
-        if (ui->check_SpeedUseBits->isChecked())
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
-            //Bits
-            ui->edit_SpeedBytesSent->setText(QString::number(gintSpeedBytesSent*gintSpeedTestBits));
+            //Data bits
+            ui->edit_SpeedBytesSent->setText(QString::number(gintSpeedBytesSent*gintSpeedTestDataBits));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesSent->setText(QString::number(gintSpeedBytesSent*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
         }
         else
         {
@@ -7209,10 +7291,15 @@ MainWindow::UpdateSpeedTestValues(
     {
         //Receive mode active
         ui->label_SpeedRx->setText(QString::number(gintSpeedBytesReceived));
-        if (ui->check_SpeedUseBits->isChecked())
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
-            //Bits
-            ui->edit_SpeedBytesRec->setText(QString::number(gintSpeedBytesReceived*gintSpeedTestBits));
+            //Data bits
+            ui->edit_SpeedBytesRec->setText(QString::number(gintSpeedBytesReceived*gintSpeedTestDataBits));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesRec->setText(QString::number(gintSpeedBytesReceived*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
         }
         else
         {
@@ -7305,14 +7392,42 @@ MainWindow::OutputSpeedTestAvgStats(
     if (gintSpeedBytesSent > 0)
     {
         //Sending has activity
-        ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent/lngElapsed));
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
+        {
+            //Data bits
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*gintSpeedTestDataBits/lngElapsed));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/lngElapsed));
+        }
+        else
+        {
+            //Bytes
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent/lngElapsed));
+        }
         ui->edit_SpeedPacketsSentAvg->setText(QString::number(gintSpeedBytesSent/gintSpeedTestMatchDataLength/lngElapsed));
     }
 
     if ((gchSpeedTestMode & SpeedModeRecv) == SpeedModeRecv)
     {
         //Receiving active
-        ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived/lngElapsed));
+        if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
+        {
+            //Data bits
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived*gintSpeedTestDataBits/lngElapsed));
+        }
+        else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
+        {
+            //All bits
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/lngElapsed));
+        }
+        else
+        {
+            //Bytes
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived/lngElapsed));
+        }
         if (ui->combo_SpeedDataType->currentIndex() != 0)
         {
             //Show stats about packets
@@ -7371,33 +7486,74 @@ MainWindow::UpdateDisplayText(
 //=============================================================================
 //=============================================================================
 void
-MainWindow::on_check_SpeedUseBits_toggled(
-    bool
+MainWindow::on_combo_SpeedDataDisplay_currentIndexChanged(
+    int
     )
 {
     //Change speed test display to bits or bytes
-    if (ui->check_SpeedUseBits->isChecked())
-    {
-        //Display in bits
-        ui->group_SpeedBytesBits->setTitle("Bits");
-        ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestBits));
-        ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestBits));
-        ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestBits));
-        ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestBits));
-        ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestBits));
-        ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestBits));
-    }
-    else
+    if (ui->combo_SpeedDataDisplay->currentIndex() == 0)
     {
         //Display in bytes
         ui->group_SpeedBytesBits->setTitle("Bytes");
-        ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/gintSpeedTestBits));
-        ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/gintSpeedTestBits));
-        ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/gintSpeedTestBits));
-        ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/gintSpeedTestBits));
-        ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/gintSpeedTestBits));
-        ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/gintSpeedTestBits));
+        ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
+        ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
+        ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
+        ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
+        ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
+        ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
     }
+    else if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
+    {
+        //Display in bits (data only)
+        ui->group_SpeedBytesBits->setTitle("Data Bits");
+        if (gintSpeedTestBytesBits == 0)
+        {
+            //From bytes
+            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits));
+            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits));
+        }
+        else
+        {
+            //From bits
+            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+        }
+    }
+    else
+    {
+        //Display in bits (including start/stop bits)
+        ui->group_SpeedBytesBits->setTitle("All Bits (Data, Start, Stop and Parity bits)");
+        if (gintSpeedTestBytesBits == 0)
+        {
+            //From bytes
+            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
+        }
+        else
+        {
+            //From bits
+            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
+        }
+    }
+    gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
+    //Need to account for moving from 10/8 bits back to bytes
 }
 
 /******************************************************************************/

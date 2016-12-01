@@ -2883,7 +2883,7 @@
               <item>
                <widget class="QLabel" name="label_33">
                 <property name="text">
-                 <string>Test data type:</string>
+                 <string>Data type:</string>
                 </property>
                </widget>
               </item>
@@ -2915,9 +2915,48 @@
                </widget>
               </item>
               <item>
+               <widget class="QLabel" name="label_43">
+                <property name="text">
+                 <string>Display:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="combo_SpeedDataDisplay">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Bytes</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Data bits</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Bits</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_7b_5">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="label_34">
                 <property name="text">
-                 <string>Test data:</string>
+                 <string>Data:</string>
                 </property>
                </widget>
               </item>
@@ -2931,13 +2970,6 @@
                 </property>
                 <property name="readOnly">
                  <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_7b_5">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
@@ -2957,26 +2989,6 @@
                 </property>
                 <property name="checked">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_7b_6">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="check_SpeedUseBits">
-                <property name="toolTip">
-                 <string>Check this box to display data in bits instead of bytes. Does not include start/stop bits.</string>
-                </property>
-                <property name="layoutDirection">
-                 <enum>Qt::RightToLeft</enum>
-                </property>
-                <property name="text">
-                 <string>Show Bits</string>
                 </property>
                </widget>
               </item>
