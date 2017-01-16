@@ -6904,6 +6904,7 @@ MainWindow::on_combo_SpeedDataType_currentIndexChanged(
     else if (ui->combo_SpeedDataType->currentIndex() == 1)
     {
         //String
+        ui->edit_SpeedTestData->setEnabled(true);
         ui->edit_SpeedPacketsSent->setEnabled(true);
         ui->edit_SpeedPacketsSent10s->setEnabled(true);
         ui->edit_SpeedPacketsSentAvg->setEnabled(true);
