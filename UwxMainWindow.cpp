@@ -1,5 +1,5 @@
 ﻿/******************************************************************************
-** Copyright (C) 2015-2016 Laird
+** Copyright (C) 2015-2017 Laird
 **
 ** Project: UwTerminalX
 **
@@ -247,71 +247,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
     );
     setWindowTitle(QString("UwTerminalX (v").append(UwVersion).append(")"));
-
-#pragma warning("TODO: Remove old configuration moving code for mac for v1.8 release")
-#if TARGET_OS_MAC
-    //Check if old configuration files exist
-    if (gpTermSettings->value("OldConfigIgnore").isNull() || gpTermSettings->value("OldConfigIgnore").toInt() != 1)
-    {
-        if (QFile::exists(QString(gstrMacBundlePath).append("UwTerminalX.ini")) == true)
-        {
-            //Old config files present, ask user if they want them copied
-            QMessageBox mbMoveFiles;
-            mbMoveFiles.setText("Old UwTerminalX configuration found");
-            mbMoveFiles.setInformativeText("The UwTerminalX configuration is now stored in the Application Support directory (instead of in the same directory as UwTermiminalX).\r\nYou can either:\r\n    \u2022Migrate the old configuration (Yes, UwTerminalX will restart)\r\n    \u2022Ignore the old configuration and not be asked again (No)\r\n    \u2022Choose next time UwTerminalX is opened (Ignore).");
-            mbMoveFiles.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Ignore);
-            mbMoveFiles.setDefaultButton(QMessageBox::Yes);
-            int intBtnClicked = mbMoveFiles.exec();
-
-            if (intBtnClicked == QMessageBox::Yes)
-            {
-                //Move files
-                delete gpTermSettings;
-                delete gpErrorMessages;
-                delete gpPredefinedDevice;
-                gbErrorsLoaded = false;
-
-                //Remove file
-                QFile::remove(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/UwTerminalX.ini"));
-
-                //Rename other file. This will fail if the other file resides on another volume (unlikely)
-                QFile::rename(QString(gstrMacBundlePath).append("UwTerminalX.ini"), QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/UwTerminalX.ini"));
-
-                if (QFile::exists(QString(gstrMacBundlePath).append("codes.csv")) == true)
-                {
-                    if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv")) == true)
-                    {
-                        //Remove file
-                        QFile::remove(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv"));
-                    }
-
-                    //Rename other file. This will fail if the other file resides on another volume (unlikely)
-                    QFile::rename(QString(gstrMacBundlePath).append("codes.csv"), QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv"));
-                }
-
-                if (QFile::exists(QString(gstrMacBundlePath).append("Devices.ini")) == true)
-                {
-                    if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/Devices.ini")) == true)
-                    {
-                        //Remove file
-                        QFile::remove(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/Devices.ini"));
-                    }
-
-                    //Rename other file. This will fail if the other file resides on another volume (unlikely)
-                    QFile::rename(QString(gstrMacBundlePath).append("Devices.ini"), QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/Devices.ini"));
-                }
-
-                //Reload settings
-                LoadSettings();
-            }
-            else if (intBtnClicked == QMessageBox::No)
-            {
-                //Do not move files, mark as done in configuration
-                gpTermSettings->setValue(QString("OldConfigIgnore"), "1");
-            }
-        }
-    }
-#endif
 
     //Create menu items
     gpMenu = new QMenu(this);
@@ -598,15 +533,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 #ifdef UseSSL
     //Load SSL certificate
-    QFile certFile(":/certificates/UwTerminalX.crt");
-    if (certFile.open(QIODevice::ReadOnly))
-    {
-        //Load certificate data
-        sslcLairdSSL = new QSslCertificate(certFile.readAll());
-        QSslSocket::addDefaultCaCertificate(*sslcLairdSSL);
-        certFile.close();
-    }
-    certFile.setFileName(":/certificates/UwTerminalX_new.crt");
+    QFile certFile(":/certificates/UwTerminalX_new.crt");
     if (certFile.open(QIODevice::ReadOnly))
     {
         //Load certificate data
@@ -1036,11 +963,6 @@ MainWindow::~MainWindow(){
     }
 
 #ifdef UseSSL
-    if (sslcLairdSSL != NULL)
-    {
-        //Clear up SSL certificate
-        delete sslcLairdSSL;
-    }
     if (sslcLairdSSLNew != NULL)
     {
         //Clear up (newer) SSL certificate
@@ -1496,83 +1418,8 @@ MainWindow::SerialRead(
             }
         }
 
-#pragma warning("TODO: Move this to separate functions")
-        if (gbStreamingBatch == true)
-        {
-            //Batch stream in progress
-            gbaBatchReceive += baOrigData;
-            if (gbaBatchReceive.indexOf("\n00\r") != -1)
-            {
-                //Success code, next statement
-                if (gpStreamFileHandle->atEnd())
-                {
-                    //Finished sending
-                    FinishBatch(false);
-                }
-                else
-                {
-                    //Send more data
-                    QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
-                    gspSerialPort.write(baFileData);
-                    gintQueuedTXBytes += baFileData.length();
-                    DoLineEnd();
-                    gpMainLog->WriteLogData(QString(baFileData).append("\n"));
-//        gintStreamBytesRead += FileData.length();
-                    gtmrBatchTimeoutTimer.start(BatchTimeout);
-                    ++gintStreamBytesRead;
-
-                    //Update the display buffer
-                    gbaDisplayBuffer.append(baFileData);
-                    if (!gtmrTextUpdateTimer.isActive())
-                    {
-                        gtmrTextUpdateTimer.start();
-                    }
-                }
-                gbaBatchReceive.clear();
-            }
-            else if (gbaBatchReceive.indexOf("\n01\t") != -1 && gbaBatchReceive.indexOf("\r", gbaBatchReceive.indexOf("\n01\t")+4) != -1)
-            {
-                //Failure code
-                QRegularExpression reTempRE("\t([a-zA-Z0-9]{1,9})(\t|\r)");
-                QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
-                if (remTempREM.hasMatch() == true)
-                {
-                    //Got the error code
-                    gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
-
-                    //Lookup error code
-                    bool bTmpBool;
-                    unsigned int ErrCode = QString("0x").append(remTempREM.captured(1)).toUInt(&bTmpBool, 16);
-                    if (bTmpBool == true)
-                    {
-                        //Converted
-                        LookupErrorCode(ErrCode);
-                    }
-                }
-                else
-                {
-                    //Unknown error code
-                    gbaDisplayBuffer.append("\nError during batch command, unknown error code.\n");
-                }
-                if (!gtmrTextUpdateTimer.isActive())
-                {
-                    gtmrTextUpdateTimer.start();
-                }
-
-                //Show status message
-                ui->statusBar->showMessage(QString("Failed sending batch file at line ").append(QString::number(gintStreamBytesRead)));
-
-                //Clear up and cancel timer
-                gtmrBatchTimeoutTimer.stop();
-                gbTermBusy = false;
-                gbStreamingBatch = false;
-                gchTermMode = 0;
-                gpStreamFileHandle->close();
-                delete gpStreamFileHandle;
-                gbaBatchReceive.clear();
-                ui->btn_Cancel->setEnabled(false);
-            }
-        }
+        //Send next chunk of batch data if enabled
+        StreamBatchContinue(&baOrigData);
 
         if (gbTermBusy == true && gchTermMode2 == 0)
         {
@@ -1840,6 +1687,91 @@ MainWindow::SerialRead(
                     ui->btn_Cancel->setEnabled(false);
                 }
             }
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::StreamBatchContinue(
+    QByteArray *baOrigData
+    )
+{
+    if (gbStreamingBatch == true)
+    {
+        //Batch stream in progress
+        gbaBatchReceive += *baOrigData;
+        if (gbaBatchReceive.indexOf("\n00\r") != -1)
+        {
+            //Success code, next statement
+            if (gpStreamFileHandle->atEnd())
+            {
+                //Finished sending
+                FinishBatch(false);
+            }
+            else
+            {
+                //Send more data
+                QByteArray baFileData = gpStreamFileHandle->readLine().replace("\n", "").replace("\r", "");
+                gspSerialPort.write(baFileData);
+                gintQueuedTXBytes += baFileData.length();
+                DoLineEnd();
+                gpMainLog->WriteLogData(QString(baFileData).append("\n"));
+//        gintStreamBytesRead += FileData.length();
+                gtmrBatchTimeoutTimer.start(BatchTimeout);
+                ++gintStreamBytesRead;
+
+                //Update the display buffer
+                gbaDisplayBuffer.append(baFileData);
+                if (!gtmrTextUpdateTimer.isActive())
+                {
+                    gtmrTextUpdateTimer.start();
+                }
+            }
+            gbaBatchReceive.clear();
+        }
+        else if (gbaBatchReceive.indexOf("\n01\t") != -1 && gbaBatchReceive.indexOf("\r", gbaBatchReceive.indexOf("\n01\t")+4) != -1)
+        {
+            //Failure code
+            QRegularExpression reTempRE("\t([a-zA-Z0-9]{1,9})(\t|\r)");
+            QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
+            if (remTempREM.hasMatch() == true)
+            {
+                //Got the error code
+                gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
+
+                //Lookup error code
+                bool bTmpBool;
+                unsigned int ErrCode = QString("0x").append(remTempREM.captured(1)).toUInt(&bTmpBool, 16);
+                if (bTmpBool == true)
+                {
+                    //Converted
+                    LookupErrorCode(ErrCode);
+                }
+            }
+            else
+            {
+                //Unknown error code
+                gbaDisplayBuffer.append("\nError during batch command, unknown error code.\n");
+            }
+            if (!gtmrTextUpdateTimer.isActive())
+            {
+                gtmrTextUpdateTimer.start();
+            }
+
+            //Show status message
+            ui->statusBar->showMessage(QString("Failed sending batch file at line ").append(QString::number(gintStreamBytesRead)));
+
+            //Clear up and cancel timer
+            gtmrBatchTimeoutTimer.stop();
+            gbTermBusy = false;
+            gbStreamingBatch = false;
+            gchTermMode = 0;
+            gpStreamFileHandle->close();
+            delete gpStreamFileHandle;
+            gbaBatchReceive.clear();
+            ui->btn_Cancel->setEnabled(false);
         }
     }
 }
@@ -4914,7 +4846,7 @@ MainWindow::sslErrors(
     )
 {
     //Error detected with SSL
-    if ((sslcLairdSSL != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSL) || (sslcLairdSSLNew != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSLNew))
+    if (sslcLairdSSLNew != NULL && nrReply->sslConfiguration().peerCertificate() == *sslcLairdSSLNew)
     {
         //Server certificate matches
         nrReply->ignoreSslErrors(lstSSLErrors);
@@ -5535,7 +5467,14 @@ MainWindow::LookupDNSName(
         else
         {
             //Failed to resolve hostname
-            QString strMessage = QString("Failed to resolve cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): ").append(hiIP.errorString());
+            QString strMessage = QString("Failed to resolve cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): ").append(hiIP.errorString())
+#ifndef _WIN32
+#ifndef __APPLE__
+                    //Linux, show warning regarding missing DNS libraries
+                    .append("\r\n\r\nHave you installed the required additional packages? Please see https://github.com/LairdCP/UwTerminalX/wiki/Installing for further details under the Linux section.")
+#endif
+#endif
+            ;
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
             return false;

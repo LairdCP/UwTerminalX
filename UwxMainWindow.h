@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2016 Laird
+** Copyright (C) 2015-2017 Laird
 **
 ** Project: UwTerminalX
 **
@@ -98,7 +98,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08f" //Version string
+#define UwVersion                         "1.08g" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
@@ -649,6 +649,10 @@ private:
     OutputSpeedTestAvgStats(
         unsigned long nsec
         );
+    void
+    StreamBatchContinue(
+        QByteArray *baOrigData
+        );
 
     //Private variables
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
@@ -721,7 +725,6 @@ private:
     bool gbAutoBaud; //True if automatic baud rate detection is in progress
 #ifdef UseSSL
     QString WebProtocol; //Holds HTTP or HTTPS depending on options selected
-    QSslCertificate *sslcLairdSSL = NULL; //Holds the Laird SSL certificate
     QSslCertificate *sslcLairdSSLNew = NULL; //Holds the (newer) Laird SSL certificate
 #endif
     PopupMessage *gpmErrorForm; //Error message form
