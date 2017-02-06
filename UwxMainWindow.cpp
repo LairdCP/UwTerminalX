@@ -45,8 +45,23 @@
         QString gstrMacBundlePath;
     #endif
 #else
-    //Assume linux
-    #define OS "Linux"
+    //Assume Linux
+    #ifdef __aarch64__
+        //ARM64
+        #define OS "Linux (AArch64)"
+    #elif __arm__
+        //ARM
+        #define OS "Linux (ARM)"
+    #elif __x86_64__
+        //x86_64
+        #define OS "Linux (x86_64)"
+    #elif __i386
+        //x86
+        #define OS "Linux (x86)"
+    #else
+        //Unknown
+        #define OS "Linux (other)"
+    #endif
 #endif
 
 /******************************************************************************/
@@ -1470,9 +1485,7 @@ MainWindow::SerialRead(
                                 //Run Pre-XComp program
                                 RunPrePostExecutable(gstrTermFilename);
                             }
-                            //Windows
                             gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName).append("/") : "")).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
-                            //gprocCompileProcess.waitForFinished(-1);
                         }
                         else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                         {
