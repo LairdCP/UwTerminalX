@@ -370,6 +370,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->check_LogEnable->setChecked(gpTermSettings->value("LogEnable", DefaultLogEnable).toBool());
     ui->check_LogAppend->setChecked(gpTermSettings->value("LogMode", DefaultLogMode).toBool());
 
+    //Set license checking option
+    ui->check_CheckLicense->setChecked(gpTermSettings->value("LicenseCheck", DefaultLicenceCheckMode).toBool());
+
 #ifdef UseSSL
     //Set SSL status
     ui->check_EnableSSL->setChecked(gpTermSettings->value("SSLEnable", DefaultSSLEnable).toBool());
@@ -1441,9 +1444,23 @@ MainWindow::SerialRead(
             //Currently waiting for a response
             gstrTermBusyData = gstrTermBusyData.append(baOrigData);
             gchTermBusyLines = gchTermBusyLines + baOrigData.count("\n");
-            if (gchTermBusyLines == 4)
+            if ((ui->check_CheckLicense->isChecked() && (gchTermMode == MODE_COMPILE_LOAD || gchTermMode == MODE_COMPILE_LOAD_RUN || gchTermMode == MODE_SERVER_COMPILE_LOAD || gchTermMode == MODE_SERVER_COMPILE_LOAD_RUN) && gchTermBusyLines == 6) || ((!ui->check_CheckLicense->isChecked() || !(gchTermMode == MODE_COMPILE_LOAD || gchTermMode == MODE_COMPILE_LOAD_RUN || gchTermMode == MODE_SERVER_COMPILE_LOAD || gchTermMode == MODE_SERVER_COMPILE_LOAD_RUN)) && gchTermBusyLines == 4))
             {
                 //Enough data, check it.
+                if (ui->check_CheckLicense->isChecked() && gchTermBusyLines == 6)
+                {
+                    //Check for license response
+                    QRegularExpression reTempLicRE("\n10\t4\t00 ([a-zA-Z0-9]{12})\r\n00\r");
+                    QRegularExpressionMatch remTempLicREM = reTempLicRE.match(gstrTermBusyData);
+                    if (remTempLicREM.hasMatch() == true && remTempLicREM.captured(1).toUpper() == "0016A4C0FFEE")
+                    {
+                        //License is not valid, display a warning to the user
+                        QString strMessage = tr("Please note: The module you are downloading to does not have a valid license and therefore some firmware functionality may not work or return unexpected error codes.\r\n\r\nTo fix this issue, please add your module license using: 'at+lic <license code>', or contact Laird Support with the module Bluetooth Address if you do not have a backup of the license code (issue the command 'at i 14' to get your module's Bluetooth address).");
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(&strMessage);
+                    }
+                }
+
                 QRegularExpression reTempRE("\n10	0	(.{2,32}?)\r\n00\r\n10	13	([a-zA-Z0-9]{4}) ([a-zA-Z0-9]{4}) \r\n00\r");
                 QRegularExpressionMatch remTempREM = reTempRE.match(gstrTermBusyData);
                 if (remTempREM.hasMatch() == true)
@@ -2531,6 +2548,14 @@ MainWindow::CompileApp(
             gchTermMode2 = 0;
             gchTermBusyLines = 0;
             gstrTermBusyData = tr("");
+            if (ui->check_CheckLicense->isChecked() && (chMode == MODE_COMPILE_LOAD || chMode == MODE_COMPILE_LOAD_RUN || chMode == MODE_SERVER_COMPILE_LOAD || chMode == MODE_SERVER_COMPILE_LOAD_RUN))
+            {
+                //Check license
+                gspSerialPort.write("at i 4");
+                gintQueuedTXBytes += 6;
+                DoLineEnd();
+                gpMainLog->WriteLogData("at i 4\n");
+            }
             gspSerialPort.write("at i 0");
             gintQueuedTXBytes += 6;
             DoLineEnd();
@@ -5092,6 +5117,14 @@ MainWindow::DroppedFile(
             gchTermMode2 = 0;
             gchTermBusyLines = 0;
             gstrTermBusyData = tr("");
+            if (ui->check_CheckLicense->isChecked())
+            {
+                //Check license
+                gspSerialPort.write("at i 4");
+                gintQueuedTXBytes += 6;
+                DoLineEnd();
+                gpMainLog->WriteLogData("at i 4\n");
+            }
             gspSerialPort.write("at i 0");
             gintQueuedTXBytes += 6;
             DoLineEnd();
@@ -7507,6 +7540,17 @@ MainWindow::on_combo_SpeedDataDisplay_currentIndexChanged(
     }
     gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
     //Need to account for moving from 10/8 bits back to bytes
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_CheckLicense_stateChanged(
+    int
+    )
+{
+    //Option for checking module license on download changed
+    gpTermSettings->setValue("LicenseCheck", (ui->check_CheckLicense->isChecked() == true ? 1 : 0));
 }
 
 /******************************************************************************/

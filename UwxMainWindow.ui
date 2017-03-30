@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>650</width>
-    <height>372</height>
+    <height>386</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1041,7 +1041,17 @@
                <item>
                 <widget class="QCheckBox" name="check_ShowFileSize">
                  <property name="text">
-                  <string>Show Application filesize</string>
+                  <string>Show application filesize</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_CheckLicense">
+                 <property name="text">
+                  <string>Check license on download</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>

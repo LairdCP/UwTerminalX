@@ -98,7 +98,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08h" //Version string
+#define UwVersion                         "1.08i" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
@@ -127,6 +127,7 @@
 #define DefaultShowFileSize               1
 #define DefaultConfirmClear               1
 #define DefaultShiftEnterLineSeparator    1
+#define DefaultLicenceCheckMode           1
 //Define the protocol
 #ifndef UseSSL
     //HTTP
@@ -569,6 +570,10 @@ private slots:
         );
     void
     on_combo_SpeedDataDisplay_currentIndexChanged(
+        int
+        );
+    void
+    on_check_CheckLicense_stateChanged(
         int
         );
 
