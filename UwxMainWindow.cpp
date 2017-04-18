@@ -4240,10 +4240,12 @@ MainWindow::replyFinished(
                         //Compile application
                         if (LookupDNSName() == true)
                         {
+                            //Setup the request and add the original application filename
+                            QFileInfo fiFileInfo(gstrTermFilename);
                             QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1")));
                             QByteArray baPostData;
                             baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
-                            baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"test.sb\"\r\nContent-Type: application/octet-stream\r\n\r\n");
+                            baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n"));
 
                             //Add file data
                             QFile file(gstrTermFilename);
@@ -4275,8 +4277,6 @@ MainWindow::replyFinished(
                                 tmpData.append(file.readAll());
                             }
                             file.close();
-
-                            QFileInfo fiFileInfo(gstrTermFilename);
 
                             //Include other files
                             QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})\"(.*?)\"");
