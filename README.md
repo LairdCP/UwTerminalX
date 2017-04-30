@@ -26,9 +26,11 @@ Download the tar file and extract it's contents to a location on your computer, 
 
 	tar xf UwTerminalX.tar ~/
 
-Where '~/' is the location of where you want it extracted to, '~/' will extract to the home directory of your local user account). To launch UwTerminalX, either double click on the executable and click the 'run' button (if asked), or execute it from a terminal as so:
+Where '\~/' is the location of where you want it extracted to, '\~/' will extract to the home directory of your local user account). To launch UwTerminalX, either double click on the executable and click the 'run' button (if asked), or execute it from a terminal as so:
 
 	./UwTerminalX
+
+Before running, you may need to install some additional libraries, please see https://github.com/LairdCP/UwTerminalX/wiki/Installing for further details
 
 ## Help and contributing
 
