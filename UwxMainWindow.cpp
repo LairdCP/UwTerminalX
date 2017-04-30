@@ -994,6 +994,12 @@ MainWindow::~MainWindow(){
         delete gnmManager;
     }
 
+    if (lstFileData.length() > 0)
+    {
+        //Clear the file data list
+        ClearFileDataList();
+    }
+
     //Delete variables
     delete gpMainLog;
     delete gpPredefinedDevice;
@@ -4247,10 +4253,24 @@ MainWindow::replyFinished(
                             baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
                             baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n"));
 
+                            //Clear the file data list if it's not empty
+                            if (lstFileData.length() > 0)
+                            {
+                                ClearFileDataList();
+                            }
+
+                            //Create and insert starting file into file array
+                            FileSStruct *tempFileS = new FileSStruct();
+                            tempFileS->strFilename = fiFileInfo.fileName();
+                            tempFileS->iStartingLine = 1;
+                            tempFileS->iEndingLine = 0;
+                            tempFileS->iLineSpaces = 0;
+                            lstFileData.append(tempFileS);
+
                             //Add file data
                             QFile file(gstrTermFilename);
-                            QByteArray tmpData;
-                            if (!file.open(QIODevice::ReadOnly))
+                            QString tmpData;
+                            if (!file.open(QIODevice::ReadOnly | QFile::Text))
                             {
                                 //Failed to open file selected for download
                                 nrReply->deleteLater();
@@ -4272,6 +4292,7 @@ MainWindow::replyFinished(
                                 return;
                             }
 
+                            //Read all the file's data
                             while (!file.atEnd())
                             {
                                 tmpData.append(file.readAll());
@@ -4292,7 +4313,7 @@ MainWindow::replyFinished(
                                     QRegularExpressionMatch ThisMatch = rx1match.next();
 
                                     file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/")));
-                                    if (!file.open(QIODevice::ReadOnly))
+                                    if (!file.open(QIODevice::ReadOnly | QFile::Text))
                                     {
                                         //Failed to open include file
                                         nrReply->deleteLater();
@@ -4313,23 +4334,43 @@ MainWindow::replyFinished(
                                         return;
                                     }
 
+                                    //Use a string ref to count the number of lines
+                                    QStringRef strrefLines(&tmpData, 0, tmpData.indexOf(ThisMatch.captured(0)));
+                                    tempFileS = new FileSStruct();
+                                    tempFileS->strFilename = ThisMatch.captured(5);
+                                    tempFileS->iStartingLine = strrefLines.count("\n")+2;
+                                    tempFileS->iLineSpaces = ThisMatch.captured(0).count("\n");
+
+                                    //Set state to changed to check for next include
                                     bChangedState = true;
 
-                                    QByteArray tmpData2;
+                                    //Read all the included file's data
+                                    QString tmpData2;
                                     while (!file.atEnd())
                                     {
                                         tmpData2.append(file.readAll());
                                     }
                                     file.close();
+
+                                    //Add the data into the buffer replacing the include statement
                                     unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
                                     tmpData.remove(i, ThisMatch.captured(0).length());
-                                    tmpData.insert(i, "\r\n");
-                                    tmpData.insert(i+2, tmpData2);
+                                    tmpData.insert(i, "\n");
+                                    tmpData.insert(i+1, tmpData2);
+
+                                    //Set the ending line of the include file and add it to the list
+                                    tempFileS->iEndingLine = tempFileS->iStartingLine + tmpData2.count("\n");
+                                    lstFileData.append(tempFileS);
                                 }
                             }
 
                             //Remove all extra #include statments
                             tmpData.replace("#include", "");
+
+                            //Set the total number of lines for the original file
+                            lstFileData.at(0)->iEndingLine = tmpData.count("\n")+2;
+
+qDebug() << tmpData;
 
                             //Append the data to the POST request
                             baPostData.append(tmpData);
@@ -4443,6 +4484,49 @@ MainWindow::replyFinished(
                     {
                         //Error whilst compiling, show results
                         QString strMessage = QString("Failed to compile ").append(joJsonObject["Result"].toString()).append("; ").append(joJsonObject["Error"].toString().append("\r\n").append(joJsonObject["Description"].toString()));
+                        if (strMessage.indexOf("File   : ") != -1 && strMessage.indexOf("Line   : ") != -1)
+                        {
+                            //File and line error information available, translate into the proper file
+                            qint32 iLineNumber = strMessage.mid(strMessage.indexOf("Line   : ") + 9, strMessage.indexOf("\n", strMessage.indexOf("Line   : "))-strMessage.indexOf("Line   : ")-9).toInt();
+                            if (iLineNumber >= 1 && iLineNumber < 200000)
+                            {
+                                //Line number seems valid, search for the file
+/*qint16 ia = lstFileData.length()-1;
+while (ia >= 0)
+{
+//Free up each element and delete it
+FileSStruct *tempFileS = lstFileData.at(ia);
+qDebug() << tempFileS->strFilename << ": " << tempFileS->iStartingLine << ", " << tempFileS->iEndingLine;
+--ia;
+}*/
+qDebug() << "Error is on #" << iLineNumber;
+                                qint16 iCFile = lstFileData.length()-1;
+                                qint16 tst = 0;
+                                while (iCFile >= 0)
+                                {
+                                    //Search for the file with the error
+                                    FileSStruct *tempFileS = lstFileData.at(iCFile);
+qDebug() << "check: " << tempFileS->strFilename << ": " << tempFileS->iStartingLine << ", " << tempFileS->iEndingLine << ", " << tempFileS->iLineSpaces;
+                                    //if (tempFileS->iStartingLine >= iLineNumber && tempFileS->iEndingLine <= iLineNumber)
+                                    if (tempFileS->iStartingLine <= iLineNumber && tempFileS->iEndingLine >= iLineNumber)
+                                    {
+                                        //Found the file
+                                        qint16 iFPos = strMessage.indexOf("File   : ");
+                                        strMessage.remove(strMessage.indexOf("File   : ")-1, strMessage.indexOf("\n", strMessage.indexOf("Line   : "))-strMessage.indexOf("File   : ")+2);
+                                        strMessage.insert(iFPos-1, QString("File   : ").append(tempFileS->strFilename).append("\n").append("Line   : ").append(QString::number(iLineNumber - tempFileS->iStartingLine + 1
+-(tst > 0 && iCFile == 0 ? tst+1 : 0)
+)).append("\n"));
+                                        break;
+                                    }
+                                    else if (tempFileS->iStartingLine <= iLineNumber)
+                                    {
+                                        //
+                                        tst += tempFileS->iEndingLine-tempFileS->iStartingLine - tempFileS->iLineSpaces;
+                                    }
+                                    --iCFile;
+                                }
+                            }
+                        }
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
                     }
@@ -4461,6 +4545,9 @@ MainWindow::replyFinished(
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
+
+                //Clear up
+                ClearFileDataList();
             }
             else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
             {
@@ -7551,6 +7638,24 @@ MainWindow::on_check_CheckLicense_stateChanged(
 {
     //Option for checking module license on download changed
     gpTermSettings->setValue("LicenseCheck", (ui->check_CheckLicense->isChecked() == true ? 1 : 0));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ClearFileDataList(
+    )
+{
+    //Clears the file data list and deletes all list entries
+    qint16 i = lstFileData.length()-1;
+    while (i >= 0)
+    {
+        //Free up each element and delete it
+        FileSStruct *tempFileS = lstFileData.at(i);
+        lstFileData.removeAt(i);
+        delete tempFileS;
+        --i;
+    }
 }
 
 /******************************************************************************/

@@ -57,6 +57,7 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QHostInfo>
+#include <QStringRef>
 //Need cmath for std::ceil function
 #include <cmath>
 #if TARGET_OS_MAC
@@ -98,7 +99,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08k" //Version string
+#define UwVersion                         "1.08l" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
@@ -201,6 +202,15 @@ namespace Ui
 {
     class MainWindow;
 }
+
+//Structure used for holding information on online XCompiled file locations
+typedef struct
+{
+    QString strFilename; //Filename
+    qint16 iStartingLine; //Starting line that file was put on
+    qint16 iEndingLine; //Ending line that file's last data was put on
+    qint8 iLineSpaces;
+} FileSStruct;
 
 /******************************************************************************/
 // Class definitions
@@ -658,6 +668,9 @@ private:
     StreamBatchContinue(
         QByteArray *baOrigData
         );
+    void
+    ClearFileDataList(
+        );
 
     //Private variables
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
@@ -767,6 +780,7 @@ private:
     quint8 gintSpeedTestDataBits; //Number of data bits (per byte) for speed testing
     quint8 gintSpeedTestStartStopParityBits; //Number of bits for start/stop/parity (per byte) for speed testing
     quint8 gintSpeedTestBytesBits; //Holds the current speed test combo selection option
+    QList<FileSStruct *> lstFileData; //Holds a list of filenames and line numbers for the file currently being XCompiled
 
 protected:
     void dragEnterEvent(
