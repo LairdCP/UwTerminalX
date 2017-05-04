@@ -99,7 +99,7 @@
 #define MODE_CHECK_FIRMWARE_VERSIONS      17
 #define MODE_CHECK_FIRMWARE_SUPPORT       18
 //Defines for version and functions
-#define UwVersion                         "1.08l" //Version string
+#define UwVersion                         "1.08n" //Version string
 //
 #define FileReadBlock                     512     //Number of bytes to read per block when streaming files
 #define StreamProgress                    10000   //Number of bytes between streaming progress updates
@@ -212,6 +212,14 @@ typedef struct
     qint8 iLineSpaces;
 } FileSStruct;
 
+//Enum used for specifying type of data
+enum class BitByteTypes
+{
+    TypeBytes,
+    TypeDataBits,
+    TypeAllBits
+};
+
 /******************************************************************************/
 // Class definitions
 /******************************************************************************/
@@ -272,13 +280,19 @@ public slots:
         );
     void
     MessagePass(
-        QString strDataString,
+        QByteArray baDataString,
         bool bEscapeString,
         bool bFromScripting
         );
     void
     SpeedMenuSelected(
         QAction* qaAction
+        );
+    qint32
+    BitsBytesConvert(
+        qint32 iCount,
+        BitByteTypes bbtFrom,
+        BitByteTypes bbtTo
         );
 
 private slots:

@@ -754,7 +754,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 guaAutomationForm->ConnectionChange(gspSerialPort.isOpen());
 
                 //Connect signals
-                connect(guaAutomationForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+                connect(guaAutomationForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
 
                 //Give focus to the first line
                 guaAutomationForm->SetFirstLineFocus();
@@ -778,7 +778,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 guaAutomationForm->ConnectionChange(gspSerialPort.isOpen());
 
                 //Connect signals
-                connect(guaAutomationForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+                connect(guaAutomationForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
             }
 
             //Load file
@@ -801,7 +801,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 gusScriptingForm->SetUwTerminalXVersion(UwVersion);
 
                 //Connect the message passing signal and slot
-                connect(gusScriptingForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+                connect(gusScriptingForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
                 connect(gusScriptingForm, SIGNAL(ScriptStartRequest()), this, SLOT(ScriptStartRequest()));
                 connect(gusScriptingForm, SIGNAL(ScriptFinished()), this, SLOT(ScriptFinished()));
 
@@ -887,7 +887,7 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
     disconnect(this, SLOT(DetectBaudTimeout()));
-    disconnect(this, SLOT(MessagePass(QString,bool,bool)));
+    disconnect(this, SLOT(MessagePass(QByteArray,bool,bool)));
     disconnect(this, SLOT(UpdateSpeedTestValues()));
     disconnect(this, SLOT(OutputSpeedTestStats()));
 
@@ -2215,7 +2215,7 @@ MainWindow::MenuSelected(
             guaAutomationForm->ConnectionChange(gspSerialPort.isOpen());
 
             //Connect signals
-            connect(guaAutomationForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+            connect(guaAutomationForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
 
             //Give focus to the first line
             guaAutomationForm->SetFirstLineFocus();
@@ -2239,7 +2239,7 @@ MainWindow::MenuSelected(
             gusScriptingForm->SetUwTerminalXVersion(UwVersion);
 
             //Connect the message passing signal and slot
-            connect(gusScriptingForm, SIGNAL(SendData(QString,bool,bool)), this, SLOT(MessagePass(QString,bool,bool)));
+            connect(gusScriptingForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
             connect(gusScriptingForm, SIGNAL(ScriptStartRequest()), this, SLOT(ScriptStartRequest()));
             connect(gusScriptingForm, SIGNAL(ScriptFinished()), this, SLOT(ScriptFinished()));
 
@@ -3468,7 +3468,7 @@ MainWindow::on_btn_Duplicate_clicked(
 //=============================================================================
 void
 MainWindow::MessagePass(
-    QString strDataString,
+    QByteArray baDataString,
     bool bEscapeString,
     bool bFromScripting
     )
@@ -3479,30 +3479,30 @@ MainWindow::MessagePass(
         if (bEscapeString == true)
         {
             //Escape string sequences
-            UwxEscape::EscapeCharacters(&strDataString);
+            UwxEscape::EscapeCharacters(&baDataString);
         }
-        QByteArray baTmpBA = strDataString.toUtf8();
-        gspSerialPort.write(baTmpBA);
-        gintQueuedTXBytes += baTmpBA.size();
+        gspSerialPort.write(baDataString);
+        gintQueuedTXBytes += baDataString.size();
         if (ui->check_Echo->isChecked() == true)
         {
             if (ui->check_ShowCLRF->isChecked() == true)
             {
                 //Escape \t, \r and \n
-                baTmpBA.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
+                baDataString.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
             }
 
             //Replace unprintable characters
-            baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
+            baDataString.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f");
 
             //Output to display buffer
-            gbaDisplayBuffer.append(baTmpBA);
+            gbaDisplayBuffer.append(baDataString);
             if (!gtmrTextUpdateTimer.isActive())
             {
                 gtmrTextUpdateTimer.start();
             }
         }
-        gpMainLog->WriteLogData(strDataString);
+#pragma warning("TODO: test if this works or needs to be a byte array")
+        gpMainLog->WriteLogData(QString(baDataString));
         if (bEscapeString == false && bFromScripting == false)
         {
             //Not escaping sequences and not from scripting form so send line end
@@ -6829,9 +6829,8 @@ MainWindow::SpeedMenuSelected(
             if (ui->check_SpeedStringUnescape->isChecked())
             {
                 //Escape
-                QString strTmpDat = ui->edit_SpeedTestData->text();
-                UwxEscape::EscapeCharacters(&strTmpDat);
-                gbaSpeedMatchData = strTmpDat.toUtf8();
+                gbaSpeedMatchData = ui->edit_SpeedTestData->text().toUtf8();
+                UwxEscape::EscapeCharacters(&gbaSpeedMatchData);
             }
             else
             {
@@ -6987,7 +6986,6 @@ MainWindow::on_combo_SpeedDataType_currentIndexChanged(
         ui->edit_SpeedPacketsBad->setEnabled(true);
         ui->edit_SpeedPacketsErrorRate->setEnabled(true);
 
-
         //Enable sending modes
         gpSpeedMenu->actions()[1]->setEnabled(true);
         gpSpeedMenu->actions()[2]->setEnabled(true);
@@ -7004,9 +7002,9 @@ MainWindow::on_btn_SpeedCopy_clicked(
     )
 {
     //Copies some data to the clipboard about the test
-    QString strTmpStr = ui->edit_SpeedTestData->text();
+    QByteArray baTmpBA = ui->edit_SpeedTestData->text().toUtf8();
     QString strResultStr;
-//TODO: rx all bit (when in byte/data bit mode) is WRONG (too small)
+
     if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
     {
         //Data bits
@@ -7127,7 +7125,7 @@ MainWindow::on_btn_SpeedCopy_clicked(
         append("\r\n    > Rx average (All bits): ").
         append(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
     }
-    UwxEscape::EscapeCharacters(&strTmpStr);
+    UwxEscape::EscapeCharacters(&baTmpBA);
     QApplication::clipboard()->setText(QString("=================================\r\n  UwTerminalX ").
         append(UwVersion).append(" Speed Test\r\n       ").
         append(QDate::currentDate().toString("dd/MM/yyyy")).
@@ -7144,11 +7142,11 @@ MainWindow::on_btn_SpeedCopy_clicked(
         append("\r\n    > Data String Size (bytes): ").
         append(QString::number(ui->edit_SpeedTestData->text().toUtf8().size())).
         append("\r\n    > Unescaped Data String: ").
-        append(strTmpStr).
+        append(baTmpBA.replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f")).
         append("\r\n    > Unescaped Data String Length: ").
-        append(QString::number(strTmpStr.length())).
+        append(QString::number(QString(baTmpBA.replace('\0', "0")).length())).
         append("\r\n    > Unescaped Data String Size (bytes): ").
-        append(QString::number(strTmpStr.toUtf8().size())).
+        append(QString::number(baTmpBA.size())).
         append("\r\n    > Unescape: ").
         append((ui->check_SpeedStringUnescape->isChecked() ? "Yes" : "No")).
         append("\r\n    > Test Type: ").
@@ -7564,69 +7562,37 @@ MainWindow::on_combo_SpeedDataDisplay_currentIndexChanged(
     )
 {
     //Change speed test display to bits or bytes
+    if (ui->edit_SpeedBytesSent->text().length() > 0 || ui->edit_SpeedBytesRec->text().length() > 0)
+    {
+        //Change type
+        BitByteTypes bbtFrom = (gintSpeedTestBytesBits == 1 ? BitByteTypes::TypeDataBits : (gintSpeedTestBytesBits == 2 ? BitByteTypes::TypeAllBits : BitByteTypes::TypeBytes));
+        BitByteTypes bbtTo = (ui->combo_SpeedDataDisplay->currentIndex() == 1 ? BitByteTypes::TypeDataBits : (ui->combo_SpeedDataDisplay->currentIndex() == 2 ? BitByteTypes::TypeAllBits : BitByteTypes::TypeBytes));
+
+        //Convert the data
+        ui->edit_SpeedBytesSent->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRec->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesSent10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent10s->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRec10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec10s->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesSentAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSentAvg->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRecAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRecAvg->text().toUInt(), bbtFrom, bbtTo)));
+    }
+
     if (ui->combo_SpeedDataDisplay->currentIndex() == 0)
     {
         //Display in bytes
         ui->group_SpeedBytesBits->setTitle("Bytes");
-        ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
-        ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
-        ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
-        ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
-        ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
-        ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()/(gintSpeedTestDataBits + (gintSpeedTestBytesBits == 2 ? 1 + gintSpeedTestStartStopParityBits : 0))));
     }
     else if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
     {
         //Display in bits (data only)
         ui->group_SpeedBytesBits->setTitle("Data Bits");
-        if (gintSpeedTestBytesBits == 0)
-        {
-            //From bytes
-            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits));
-            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits));
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits));
-        }
-        else
-        {
-            //From bits
-            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*gintSpeedTestDataBits/(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-        }
     }
     else
     {
         //Display in bits (including start/stop bits)
         ui->group_SpeedBytesBits->setTitle("All Bits (Data, Start, Stop and Parity bits)");
-        if (gintSpeedTestBytesBits == 0)
-        {
-            //From bytes
-            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)));
-        }
-        else
-        {
-            //From bits
-            ui->edit_SpeedBytesSent->setText(QString::number(ui->edit_SpeedBytesSent->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRec->setText(QString::number(ui->edit_SpeedBytesRec->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-            ui->edit_SpeedBytesSent10s->setText(QString::number(ui->edit_SpeedBytesSent10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRec10s->setText(QString::number(ui->edit_SpeedBytesRec10s->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(ui->edit_SpeedBytesSentAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(ui->edit_SpeedBytesRecAvg->text().toUInt()*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/gintSpeedTestDataBits));
-        }
     }
     gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
-    //Need to account for moving from 10/8 bits back to bytes
 }
 
 //=============================================================================
@@ -7656,6 +7622,44 @@ MainWindow::ClearFileDataList(
         delete tempFileS;
         --i;
     }
+}
+
+//=============================================================================
+//=============================================================================
+qint32
+MainWindow::BitsBytesConvert(
+    qint32 iCount,
+    BitByteTypes bbtFrom,
+    BitByteTypes bbtTo
+    )
+{
+    //Convert the value to all bits
+    qint32 iTemp = iCount;
+    if (bbtFrom == BitByteTypes::TypeBytes)
+    {
+        //Convert from bytes
+        iTemp = iCount * (gintSpeedTestDataBits + gintSpeedTestStartStopParityBits);
+    }
+    else if (bbtFrom == BitByteTypes::TypeDataBits)
+    {
+        //Convert from data bits
+        iTemp = iCount * (gintSpeedTestDataBits + gintSpeedTestStartStopParityBits) / gintSpeedTestDataBits;
+    }
+
+    //Convert the value to the required type
+    if (bbtTo == BitByteTypes::TypeBytes)
+    {
+        //Convert to bytes
+        iTemp = iTemp / (gintSpeedTestDataBits + gintSpeedTestStartStopParityBits);
+    }
+    else if (bbtTo == BitByteTypes::TypeDataBits)
+    {
+        //Convert to data bits
+        iTemp = iTemp * gintSpeedTestDataBits / (gintSpeedTestDataBits + gintSpeedTestStartStopParityBits);
+    }
+
+    //Return the value
+    return iTemp;
 }
 
 /******************************************************************************/

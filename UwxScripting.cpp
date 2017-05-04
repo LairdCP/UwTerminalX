@@ -545,14 +545,14 @@ UwxScripting::AdvanceLine(
             {
                 //Clear receive buffer and send data out
                 mbaRecvData.clear();
-                QString strTmpDat(mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1));
-                UwxEscape::EscapeCharacters(&strTmpDat);
+                QByteArray baTmpDat(mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1).toUtf8());
+                UwxEscape::EscapeCharacters(&baTmpDat);
 
                 //Set the number of bytes remaining to be written to the length of the string (only used if the WaitForWrite checkout is enabled)
-                mbBytesWriteRemain = strTmpDat.length();
+                mbBytesWriteRemain = QString(baTmpDat).length();
 
                 //Pass the data back to the main form
-                emit SendData(strTmpDat, false, true);
+                emit SendData(baTmpDat, false, true);
 
                 ucLastAct = ScriptingActionDataOut;
 
@@ -566,9 +566,8 @@ UwxScripting::AdvanceLine(
             else if (mtbExecutionBlock.text().at(0) == ScriptingDataIn)
             {
                 //Receive
-                QString strTmpDat = mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1);
-                UwxEscape::EscapeCharacters(&strTmpDat);
-                mbaMatchData = strTmpDat.toUtf8();
+                mbaMatchData = mtbExecutionBlock.text().right(mtbExecutionBlock.text().length()-1).toUtf8();
+                UwxEscape::EscapeCharacters(&mbaMatchData);
                 ucLastAct = ScriptingActionDataIn;
                 if (!gtmrRecTimer.isValid())
                 {
