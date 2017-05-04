@@ -208,7 +208,7 @@ signals:
     void ScriptStartRequest(
         );
     void SendData(
-        QString strDataString,
+        QByteArray baDataString,
         bool bEscapeString,
         bool bFromScripting
         );

@@ -2981,7 +2981,7 @@
                  <bool>true</bool>
                 </property>
                 <property name="text">
-                 <string>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!\&quot;£$%^&amp;*()_+-=[]{};:'@#~,&lt;.&gt;/?\|¬`</string>
+                 <string>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!&quot;£$%^&amp;*()_+-=[]{};:'@#~,&lt;.&gt;/?\|¬`</string>
                 </property>
                 <property name="readOnly">
                  <bool>false</bool>

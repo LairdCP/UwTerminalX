@@ -26,8 +26,7 @@
 /******************************************************************************/
 // Include Files
 /******************************************************************************/
-#include <QString>
-#include <QRegularExpression>
+#include <QByteArray>
 
 /******************************************************************************/
 // Class definitions
@@ -38,11 +37,8 @@ public:
     static
     void
     EscapeCharacters(
-        QString *strData
+        QByteArray *baData
         );
-
-private:
-    static QRegularExpression reESeq; //Regular expression used for escaping character codes
 };
 
 #endif // UWXESCAPE_H

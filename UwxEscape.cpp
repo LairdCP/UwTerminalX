@@ -29,27 +29,61 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-//Set pattern to match
-QRegularExpression UwxEscape::reESeq = QRegularExpression("[\\\\]([0-9A-Fa-f]{2})");
 
 //=============================================================================
 //=============================================================================
 void
 UwxEscape::EscapeCharacters(
-    QString *strData
+    QByteArray *baData
     )
 {
     //Escapes character sequences
-    QRegularExpressionMatchIterator remiESeqMatch = UwxEscape::reESeq.globalMatch(strData);
-    while (remiESeqMatch.hasNext())
+    qint32 Next = baData->indexOf("\\");
+    while (Next != -1)
     {
-        //We have escape sequences
-        QRegularExpressionMatch remThisESeqMatch = remiESeqMatch.next();
-        strData->replace(QString("\\").append(remThisESeqMatch.captured(1)), QString((char)remThisESeqMatch.captured(1).toInt(NULL, 16)));
-    }
+        if (baData->length() <= Next+1)
+        {
+            //No more string length, ignore
+            break;
+        }
+        else if (baData->at(Next+1) == '\\')
+        {
+            //This is a \\ so remove one of the slashes and ignore the conversion
+            baData->remove(Next, 1);
+        }
+        else if (baData->at(Next+1) == 'r' || baData->at(Next+1) == 'R')
+        {
+            //This is a \r or \R
+            baData->insert(Next, "\r");
+            baData->remove(Next+1, 2);
+        }
+        else if (baData->at(Next+1) == 'n' || baData->at(Next+1) == 'N')
+        {
+            //This is a \n or \N
+            baData->insert(Next, "\n");
+            baData->remove(Next+1, 2);
+        }
+        else if (baData->at(Next+1) == 't' || baData->at(Next+1) == 'T')
+        {
+            //This is a \t or \T
+            baData->insert(Next, "\t");
+            baData->remove(Next+1, 2);
+        }
+        else if (baData->length() <= Next+2)
+        {
+            //No more string length, ignore
+            break;
+        }
+        else if (((baData->at(Next+1) >= '0' && baData->at(Next+1) <= '9') || (baData->at(Next+1) >= 'a' && baData->at(Next+1) <= 'f') || (baData->at(Next+1) >= 'A' && baData->at(Next+1) <= 'F')) && ((baData->at(Next+2) >= '0' && baData->at(Next+2) <= '9') || (baData->at(Next+2) >= 'a' && baData->at(Next+2) <= 'f') || (baData->at(Next+2) >= 'A' && baData->at(Next+2) <= 'F')))
+        {
+            //Character to escape
+            baData->insert(Next, (char)baData->mid(Next+1, 2).toInt(NULL, 16));
+            baData->remove(Next+1, 3);
+        }
 
-    //Replace newline and tab characters
-    strData->replace("\\r", "\r").replace("\\n", "\n").replace("\\t", "\t");
+        //Search for the next instance
+        Next = baData->indexOf("\\", Next+1);
+    }
 }
 
 /******************************************************************************/
