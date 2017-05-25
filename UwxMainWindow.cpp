@@ -1520,6 +1520,26 @@ MainWindow::SerialRead(
                             }
                             gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
                         }
+                        else if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("/") : "")).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                        {
+                            //XCompiler found! - First run the Pre XCompile program if enabled and it exists
+                            if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
+                            {
+                                //Run Pre-XComp program
+                                RunPrePostExecutable(gstrTermFilename);
+                            }
+                            gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("/") : "")).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                        }
+                        else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
+                        {
+                            //XCompiler found in directory with sB file
+                            if (ui->check_PreXCompRun->isChecked() == true && ui->radio_XCompPre->isChecked() == true)
+                            {
+                                //Run Pre-XComp program
+                                RunPrePostExecutable(gstrTermFilename);
+                            }
+                            gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                        }
                         else
 #endif
                         if (ui->check_OnlineXComp->isChecked() == true)
@@ -1557,7 +1577,19 @@ MainWindow::SerialRead(
 #ifdef _WIN32
                             .append(".exe")
 #endif
-                            .append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
+                            ;
+
+                            if (strDevName.length() > MaxOldDevNameSize)
+                            {
+                                //Add legacy 8-character name
+                                strMessage.append("\" or \"XComp_").append(strDevName.left(MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3))
+#ifdef _WIN32
+                                .append(".exe")
+#endif
+                                ;
+                            }
+
+                            strMessage.append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
                             gpmErrorForm->show();
                             gpmErrorForm->SetMessage(&strMessage);
                             gbTermBusy = false;
