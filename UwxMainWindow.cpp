@@ -4402,8 +4402,6 @@ MainWindow::replyFinished(
                             //Set the total number of lines for the original file
                             lstFileData.at(0)->iEndingLine = tmpData.count("\n")+2;
 
-qDebug() << tmpData;
-
                             //Append the data to the POST request
                             baPostData.append(tmpData);
                             baPostData.append("\r\n-----------------------------17192614014659--\r\n");
@@ -4523,37 +4521,24 @@ qDebug() << tmpData;
                             if (iLineNumber >= 1 && iLineNumber < 200000)
                             {
                                 //Line number seems valid, search for the file
-/*qint16 ia = lstFileData.length()-1;
-while (ia >= 0)
-{
-//Free up each element and delete it
-FileSStruct *tempFileS = lstFileData.at(ia);
-qDebug() << tempFileS->strFilename << ": " << tempFileS->iStartingLine << ", " << tempFileS->iEndingLine;
---ia;
-}*/
-qDebug() << "Error is on #" << iLineNumber;
                                 qint16 iCFile = lstFileData.length()-1;
-                                qint16 tst = 0;
+                                qint16 iCLine = 0;
                                 while (iCFile >= 0)
                                 {
                                     //Search for the file with the error
                                     FileSStruct *tempFileS = lstFileData.at(iCFile);
-qDebug() << "check: " << tempFileS->strFilename << ": " << tempFileS->iStartingLine << ", " << tempFileS->iEndingLine << ", " << tempFileS->iLineSpaces;
-                                    //if (tempFileS->iStartingLine >= iLineNumber && tempFileS->iEndingLine <= iLineNumber)
                                     if (tempFileS->iStartingLine <= iLineNumber && tempFileS->iEndingLine >= iLineNumber)
                                     {
                                         //Found the file
                                         qint16 iFPos = strMessage.indexOf("File   : ");
                                         strMessage.remove(strMessage.indexOf("File   : ")-1, strMessage.indexOf("\n", strMessage.indexOf("Line   : "))-strMessage.indexOf("File   : ")+2);
-                                        strMessage.insert(iFPos-1, QString("File   : ").append(tempFileS->strFilename).append("\n").append("Line   : ").append(QString::number(iLineNumber - tempFileS->iStartingLine + 1
--(tst > 0 && iCFile == 0 ? tst+1 : 0)
-)).append("\n"));
+                                        strMessage.insert(iFPos-1, QString("File   : ").append(tempFileS->strFilename).append("\n").append("Line   : ").append(QString::number(iLineNumber - tempFileS->iStartingLine + 1 - (iCLine > 0 && iCFile == 0 ? iCLine+1 : 0))).append("\n"));
                                         break;
                                     }
                                     else if (tempFileS->iStartingLine <= iLineNumber)
                                     {
-                                        //
-                                        tst += tempFileS->iEndingLine-tempFileS->iStartingLine - tempFileS->iLineSpaces;
+                                        //Not this file
+                                        iCLine += tempFileS->iEndingLine-tempFileS->iStartingLine - tempFileS->iLineSpaces;
                                     }
                                     --iCFile;
                                 }
