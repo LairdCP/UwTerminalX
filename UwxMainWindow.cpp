@@ -4332,7 +4332,7 @@ MainWindow::replyFinished(
                             file.close();
 
                             //Include other files
-                            QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})\"(.*?)\"");
+                            QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})(.*?)$");
                             reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
                             bool bChangedState = true;
                             while (bChangedState == true)
@@ -4343,8 +4343,66 @@ MainWindow::replyFinished(
                                 {
                                     //Found an include, add the file data
                                     QRegularExpressionMatch ThisMatch = rx1match.next();
+                                    QString strIncludeName = QString(ThisMatch.captured(5)).replace("\r", "").replace("\n", "");
 
-                                    file.setFileName(QString(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/")));
+                                    if (strIncludeName.indexOf("\"") == -1)
+                                    {
+                                        //Include from a variable
+                                        QRegularExpression reTempRE2("(^|:)(\\s{0,})#(\\s{0,})define(\\s{1,})(.*?)(\\s{1,})(.*?)$");
+                                        reTempRE2.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
+                                        QRegularExpressionMatchIterator rx2match = reTempRE2.globalMatch(tmpData);
+                                        bool bFoundVariable = false;
+                                        while (rx2match.hasNext())
+                                        {
+                                            //
+                                            QRegularExpressionMatch ThisMatch2 = rx2match.next();
+                                            if (ThisMatch2.captured(5) == strIncludeName)
+                                            {
+                                                //Found a match
+                                                strIncludeName = ThisMatch2.captured(7);
+                                                if (strIncludeName.indexOf("\"") == -1)
+                                                {
+                                                    //Another variable, search for this again
+                                                    rx2match = reTempRE2.globalMatch(tmpData);
+                                                }
+                                                else
+                                                {
+                                                    //Got the filename
+                                                    strIncludeName = strIncludeName.replace("\r", "").replace("\n", "").replace("\"", "");
+                                                    bFoundVariable = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (bFoundVariable == false)
+                                        {
+                                            //Variable not found, error
+                                            nrReply->deleteLater();
+                                            gtmrDownloadTimeoutTimer.stop();
+                                            gstrHexData = "";
+                                            if (!gtmrTextUpdateTimer.isActive())
+                                            {
+                                                gtmrTextUpdateTimer.start();
+                                            }
+                                            gchTermMode = 0;
+                                            gchTermMode2 = 0;
+                                            gbTermBusy = false;
+                                            ui->btn_Cancel->setEnabled(false);
+                                            QString strMessage = QString("Failed to find variable ").append(strIncludeName).append(" for include file in: ").append(fiFileInfo.path()).append("/").append(lstFileData.last()->strFilename);
+                                            gpmErrorForm->show();
+                                            gpmErrorForm->SetMessage(&strMessage);
+                                            return;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //Remove quotes
+                                        strIncludeName = strIncludeName.replace("\"", "");
+                                    }
+
+                                    //Open the file
+                                    file.setFileName(QString(fiFileInfo.path()).append("/").append(strIncludeName.replace("\\", "/")));
                                     if (!file.open(QIODevice::ReadOnly | QFile::Text))
                                     {
                                         //Failed to open include file
@@ -4360,7 +4418,7 @@ MainWindow::replyFinished(
                                         gbTermBusy = false;
                                         ui->btn_Cancel->setEnabled(false);
 
-                                        QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(ThisMatch.captured(5).replace("\\", "/"));
+                                        QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(strIncludeName.replace("\\", "/"));
                                         gpmErrorForm->show();
                                         gpmErrorForm->SetMessage(&strMessage);
                                         return;
@@ -4369,7 +4427,7 @@ MainWindow::replyFinished(
                                     //Use a string ref to count the number of lines
                                     QStringRef strrefLines(&tmpData, 0, tmpData.indexOf(ThisMatch.captured(0)));
                                     tempFileS = new FileSStruct();
-                                    tempFileS->strFilename = ThisMatch.captured(5);
+                                    tempFileS->strFilename = strIncludeName;
                                     tempFileS->iStartingLine = strrefLines.count("\n")+2;
                                     tempFileS->iLineSpaces = ThisMatch.captured(0).count("\n");
 
@@ -6053,7 +6111,7 @@ MainWindow::UpdateSettings(
     {
         if (intMinor <= 4)
         {
-            if (qcDelta == 0 || (qcDelta >= 'a' && qcDelta <= 'b'))
+            if (qcDelta.isNull() || (qcDelta >= 'a' && qcDelta <= 'b'))
             {
                 //Add new RM186 and RM191 devices
                 int i = 1;
@@ -6082,7 +6140,7 @@ MainWindow::UpdateSettings(
 
         if (intMinor <= 5)
         {
-            if (qcDelta == 0)
+            if (qcDelta.isNull())
             {
                 //Add new BL652 device
                 int i = 1;
