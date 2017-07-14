@@ -80,121 +80,124 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define ServerHost                        "uwterminalx.no-ip.org" //Hostname/IP of online xcompile server
 #ifndef QT_NO_SSL
     #define UseSSL //By default enable SSL if Qt supports it (requires OpenSSL runtime libraries). Comment this line out to build without SSL support or if you get errors when communicating with the server
 #endif
-//Defines for various file download functions
-#define MODE_COMPILE                      1
-#define MODE_COMPILE_LOAD                 2
-#define MODE_COMPILE_LOAD_RUN             3
-#define MODE_LOAD                         4
-#define MODE_LOAD_RUN                     5
-#define MODE_SERVER_COMPILE               9
-#define MODE_SERVER_COMPILE_LOAD          10
-#define MODE_SERVER_COMPILE_LOAD_RUN      11
-#define MODE_CHECK_ERROR_CODE_VERSIONS    14
-#define MODE_CHECK_UWTERMINALX_VERSIONS   15
-#define MODE_UPDATE_ERROR_CODE            16
-#define MODE_CHECK_FIRMWARE_VERSIONS      17
-#define MODE_CHECK_FIRMWARE_SUPPORT       18
-//Defines for version and functions
-#define UwVersion                         "1.08p" //Version string
+
+/******************************************************************************/
+// Constants
+/******************************************************************************/
+const QString ServerHost                      = "uwterminalx.no-ip.org"; //Hostname/IP of online xcompile server
+//Constants for various file download functions
+const qint8 MODE_COMPILE                      = 1;
+const qint8 MODE_COMPILE_LOAD                 = 2;
+const qint8 MODE_COMPILE_LOAD_RUN             = 3;
+const qint8 MODE_LOAD                         = 4;
+const qint8 MODE_LOAD_RUN                     = 5;
+const qint8 MODE_SERVER_COMPILE               = 9;
+const qint8 MODE_SERVER_COMPILE_LOAD          = 10;
+const qint8 MODE_SERVER_COMPILE_LOAD_RUN      = 11;
+const qint8 MODE_CHECK_ERROR_CODE_VERSIONS    = 14;
+const qint8 MODE_CHECK_UWTERMINALX_VERSIONS   = 15;
+const qint8 MODE_UPDATE_ERROR_CODE            = 16;
+const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
+const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
+//Constants for version and functions
+const QString UwVersion                       = "1.08q"; //Version string
 //
-#define FileReadBlock                     512     //Number of bytes to read per block when streaming files
-#define StreamProgress                    10000   //Number of bytes between streaming progress updates
-#define BatchTimeout                      4000    //Time (in ms) to wait for getting a response from a batch command for
-#define PrePostXCompTimeout               15000   //Time (in ms) to allow a pre/post XCompilation process to execute for
-#define ModuleTimeout                     4000    //Time (in ms) that a download stage command/process times out (module)
-#define MaxOldDevNameSize                 8       //Size (in characters) to allow for older module device names (characters past this point will be chopped off)
-#define MaxDevNameSize                    18      //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
-#define AutoBaudTimeout                   1200    //Time (in ms) to wait before checking the next baud rate when automatically detecting the module's baud rate
-//Defines for default config values
-#define DefaultLogFile                    "UwTerminalX.log"
-#define DefaultLogMode                    0
-#define DefaultLogEnable                  0
-#define DefaultCompilerDir                "compilers/"
-#define DefaultCompilerSubDirs            0
-#define DefaultDelUWCAfterDownload        0
-#define DefaultSysTrayIcon                1
-#define DefaultSerialSignalCheckInterval  50
-#define DefaultPrePostXCompRun            0
-#define DefaultPrePostXCompFail           0
-#define DefaultPrePostXCompMode           0
-#define DefaultPrePostXCompPath           ""
-#define DefaultOnlineXComp                1
-#define DefaultTextUpdateInterval         80
-#define DefaultSkipDownloadDisplay        1
-#define DefaultSSLEnable                  1
-#define DefaultShowFileSize               1
-#define DefaultConfirmClear               1
-#define DefaultShiftEnterLineSeparator    1
-#define DefaultLicenceCheckMode           1
-//Define the protocol
+const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
+const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
+const qint16 BatchTimeout                     = 4000;    //Time (in ms) to wait for getting a response from a batch command for
+const qint16 PrePostXCompTimeout              = 15000;   //Time (in ms) to allow a pre/post XCompilation process to execute for
+const qint16 ModuleTimeout                    = 4000;    //Time (in ms) that a download stage command/process times out (module)
+const qint8 MaxOldDevNameSize                 = 8;       //Size (in characters) to allow for older module device names (characters past this point will be chopped off)
+const qint8 MaxDevNameSize                    = 18;      //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
+const qint16 AutoBaudTimeout                  = 1200;    //Time (in ms) to wait before checking the next baud rate when automatically detecting the module's baud rate
+//Constants for default config values
+const QString DefaultLogFile                  = "UwTerminalX.log";
+const bool DefaultLogMode                     = 0;
+const bool DefaultLogEnable                   = 0;
+const QString DefaultCompilerDir              = "compilers/";
+const bool DefaultCompilerSubDirs             = 0;
+const bool DefaultDelUWCAfterDownload         = 0;
+const bool DefaultSysTrayIcon                 = 1;
+const qint16 DefaultSerialSignalCheckInterval = 50;
+const bool DefaultPrePostXCompRun             = 0;
+const bool DefaultPrePostXCompFail            = 0;
+const bool DefaultPrePostXCompMode            = 0;
+const QString DefaultPrePostXCompPath         = "";
+const bool DefaultOnlineXComp                 = 1;
+const qint16 DefaultTextUpdateInterval        = 80;
+const bool DefaultSkipDownloadDisplay         = 1;
+const bool DefaultSSLEnable                   = 1;
+const bool DefaultShowFileSize                = 1;
+const bool DefaultConfirmClear                = 1;
+const bool DefaultShiftEnterLineSeparator     = 1;
+const bool DefaultLicenceCheckMode            = 1;
+//Constants the protocol
 #ifndef UseSSL
     //HTTP
-    #define WebProtocol "http"
+    const QString WebProtocol = "http";
 #endif
-//Defines for array indexes
-#define FilenameIndexApplication          0
-#define FilenameIndexOthers               1
-//Defines for right click menu options
-#define MenuActionXCompile                1
-#define MenuActionXCompileLoad            2
-#define MenuActionXCompileLoadRun         3
-#define MenuActionLoad                    4
-#define MenuActionLoadRun                 5
-#define MenuActionErrorHex                6
-#define MenuActionErrorInt                7
-#define MenuActionLoopback                8
-#define MenuActionLoad2                   9
-#define MenuActionEraseFile               10
-#define MenuActionDir                     11
-#define MenuActionRun                     12
-#define MenuActionDebug                   13
-#define MenuActionDataFile                14
-#define MenuActionEraseFile2              15
-#define MenuActionClearFilesystem         16
-#define MenuActionMultiDataFile           17
-#define MenuActionStreamFile              18
-#define MenuActionFont                    19
-#define MenuActionRun2                    20
-#define MenuActionAutomation              21
-#define MenuActionScripting               22
-#define MenuActionBatch                   23
-#define MenuActionClearModule             24
-#define MenuActionClearDisplay            25
-#define MenuActionClearRxTx               26
-#define MenuActionCopy                    27
-#define MenuActionCopyAll                 28
-#define MenuActionPaste                   29
-#define MenuActionSelectAll               30
-//Defines for balloon (notification area) icon options
-#define BalloonActionShow                 1
-#define BalloonActionExit                 2
-//Defines for speed test menu
-#define SpeedMenuActionRecv               1
-#define SpeedMenuActionSend               2
-#define SpeedMenuActionSendRecv           3
-#define SpeedMenuActionSendRecv5Delay     4
-#define SpeedMenuActionSendRecv10Delay    5
-#define SpeedMenuActionSendRecv15Delay    6
-#define SpeedModeInactive                 0b00
-#define SpeedModeRecv                     0b01
-#define SpeedModeSend                     0b10
-#define SpeedModeSendRecv                 0b11
-//Defines for the selector tab
-#define TabTerminal                       0
-#define TabConfig                         1
-#define TabSpeedTest                      2
-#define TabUpdate                         3
-#define TabAbout                          4
-#define TabLogs                           5
-#define TabEditor                         6
-//Defines for speed testing
-#define SpeedTestChunkSize                512  //Maximum number of bytes to send per chunk when speed testing
-#define SpeedTestMinBufSize               128  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
-#define SpeedTestStatUpdateTime           500  //Time (in ms) between status updates for speed test mode
+const qint8 FilenameIndexApplication          = 0;
+const qint8 FilenameIndexOthers               = 1;
+//Constants for right click menu options
+const qint8 MenuActionXCompile                = 1;
+const qint8 MenuActionXCompileLoad            = 2;
+const qint8 MenuActionXCompileLoadRun         = 3;
+const qint8 MenuActionLoad                    = 4;
+const qint8 MenuActionLoadRun                 = 5;
+const qint8 MenuActionErrorHex                = 6;
+const qint8 MenuActionErrorInt                = 7;
+const qint8 MenuActionLoopback                = 8;
+const qint8 MenuActionLoad2                   = 9;
+const qint8 MenuActionEraseFile               = 10;
+const qint8 MenuActionDir                     = 11;
+const qint8 MenuActionRun                     = 12;
+const qint8 MenuActionDebug                   = 13;
+const qint8 MenuActionDataFile                = 14;
+const qint8 MenuActionEraseFile2              = 15;
+const qint8 MenuActionClearFilesystem         = 16;
+const qint8 MenuActionMultiDataFile           = 17;
+const qint8 MenuActionStreamFile              = 18;
+const qint8 MenuActionFont                    = 19;
+const qint8 MenuActionRun2                    = 20;
+const qint8 MenuActionAutomation              = 21;
+const qint8 MenuActionScripting               = 22;
+const qint8 MenuActionBatch                   = 23;
+const qint8 MenuActionClearModule             = 24;
+const qint8 MenuActionClearDisplay            = 25;
+const qint8 MenuActionClearRxTx               = 26;
+const qint8 MenuActionCopy                    = 27;
+const qint8 MenuActionCopyAll                 = 28;
+const qint8 MenuActionPaste                   = 29;
+const qint8 MenuActionSelectAll               = 30;
+//Constants for balloon (notification area) icon options
+const qint8 BalloonActionShow                 = 1;
+const qint8 BalloonActionExit                 = 2;
+//Constants for speed test menu
+const qint8 SpeedMenuActionRecv               = 1;
+const qint8 SpeedMenuActionSend               = 2;
+const qint8 SpeedMenuActionSendRecv           = 3;
+const qint8 SpeedMenuActionSendRecv5Delay     = 4;
+const qint8 SpeedMenuActionSendRecv10Delay    = 5;
+const qint8 SpeedMenuActionSendRecv15Delay    = 6;
+const qint8 SpeedModeInactive                 = 0b00;
+const qint8 SpeedModeRecv                     = 0b01;
+const qint8 SpeedModeSend                     = 0b10;
+const qint8 SpeedModeSendRecv                 = 0b11;
+//Constants for the selector tab
+const qint8 TabTerminal                       = 0;
+const qint8 TabConfig                         = 1;
+const qint8 TabSpeedTest                      = 2;
+const qint8 TabUpdate                         = 3;
+const qint8 TabAbout                          = 4;
+const qint8 TabLogs                           = 5;
+const qint8 TabEditor                         = 6;
+//Constants for speed testing
+const qint16 SpeedTestChunkSize               = 512;  //Maximum number of bytes to send per chunk when speed testing
+const qint16 SpeedTestMinBufSize              = 128;  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
+const qint16 SpeedTestStatUpdateTime          = 500;  //Time (in ms) between status updates for speed test mode
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
