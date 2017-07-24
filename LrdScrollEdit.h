@@ -27,11 +27,14 @@
 // Include Files
 /******************************************************************************/
 #include <QPlainTextEdit>
+#include <QApplication>
 #include <QKeyEvent>
 #include <QString>
 #include <QScrollBar>
 #include <QMimeData>
 #include <QTextCursor>
+#include <QTextDocumentFragment>
+#include <QClipboard>
 
 /******************************************************************************/
 // Defines

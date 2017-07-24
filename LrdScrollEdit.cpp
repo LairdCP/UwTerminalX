@@ -66,6 +66,17 @@ LrdScrollEdit::eventFilter(
     {
         //Key has been pressed...
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        if ((keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier)
+        {
+            //Check if this is a shortcut for cut
+            if (QKeySequence(keyEvent->key() | Qt::ControlModifier) == QKeySequence::Cut)
+            {
+                //We can either disallow cut or treat it as a copy - we will treat it as copy
+                QApplication::clipboard()->setText(this->textCursor().selection().toPlainText());
+                return true;
+            }
+        }
+
         if (mbLineMode == true)
         {
             //Line mode
