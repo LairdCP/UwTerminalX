@@ -1431,7 +1431,7 @@ MainWindow::SerialRead(
                 ui->btn_Cancel->setEnabled(false);
 
                 //Show success message to user
-                QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9]{3,20})\r");
+                QRegularExpression reTempRE("10\t0\t([a-zA-Z0-9\\-_]{3,20})\r");
                 QRegularExpressionMatch remTempREM = reTempRE.match(gbaBatchReceive);
                 QString strMessage = tr("Successfully detected ").append((remTempREM.hasMatch() == true ? QString(remTempREM.captured(1)).append(" ") : "")).append("module on port ").append(ui->combo_COM->currentText()).append(" at baud rate ").append(ui->combo_Baud->currentText()).append(".\r\n\r\nThe port has been left open for you to communicate with the module.\r\n\r\n(Please note that it is possible to change the default module baud rate with newer firmware versions using AT+CFG 520 <baud>. Please check the smartBASIC extension manual for your module to see if this is supported and how to configure it)");
                 gpmErrorForm->show();
@@ -1863,7 +1863,7 @@ MainWindow::MenuSelected(
 {
     //Runs when a menu item is selected
     int intItem = qaAction->data().toInt();
-    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
+    if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Serial is open, allow xcompile functions
         if (intItem == MenuActionXCompile)
@@ -1921,28 +1921,12 @@ MainWindow::MenuSelected(
         //Shows a meaning for the error code selected (number as int)
         LookupErrorCode(ui->text_TermEditData->textCursor().selection().toPlainText().toInt());
     }
-    else if (intItem == MenuActionLoopback)
+    else if (intItem == MenuActionLoopback && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Enable/disable loopback mode
-        gbLoopbackMode = !gbLoopbackMode;
-        if (gbLoopbackMode == true)
-        {
-            //Enabled
-            gbaDisplayBuffer.append("\n[Loopback Enabled]\n");
-            gpMenu->actions()[7]->setText("Disable Loopback (Rx->Tx)");
-        }
-        else
-        {
-            //Disabled
-            gbaDisplayBuffer.append("\n[Loopback Disabled]\n");
-            gpMenu->actions()[7]->setText("Enable Loopback (Rx->Tx)");
-        }
-        if (!gtmrTextUpdateTimer.isActive())
-        {
-            gtmrTextUpdateTimer.start();
-        }
+        SetLoopBackMode(!gbLoopbackMode);
     }
-    else if (intItem == MenuActionEraseFile || intItem == MenuActionEraseFile2)
+    else if ((intItem == MenuActionEraseFile || intItem == MenuActionEraseFile2) && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Erase file
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -1998,7 +1982,7 @@ MainWindow::MenuSelected(
             }
         }
     }
-    else if (intItem == MenuActionDir)
+    else if (intItem == MenuActionDir && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Dir
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2015,7 +1999,7 @@ MainWindow::MenuSelected(
             gpMainLog->WriteLogData("at+dir\n");
         }
     }
-    else if (intItem == MenuActionRun || intItem == MenuActionDebug)
+    else if ((intItem == MenuActionRun || intItem == MenuActionDebug) && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Run/debug an application
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2071,7 +2055,7 @@ MainWindow::MenuSelected(
             }
         }
     }
-    else if (intItem == MenuActionClearFilesystem)
+    else if (intItem == MenuActionClearFilesystem && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Clear filesystem
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2092,7 +2076,7 @@ MainWindow::MenuSelected(
             }
         }
     }
-    else if (intItem == MenuActionStreamFile)
+    else if (intItem == MenuActionStreamFile && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Stream out a file
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2173,7 +2157,7 @@ MainWindow::MenuSelected(
             ui->text_SpeedEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
         }
     }
-    else if (intItem == MenuActionRun2)
+    else if (intItem == MenuActionRun2 && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Runs an application
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2285,7 +2269,7 @@ MainWindow::MenuSelected(
         gusScriptingForm->SetEditorFocus();
     }
 #endif
-    else if (intItem == MenuActionBatch)
+    else if (intItem == MenuActionBatch && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Start a Batch file script
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -2353,7 +2337,7 @@ MainWindow::MenuSelected(
             }
         }
     }
-    else if (intItem == MenuActionClearModule)
+    else if (intItem == MenuActionClearModule && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Clear module
         if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
@@ -6643,13 +6627,16 @@ MainWindow::ScriptStartRequest(
         //Serial port is not open
         chReason = ScriptingReasonPortClosed;
     }
-    else if (gbTermBusy == true)
+    else if (gbTermBusy == true || gbSpeedTestRunning == true)
     {
         //Terminal is busy
         chReason = ScriptingReasonTermBusy;
     }
     else
     {
+        //Disable loopback mode if active
+        SetLoopBackMode(false);
+
         //Terminal is free: allow script execution
         gbScriptingRunning = true;
         gbTermBusy = true;
@@ -6840,6 +6827,9 @@ MainWindow::SpeedMenuSelected(
             gpmErrorForm->SetMessage(&strMessage);
             return;
         }
+
+        //Disable loopback mode if active
+        SetLoopBackMode(false);
 
         //Enable testing
         gintSpeedTestDataBits = gspSerialPort.dataBits();
@@ -7735,6 +7725,37 @@ MainWindow::BitsBytesConvert(
 
     //Return the value
     return iTemp;
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::SetLoopBackMode(
+    bool bNewMode
+    )
+{
+    //Enables or disables loopback mode
+    if (gbLoopbackMode != bNewMode)
+    {
+        //Change loopback mode
+        gbLoopbackMode = bNewMode;
+        if (gbLoopbackMode == true)
+        {
+            //Enabled
+            gbaDisplayBuffer.append("\n[Loopback Enabled]\n");
+            gpMenu->actions()[7]->setText("Disable Loopback (Rx->Tx)");
+        }
+        else
+        {
+            //Disabled
+            gbaDisplayBuffer.append("\n[Loopback Disabled]\n");
+            gpMenu->actions()[7]->setText("Enable Loopback (Rx->Tx)");
+        }
+        if (!gtmrTextUpdateTimer.isActive())
+        {
+            gtmrTextUpdateTimer.start();
+        }
+    }
 }
 
 /******************************************************************************/
