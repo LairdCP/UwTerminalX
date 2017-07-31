@@ -36,7 +36,13 @@
 #endif
 #ifdef _WIN32
     //Windows
-    #define OS "Win"
+    #ifdef _WIN64
+        //Windows 64-bit
+        #define OS "Windows (x86_64)"
+    #else
+        //Windows 32-bit
+        #define OS "Windows (x86)"
+    #endif
 #elif __APPLE__
     #include "TargetConditionals.h"
     #if TARGET_OS_MAC
@@ -479,6 +485,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         //System tray enabled and available on system, set it up with contect menu/icon and show it
         gpSysTray = new QSystemTrayIcon;
         gpSysTray->setContextMenu(gpBalloonMenu);
+        gpSysTray->setToolTip(QString("UwTerminalX v").append(UwVersion));
         gpSysTray->setIcon(QIcon(*gpUw16Pixmap));
         gpSysTray->show();
         gbSysTrayEnabled = true;
@@ -3011,6 +3018,12 @@ MainWindow::OpenDevice(
             ui->label_TermConn->setText(ui->statusBar->currentMessage());
             ui->label_SpeedConn->setText(ui->statusBar->currentMessage());
 
+            //Update tooltip of system tray
+            if (gbSysTrayEnabled == true)
+            {
+                gpSysTray->setToolTip(QString("UwTerminalX v").append(UwVersion).append(" (").append(ui->combo_COM->currentText()).append(")"));
+            }
+
             //Switch to Terminal tab if not on terminal or speed testing tab
             if (ui->selector_Tab->currentIndex() != TabTerminal && ui->selector_Tab->currentIndex() != TabSpeedTest)
             {
@@ -5417,6 +5430,12 @@ MainWindow::SerialPortClosing(
         gusScriptingForm->SerialPortStatus(false);
     }
 #endif
+
+    //Update tooltip of system tray
+    if (gbSysTrayEnabled == true)
+    {
+        gpSysTray->setToolTip(QString("UwTerminalX v").append(UwVersion));
+    }
 }
 
 //=============================================================================
