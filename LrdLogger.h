@@ -28,7 +28,7 @@
 /******************************************************************************/
 #include <QWidget>
 #include <QFile>
-#include <QTextStream>
+#include <QDataStream>
 
 /******************************************************************************/
 // Defines
@@ -37,7 +37,6 @@
 #define LOG_ERR_OPEN_ALREADY 1  //Log already open
 #define LOG_ERR_ACCESS 2        //Access denied to log file
 #define LOG_NOT_OPEN 3          //Log file not open
-#define FLUSHDATAONWRITE        //Set to flush data when it's written
 
 /******************************************************************************/
 // Class definitions
@@ -82,7 +81,7 @@ public:
 private:
     bool mbLogOpen; //True when log file is open
     QFile *mpLogFile; //Contains the handle of log file
-    QTextStream *mpStreamOut; //Contains the handle to the text steam
+    QDataStream *mpStreamOut; //Contains the handle to the data steam
 };
 
 #endif // LRDLOGGER_H
