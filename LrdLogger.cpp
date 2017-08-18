@@ -43,7 +43,6 @@ LrdLogger::~LrdLogger(
     if (mbLogOpen == true)
     {
         //Log is open, flush the buffer, close it and delete it's handle
-        mpStreamOut->flush();
         mpLogFile->flush();
         mbLogOpen = false;
         delete mpStreamOut;
@@ -69,17 +68,16 @@ LrdLogger::OpenLogFile(
             //Unable to open file
             return LOG_ERR_ACCESS;
         }
-        mpStreamOut = new QTextStream(mpLogFile);
-        mpStreamOut->setCodec("UTF-8");
-        if (bNewFile == false)
+        mpStreamOut = new QDataStream(mpLogFile);
+        if (bNewFile == false || bForceBOM == true)
         {
-            //Create UTF8 header
-            mpStreamOut->setGenerateByteOrderMark(true);
+            //Create UTF-8 header
+            mpStreamOut->writeRawData("\xEF\xBB\xBF", 3);
         }
         else
         {
             //Add a newline
-            *mpStreamOut << "\r\n";
+            mpStreamOut->writeRawData("\r\n", 2);
         }
         mbLogOpen = true;
         return LOG_OK;
@@ -100,7 +98,6 @@ LrdLogger::CloseLogFile(
     //Closes the log file
     if (mbLogOpen == true)
     {
-        mpStreamOut->flush();
         mpLogFile->flush();
         mbLogOpen = false;
         delete mpStreamOut;
@@ -119,10 +116,7 @@ LrdLogger::WriteLogData(
     if (mbLogOpen == true)
     {
         //Log opened
-        *mpStreamOut << strData.toUtf8();
-#ifdef FLUSHDATAONWRITE
-        mpStreamOut->flush();
-#endif
+        mpStreamOut->writeRawData(strData.toUtf8(), strData.toUtf8().length());
         return LOG_OK;
     }
     else
@@ -143,10 +137,7 @@ LrdLogger::WriteRawLogData(
     if (mbLogOpen == true)
     {
         //Log opened
-        *mpStreamOut << baData;
-#ifdef FLUSHDATAONWRITE
-        mpStreamOut->flush();
-#endif
+        mpStreamOut->writeRawData(baData, baData.length());
         return LOG_OK;
     }
     else
@@ -184,8 +175,12 @@ LrdLogger::ClearLog(
     //Clears out the log
     if (mbLogOpen == true)
     {
+        //Resize file to be empty
+        mpLogFile->flush();
         mpLogFile->resize(0);
-        mpStreamOut->setGenerateByteOrderMark(true);
+
+        //Write the UTF-8 BOM
+        mpStreamOut->writeRawData("\xEF\xBB\xBF", 3);
     }
 }
 
