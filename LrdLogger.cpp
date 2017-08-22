@@ -69,7 +69,7 @@ LrdLogger::OpenLogFile(
             return LOG_ERR_ACCESS;
         }
         mpStreamOut = new QDataStream(mpLogFile);
-        if (bNewFile == false || bForceBOM == true)
+        if (bNewFile == false)
         {
             //Create UTF-8 header
             mpStreamOut->writeRawData("\xEF\xBB\xBF", 3);

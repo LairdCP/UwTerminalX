@@ -3510,8 +3510,12 @@ MainWindow::MessagePass(
             //Escape string sequences
             UwxEscape::EscapeCharacters(&baDataString);
         }
+
+        //Output the data and send it to the log
         gspSerialPort.write(baDataString);
         gintQueuedTXBytes += baDataString.size();
+        gpMainLog->WriteRawLogData(baDataString);
+
         if (ui->check_Echo->isChecked() == true)
         {
             if (ui->check_ShowCLRF->isChecked() == true)
@@ -3530,8 +3534,7 @@ MainWindow::MessagePass(
                 gtmrTextUpdateTimer.start();
             }
         }
-#pragma warning("TODO: test if this works or needs to be a byte array")
-        gpMainLog->WriteLogData(QString(baDataString));
+
         if (bEscapeString == false && bFromScripting == false)
         {
             //Not escaping sequences and not from scripting form so send line end
@@ -6926,6 +6929,9 @@ MainWindow::SpeedMenuSelected(
             gintSpeedTestMatchDataLength = gbaSpeedMatchData.length();
         }
 
+        //By default, no send delay
+        gintDelayedSpeedTest = 0;
+
         if (chItem == SpeedMenuActionRecv)
         {
             //Receive only test
@@ -6947,6 +6953,7 @@ MainWindow::SpeedMenuSelected(
             if (chItem == SpeedMenuActionSendRecv5Delay || chItem == SpeedMenuActionSendRecv10Delay || chItem == SpeedMenuActionSendRecv15Delay)
             {
                 //Send after delay
+                gintDelayedSpeedTest = (chItem == SpeedMenuActionSendRecv15Delay ? 15 : (chItem == SpeedMenuActionSendRecv10Delay ? 10 : 5));
                 gtmrSpeedTestDelayTimer = new QTimer();
                 gtmrSpeedTestDelayTimer->setSingleShot(true);
                 connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
@@ -7376,8 +7383,23 @@ MainWindow::SpeedTestReceive(
 
                     if (ui->check_SpeedShowErrors->isChecked())
                     {
-                        //Show error
-                        gbaSpeedDisplayBuffer.append(QString("\r\nError: Data mismatch.\r\n\tExpected: ").append(gbaSpeedMatchData.mid(gintSpeedTestReceiveIndex, SizeToTest)).append("\r\n\tGot     : ").append(gbaSpeedReceivedData.left(SizeToTest)).append("\r\n"));
+                        //Show error - find mismatch position
+                        const QString strFirst(gbaSpeedMatchData);
+                        const QString strSecond(gbaSpeedReceivedData);
+                        quint16 iOffset = 0;
+                        while (iOffset < SizeToTest)
+                        {
+                            if (strFirst.at(gintSpeedTestReceiveIndex+iOffset) != strSecond.at(iOffset))
+                            {
+                                //Found
+                                ++iOffset;
+                                break;
+                            }
+                            ++iOffset;
+                        }
+
+                        //Add to display
+                        gbaSpeedDisplayBuffer.append(QString("\r\nError: Data mismatch.\r\n\tExpected: ").append(gbaSpeedMatchData.mid(gintSpeedTestReceiveIndex, SizeToTest)).append("\r\n\tGot     : ").append(gbaSpeedReceivedData.left(SizeToTest)).append("\r\n\tPosition: ").append(QString("-").repeated(iOffset-1).append("^")).append("\r\n\tOccurred: ").append(ui->label_SpeedTime->text()).append(" (").append(QDateTime::currentDateTime().toLocalTime().toString()).append(")\r\n"));
                         if (!gtmrSpeedUpdateTimer.isActive())
                         {
                             gtmrSpeedUpdateTimer.start();
@@ -7413,7 +7435,7 @@ MainWindow::UpdateSpeedTestValues(
     )
 {
     //Update speed test statistics
-    unsigned long lngElapsed = gtmrSpeedTimer.nsecsElapsed()/1000000;
+    qint64 lngElapsed = gtmrSpeedTimer.nsecsElapsed()/1000000;
     unsigned int intHours = (lngElapsed / 3600000);
     unsigned char chMinutes = (lngElapsed / 60000) % 60;
     unsigned char chSeconds = (lngElapsed % 60000) / 1000;
@@ -7540,7 +7562,7 @@ MainWindow::SpeedTestStopTimer(
 //=============================================================================
 void
 MainWindow::OutputSpeedTestAvgStats(
-    unsigned long lngElapsed
+    qint64 lngElapsed
     )
 {
     //Update average statistics
@@ -7550,17 +7572,17 @@ MainWindow::OutputSpeedTestAvgStats(
         if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
             //Data bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*gintSpeedTestDataBits/lngElapsed));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*gintSpeedTestDataBits/(lngElapsed-gintDelayedSpeedTest)));
         }
         else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
         {
             //All bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/lngElapsed));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/(lngElapsed-gintDelayedSpeedTest)));
         }
         else
         {
             //Bytes
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent/lngElapsed));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent/(lngElapsed-gintDelayedSpeedTest)));
         }
         ui->edit_SpeedPacketsSentAvg->setText(QString::number(gintSpeedBytesSent/gintSpeedTestMatchDataLength/lngElapsed));
     }
@@ -7653,12 +7675,12 @@ MainWindow::on_combo_SpeedDataDisplay_currentIndexChanged(
         BitByteTypes bbtTo = (ui->combo_SpeedDataDisplay->currentIndex() == 1 ? BitByteTypes::TypeDataBits : (ui->combo_SpeedDataDisplay->currentIndex() == 2 ? BitByteTypes::TypeAllBits : BitByteTypes::TypeBytes));
 
         //Convert the data
-        ui->edit_SpeedBytesSent->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent->text().toUInt(), bbtFrom, bbtTo)));
-        ui->edit_SpeedBytesRec->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec->text().toUInt(), bbtFrom, bbtTo)));
-        ui->edit_SpeedBytesSent10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent10s->text().toUInt(), bbtFrom, bbtTo)));
-        ui->edit_SpeedBytesRec10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec10s->text().toUInt(), bbtFrom, bbtTo)));
-        ui->edit_SpeedBytesSentAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSentAvg->text().toUInt(), bbtFrom, bbtTo)));
-        ui->edit_SpeedBytesRecAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRecAvg->text().toUInt(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesSent->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent->text().toULongLong(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRec->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec->text().toULongLong(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesSent10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSent10s->text().toULongLong(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRec10s->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRec10s->text().toULongLong(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesSentAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesSentAvg->text().toULongLong(), bbtFrom, bbtTo)));
+        ui->edit_SpeedBytesRecAvg->setText(QString::number(BitsBytesConvert(ui->edit_SpeedBytesRecAvg->text().toULongLong(), bbtFrom, bbtTo)));
     }
 
     if (ui->combo_SpeedDataDisplay->currentIndex() == 0)
@@ -7710,15 +7732,15 @@ MainWindow::ClearFileDataList(
 
 //=============================================================================
 //=============================================================================
-qint32
+quint64
 MainWindow::BitsBytesConvert(
-    qint32 iCount,
+    quint64 iCount,
     BitByteTypes bbtFrom,
     BitByteTypes bbtTo
     )
 {
     //Convert the value to all bits
-    qint32 iTemp = iCount;
+    quint64 iTemp = iCount;
     if (bbtFrom == BitByteTypes::TypeBytes)
     {
         //Convert from bytes
