@@ -103,7 +103,7 @@ const qint8 MODE_UPDATE_ERROR_CODE            = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
 //Constants for version and functions
-const QString UwVersion                       = "1.08t"; //Version string
+const QString UwVersion                       = "1.08u"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
@@ -292,9 +292,9 @@ public slots:
     SpeedMenuSelected(
         QAction* qaAction
         );
-    qint32
+    quint64
     BitsBytesConvert(
-        qint32 iCount,
+        quint64 iCount,
         BitByteTypes bbtFrom,
         BitByteTypes bbtTo
         );
@@ -680,7 +680,7 @@ private:
         );
     void
     OutputSpeedTestAvgStats(
-        unsigned long nsec
+        qint64 lngElapsed
         );
     void
     StreamBatchContinue(
@@ -803,6 +803,7 @@ private:
     quint8 gintSpeedTestStartStopParityBits; //Number of bits for start/stop/parity (per byte) for speed testing
     quint8 gintSpeedTestBytesBits; //Holds the current speed test combo selection option
     QList<FileSStruct *> lstFileData; //Holds a list of filenames and line numbers for the file currently being XCompiled
+    quint8 gintDelayedSpeedTest; //Stores that delay before sending data in a speed test begins
 
 protected:
     void dragEnterEvent(
