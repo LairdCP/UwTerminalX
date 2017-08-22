@@ -5190,7 +5190,35 @@ MainWindow::on_combo_PredefinedDevice_currentIndexChanged(
     )
 {
     //Load settings for current device
-    ui->combo_Baud->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Baud")), "115200").toString());
+    const QString strNewBaud = gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Baud")), "115200").toString();
+    qint8 intNewIndex = ui->combo_Baud->findText(strNewBaud, Qt::MatchExactly);
+    if (intNewIndex == -1)
+    {
+        //No existing item with an exact match, find the closest speed
+        quint32 intNewSpeed = strNewBaud.toULong();
+        while (intNewIndex < ui->combo_Baud->count())
+        {
+            if (ui->combo_Baud->itemText(intNewIndex).toUInt() > intNewSpeed)
+            {
+                //Found a speed faster than the new speed, use this
+                if (intNewIndex > 0)
+                {
+                    --intNewIndex;
+                }
+                break;
+            }
+            ++intNewIndex;
+        }
+
+        //Set current index to closest speed and then update speed with new speed
+        ui->combo_Baud->setCurrentIndex(intNewIndex);
+        ui->combo_Baud->setCurrentText(strNewBaud);
+    }
+    else
+    {
+        //Set the current index to the existing item
+        ui->combo_Baud->setCurrentIndex(intNewIndex);
+    }
     ui->combo_Parity->setCurrentIndex(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Parity")), "0").toInt());
     ui->combo_Stop->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Stop")), "1").toString());
     ui->combo_Data->setCurrentText(gpPredefinedDevice->value(QString("Port").append(QString::number(intIndex+1).append("Data")), "8").toString());
