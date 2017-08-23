@@ -87,6 +87,10 @@ public:
     SetSerialOpen(
         bool SerialOpen
         );
+    void TrimDatIn(
+        qint32 intThreshold,
+        quint32 intSize
+        );
 
 protected:
     bool

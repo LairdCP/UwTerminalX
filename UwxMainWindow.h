@@ -103,7 +103,7 @@ const qint8 MODE_UPDATE_ERROR_CODE            = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
 //Constants for version and functions
-const QString UwVersion                       = "1.08x"; //Version string
+const QString UwVersion                       = "1.09"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
@@ -134,6 +134,9 @@ const bool DefaultShowFileSize                = 1;
 const bool DefaultConfirmClear                = 1;
 const bool DefaultShiftEnterLineSeparator     = 1;
 const bool DefaultLicenceCheckMode            = 1;
+const bool DefaultAutoDTrimBuffer             = 0; //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferThreshold = 0; //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferSize      = 0; //(Unlisted option)
 //Constants the protocol
 #ifndef UseSSL
     //HTTP
@@ -186,14 +189,6 @@ const qint8 SpeedModeInactive                 = 0b00;
 const qint8 SpeedModeRecv                     = 0b01;
 const qint8 SpeedModeSend                     = 0b10;
 const qint8 SpeedModeSendRecv                 = 0b11;
-//Constants for the selector tab
-const qint8 TabTerminal                       = 0;
-const qint8 TabConfig                         = 1;
-const qint8 TabSpeedTest                      = 2;
-const qint8 TabUpdate                         = 3;
-const qint8 TabAbout                          = 4;
-const qint8 TabLogs                           = 5;
-const qint8 TabEditor                         = 6;
 //Constants for speed testing
 const qint16 SpeedTestChunkSize               = 512;  //Maximum number of bytes to send per chunk when speed testing
 const qint16 SpeedTestMinBufSize              = 128;  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
@@ -288,6 +283,7 @@ public slots:
         bool bEscapeString,
         bool bFromScripting
         );
+#if SKIPSPEEDTEST != 1
     void
     SpeedMenuSelected(
         QAction* qaAction
@@ -298,6 +294,7 @@ public slots:
         BitByteTypes bbtFrom,
         BitByteTypes bbtTo
         );
+#endif
 
 private slots:
     void
@@ -554,6 +551,7 @@ private slots:
     ScriptFinished(
         );
 #endif
+#if SKIPSPEEDTEST != 1
     void
     on_check_SpeedRTS_stateChanged(
         int
@@ -591,12 +589,13 @@ private slots:
     SpeedTestStopTimer(
         );
     void
-    UpdateDisplayText(
-        );
-    void
     on_combo_SpeedDataDisplay_currentIndexChanged(
         int
         );
+    void
+    UpdateDisplayText(
+        );
+#endif
     void
     on_check_CheckLicense_stateChanged(
         int
@@ -664,6 +663,7 @@ private:
     RemoveZeros(
         QString strData
         );
+#if SKIPSPEEDTEST != 1
     void
     SendSpeedTestData(
         int intMaxLength
@@ -679,6 +679,7 @@ private:
     OutputSpeedTestAvgStats(
         qint64 lngElapsed
         );
+#endif
     void
     StreamBatchContinue(
         QByteArray *baOrigData
@@ -727,7 +728,9 @@ private:
     QMenu *gpSMenu2; //Submenu 2
     QMenu *gpSMenu3; //Submenu 3
     QMenu *gpBalloonMenu; //Balloon menu
+#if SKIPSPEEDTEST != 1
     QMenu *gpSpeedMenu; //Speed testing menu
+#endif
     bool gbLoopbackMode; //True if loopback mode is enabled
     bool gbSysTrayEnabled; //True if system tray is enabled
     QSystemTrayIcon *gpSysTray; //Handle for system tray object
@@ -760,6 +763,7 @@ private:
     bool gbErrorsLoaded; //True if error csv file has been loaded
     QTimer gtmrBaudTimer; //Timer for automatic baud rate detection timeout
     bool gbAutoBaud; //True if automatic baud rate detection is in progress
+    QList<FileSStruct *> lstFileData; //Holds a list of filenames and line numbers for the file currently being XCompiled
 #ifdef UseSSL
     QString WebProtocol; //Holds HTTP or HTTPS depending on options selected
     QSslCertificate *sslcLairdSSLNew = NULL; //Holds the (newer) Laird SSL certificate
@@ -776,6 +780,7 @@ private:
     bool gbScriptingRunning; //True if a script is running
 #endif
     bool gbSpeedTestRunning; //True if speed test is running
+#if SKIPSPEEDTEST != 1
     unsigned char gchSpeedTestMode; //What mode the speed test is (inactive, receive, send or send & receive)
     QElapsedTimer gtmrSpeedTimer; //Used for timing how long a speed test has been running
     QByteArray gbaSpeedDisplayBuffer; //Buffer of data to display for speed test mode
@@ -799,8 +804,13 @@ private:
     quint8 gintSpeedTestDataBits; //Number of data bits (per byte) for speed testing
     quint8 gintSpeedTestStartStopParityBits; //Number of bits for start/stop/parity (per byte) for speed testing
     quint8 gintSpeedTestBytesBits; //Holds the current speed test combo selection option
-    QList<FileSStruct *> lstFileData; //Holds a list of filenames and line numbers for the file currently being XCompiled
-    quint8 gintDelayedSpeedTest; //Stores that delay before sending data in a speed test begins
+    quint8 gintDelayedSpeedTestSend; //Stores the delay before sending data in a speed test begins (in seconds)
+    quint32 gintDelayedSpeedTestReceive; //Stores the delay before data started being received after a speed test begins (in seconds)
+    bool gbSpeedTestReceived; //Set to true when data has been received in a speed test
+#endif
+    bool gbAutoTrimDBuffer; //(Unlisted option) Set to true to automatically trim the display buffer when it reaches a threashold
+    quint32 gintAutoTrimBufferDThreshold; //(Unlisted option) Number of bytes at which to trim the display buffer
+    quint32 gintAutoTrimBufferDSize; //(Unlisted option) Number of bytes to trim the recieve buffer
 
 protected:
     void dragEnterEvent(

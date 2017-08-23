@@ -168,6 +168,7 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_Left)
             {
+                //Left key pressed
                 if (keyEvent->modifiers() & Qt::ControlModifier)
                 {
                     //Move to previous word
@@ -192,6 +193,7 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_Right)
             {
+                //Right key pressed
                 if (keyEvent->modifiers() & Qt::ControlModifier)
                 {
                     //Move to next word
@@ -216,6 +218,7 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_Home)
             {
+                //Home key pressed
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Move to beginning of line
@@ -226,6 +229,7 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_End)
             {
+                //End key pressed
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Move to end of line
@@ -236,6 +240,7 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_Delete)
             {
+                //Delete key pressed
                 if ((keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Delete word
@@ -272,6 +277,9 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
             {
+                //Move cursor to correct position to prevent inserting at wrong location if e.g. text is selected
+                this->UpdateCursor();
+
                 //Add character
                 mstrDatOut.insert(mintCurPos, keyEvent->text());
                 mintCurPos += keyEvent->text().length();
@@ -581,6 +589,22 @@ LrdScrollEdit::SetSerialOpen(
 {
     //Updates the serial open variable
     mbSerialOpen = SerialOpen;
+}
+
+//=============================================================================
+//=============================================================================
+void
+LrdScrollEdit::TrimDatIn(
+    qint32 intThreshold,
+    quint32 intSize
+    )
+{
+    //Trim the display buffer
+    if (mstrDatIn.length() > intThreshold)
+    {
+        //Threshold exceeded, trim to desired size
+        mstrDatIn.remove(0, mstrDatIn.length() - intSize);
+    }
 }
 
 /******************************************************************************/

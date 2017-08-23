@@ -1020,6 +1020,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_ConfirmClear">
+                 <property name="toolTip">
+                  <string>Enable this in order to confirm clearing the filesystem or resetting the module configuration to factory settings.</string>
+                 </property>
                  <property name="text">
                   <string>Confirm module clearing</string>
                  </property>
@@ -1030,6 +1033,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_SkipDL">
+                 <property name="toolTip">
+                  <string>Enable this to skip displaying the commands sent/received to the module when downloading a file to it.</string>
+                 </property>
                  <property name="text">
                   <string>Skip download display</string>
                  </property>
@@ -1040,6 +1046,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_ShowFileSize">
+                 <property name="toolTip">
+                  <string>Enable this to see the filesize of compiled applications.</string>
+                 </property>
                  <property name="text">
                   <string>Show application filesize</string>
                  </property>
@@ -1060,6 +1069,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_ShowCLRF">
+                 <property name="toolTip">
+                  <string>Enable this to escape various characters (CR will show as \r, LF will show as \n and Tab will show as \t).</string>
+                 </property>
                  <property name="text">
                   <string>Escape CR/LF/Tab</string>
                  </property>
@@ -1067,6 +1079,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_LineSeparator">
+                 <property name="toolTip">
+                  <string>When enabled, pressing shit+enter in the terminal will create a line separator allowing for multiple lines to be sent when enter is pressed. If disabled then shift+enter will behave the same as pressing enter and send the line.</string>
+                 </property>
                  <property name="text">
                   <string>Shift+enter line seperator</string>
                  </property>
@@ -1074,6 +1089,9 @@
                </item>
                <item>
                 <widget class="QCheckBox" name="check_EnableSSL">
+                 <property name="toolTip">
+                  <string>Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.</string>
+                 </property>
                  <property name="text">
                   <string>Enable SSL</string>
                  </property>
@@ -2407,6 +2425,31 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="check_SpeedSyncReceive">
+                <property name="toolTip">
+                 <string>Synchronise receive data timer when data is received. When unchecked it will start the receive timer when the test starts, when checked it will start the receive timer when the first packet of data is received.</string>
+                </property>
+                <property name="statusTip">
+                 <string/>
+                </property>
+                <property name="whatsThis">
+                 <string/>
+                </property>
+                <property name="accessibleDescription">
+                 <string>ok</string>
+                </property>
+                <property name="layoutDirection">
+                 <enum>Qt::RightToLeft</enum>
+                </property>
+                <property name="text">
+                 <string>Sync Receive Time</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QPushButton" name="btn_SpeedStartStop">
