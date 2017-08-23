@@ -38,7 +38,7 @@ main(
     int argc,
     char *argv[]
     )
-{    
+{
     QApplication a(argc, argv);
 #if TARGET_OS_MAC
     //Fix for Mac to stop bad styling

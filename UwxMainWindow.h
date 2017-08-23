@@ -103,7 +103,7 @@ const qint8 MODE_UPDATE_ERROR_CODE            = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
 //Constants for version and functions
-const QString UwVersion                       = "1.08v"; //Version string
+const QString UwVersion                       = "1.08w"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
@@ -788,10 +788,10 @@ private:
     QTimer gtmrSpeedTestStats10s; //Timer that runs every 10 seconds to output 10s stats for speed test
     QTimer gtmrSpeedUpdateTimer; //Timer for slower updating of speed test buffer (but less display freezing)
     QTimer *gtmrSpeedTestDelayTimer; //Timer used for delay before sending data in speed test mode
-    quint32 gintSpeedBytesReceived; //Number of bytes received from device in speed test mode
-    quint32 gintSpeedBytesReceived10s; //Number of bytes received from device in the past 10 seconds in speed test mode
-    quint32 gintSpeedBytesSent; //Number of bytes sent to the device in speed test mode
-    quint32 gintSpeedBytesSent10s; //Number of bytes sent to the device in the past 10 seconds in speed test mode
+    quint64 gintSpeedBytesReceived; //Number of bytes received from device in speed test mode
+    quint64 gintSpeedBytesReceived10s; //Number of bytes received from device in the past 10 seconds in speed test mode
+    quint64 gintSpeedBytesSent; //Number of bytes sent to the device in speed test mode
+    quint64 gintSpeedBytesSent10s; //Number of bytes sent to the device in the past 10 seconds in speed test mode
     quint32 gintSpeedBufferCount; //Number of bytes waiting to be sent to the device (waiting in the buffer) in speed test mode
     quint32 gintSpeedTestMatchDataLength; //Length of MatchData
     quint32 gintSpeedTestReceiveIndex; //Current index for RecData

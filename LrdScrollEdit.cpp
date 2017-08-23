@@ -88,6 +88,7 @@ LrdScrollEdit::eventFilter(
                     mchPosition = mchPosition-1;
                 }
                 mstrDatOut = mstrItemArray[mchPosition];
+                mintCurPos = mstrDatOut.length();
                 this->UpdateDisplay();
                 return true;
             }
@@ -99,6 +100,7 @@ LrdScrollEdit::eventFilter(
                     mchPosition = mchPosition+1;
                 }
                 mstrDatOut = mstrItemArray[mchPosition];
+                mintCurPos = mstrDatOut.length();
                 this->UpdateDisplay();
                 return true;
             }
@@ -131,45 +133,58 @@ LrdScrollEdit::eventFilter(
                     emit EnterPressed();
                 }
                 this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+                mintCurPos = 0;
                 return true;
             }
             else if (keyEvent->key() == Qt::Key_Backspace)
             {
-                this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
                 if ((keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Delete word
-                    if (mstrDatOut.indexOf(" ") != -1)
+                    quint32 intSpacePos = mintCurPos;
+                    while (intSpacePos > 0)
                     {
-                        mstrDatOut = mstrDatOut.left(mstrDatOut.lastIndexOf(" ")+1);
+                        --intSpacePos;
+                        if (mstrDatOut.at(intSpacePos) == ' ')
+                        {
+                            //Found a space
+                            break;
+                        }
                     }
-                    else
-                    {
-                        mstrDatOut = "";
-                    }
-                }
-                else
-                {
-                    //Delete character
-                    mstrDatOut = mstrDatOut.left(mstrDatOut.length()-1);
-                    if (mintCurPos > mstrDatOut.length())
-                    {
-                        --mintCurPos;
-                    }
-                }
-                this->UpdateDisplay();
-                return true;
-            }
-#pragma warning("TODO: Add left/right code to Scroll edit")
-/*            else if (keyEvent->key() == Qt::Key_Left)
-            {
-                if (keyEvent->modifiers() & Qt::ShiftModifier)
-                {
-                    //
+
+                    //Previous word found, remove up to the previous word
+                    mstrDatOut.remove(intSpacePos, mintCurPos-intSpacePos);
+                    mintCurPos -= mintCurPos-intSpacePos;
                 }
                 else if (mintCurPos > 0)
                 {
-                    //
+                    //Delete character
+                    mstrDatOut.remove(mintCurPos-1, 1);
+                    --mintCurPos;
+                }
+                this->UpdateDisplay();
+                this->UpdateCursor();
+                return true;
+            }
+            else if (keyEvent->key() == Qt::Key_Left)
+            {
+                if (keyEvent->modifiers() & Qt::ControlModifier)
+                {
+                    //Move to previous word
+                    while (mintCurPos > 0)
+                    {
+                        --mintCurPos;
+                        if (mstrDatOut.at(mintCurPos) == ' ')
+                        {
+                            //Found a space
+                            break;
+                        }
+                    }
+                    this->UpdateCursor();
+                }
+                else if (mintCurPos > 0)
+                {
+                    //Move left
                     --mintCurPos;
                     this->UpdateCursor();
                 }
@@ -177,31 +192,89 @@ LrdScrollEdit::eventFilter(
             }
             else if (keyEvent->key() == Qt::Key_Right)
             {
-                if (keyEvent->modifiers() & Qt::ShiftModifier)
+                if (keyEvent->modifiers() & Qt::ControlModifier)
                 {
-                    //
+                    //Move to next word
+                    while (mintCurPos < mstrDatOut.length())
+                    {
+                        ++mintCurPos;
+                        if (mstrDatOut.at(mintCurPos) == ' ')
+                        {
+                            //Found a space
+                            break;
+                        }
+                    }
+                    this->UpdateCursor();
                 }
                 else if (mintCurPos < mstrDatOut.length())
                 {
-                    //
+                    //Move right
                     ++mintCurPos;
                     this->UpdateCursor();
                 }
                 return true;
-            }*/
-            else if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right)
+            }
+            else if (keyEvent->key() == Qt::Key_Home)
             {
+                if (!(keyEvent->modifiers() & Qt::ControlModifier))
+                {
+                    //Move to beginning of line
+                    mintCurPos = 0;
+                    this->UpdateCursor();
+                }
+                return true;
+            }
+            else if (keyEvent->key() == Qt::Key_End)
+            {
+                if (!(keyEvent->modifiers() & Qt::ControlModifier))
+                {
+                    //Move to end of line
+                    mintCurPos = mstrDatOut.length()-1;
+                    this->UpdateCursor();
+                }
                 return true;
             }
             else if (keyEvent->key() == Qt::Key_Delete)
             {
+                if ((keyEvent->modifiers() & Qt::ControlModifier))
+                {
+                    //Delete word
+                    qint32 intSpacePos = mintCurPos;
+                    while (intSpacePos < mstrDatOut.length())
+                    {
+                        ++intSpacePos;
+                        if (mstrDatOut.at(intSpacePos) == ' ')
+                        {
+                            //Found a space
+                            break;
+                        }
+                    }
+
+                    if (intSpacePos == mstrDatOut.length())
+                    {
+                        //Next word not found, remove text from current position until end
+                        mstrDatOut.remove(mintCurPos, mstrDatOut.length()-mintCurPos);
+                    }
+                    else
+                    {
+                        //Next word found, remove up to next word
+                        mstrDatOut.remove(mintCurPos, intSpacePos-mintCurPos);
+                    }
+                }
+                else if (mstrDatOut.length() > 0)
+                {
+                    //Delete character
+                    mstrDatOut.remove(mintCurPos, 1);
+                }
+                this->UpdateDisplay();
+                this->UpdateCursor();
                 return true;
             }
             else if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && keyEvent->key() != Qt::Key_Backspace && keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock && !(keyEvent->modifiers() & Qt::ControlModifier))
             {
                 //Add character
-                this->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
-                mstrDatOut += keyEvent->text();
+                mstrDatOut.insert(mintCurPos, keyEvent->text());
+                mintCurPos += keyEvent->text().length();
             }
         }
         else
@@ -258,9 +331,11 @@ LrdScrollEdit::AddDatInText(
     )
 {
     //Adds data to the DatIn buffer
-    mstrDatIn += QString(*baDat);
-    if (mstrDatIn.length() == baDat->length() && (baDat[0] == "\r" || baDat[0] == "\n"))
+    bool bIsEmpty = mstrDatIn.isEmpty();
+    mstrDatIn += QString(baDat->replace("\r", "\n"));
+    if (bIsEmpty == true && (baDat[0] == "\r" || baDat[0] == "\n"))
     {
+        //Remove first newline
         mstrDatIn.remove(0, 1);
     }
     this->UpdateDisplay();
@@ -270,7 +345,7 @@ LrdScrollEdit::AddDatInText(
 //=============================================================================
 void
 LrdScrollEdit::AddDatOutText(
-    QString strDat
+    const QString strDat
     )
 {
     //Adds data to the DatOut buffer
@@ -278,6 +353,7 @@ LrdScrollEdit::AddDatOutText(
     {
         //Line mode
         mstrDatOut += strDat;
+        mintCurPos += strDat.toUtf8().length();
         this->UpdateDisplay();
     }
     else
@@ -299,9 +375,7 @@ LrdScrollEdit::ClearDatIn(
 {
     //Clears the DatIn buffer
     mstrDatIn.clear();
-    QTextCursor tcTmpTC(this->document());
-    tcTmpTC.setPosition(0);
-    this->setTextCursor(tcTmpTC);
+    this->moveCursor(QTextCursor::End);
     this->UpdateDisplay();
 }
 
@@ -313,6 +387,7 @@ LrdScrollEdit::ClearDatOut(
 {
     //Clears the DatOut buffer
     mstrDatOut.clear();
+    mintCurPos = 0;
     this->UpdateDisplay();
 }
 
@@ -363,7 +438,8 @@ LrdScrollEdit::insertFromMimeData(
         if (mbLineMode == true)
         {
             //Line mode
-            mstrDatOut += mdSrc->text();
+            mstrDatOut.insert(mintCurPos, mdSrc->text());
+            mintCurPos += mdSrc->text().length();
             this->UpdateDisplay();
         }
         else
@@ -401,13 +477,13 @@ LrdScrollEdit::UpdateDisplay(
             uiAnchor = this->textCursor().anchor();
             uiPosition = this->textCursor().position();
             tcTmpCur = this->textCursor();
-            if (uiAnchor > mbPrevTextSize)
+            if (uiAnchor > mintPrevTextSize)
             {
                 //Start of selected text is in the output buffer
                 bShiftStart = true;
                 uiCurrentSize = this->toPlainText().size();
             }
-            if (uiPosition > mbPrevTextSize)
+            if (uiPosition > mintPrevTextSize)
             {
                 //End of selected text is in the output buffer
                 bShiftEnd = true;
@@ -432,12 +508,9 @@ LrdScrollEdit::UpdateDisplay(
         this->setUpdatesEnabled(true);
 
         //Update previous text size variable
-        mbPrevTextSize = mstrDatIn.size();
+        mintPrevTextSize = mstrDatIn.size();
 
-        if (mintCurPos == mstrDatOut.length()-1)
-        {
-            ++mintCurPos;
-        }
+        //Update the cursor position
         this->UpdateCursor();
 
         if (uiAnchor != 0 || uiPosition != 0)
@@ -483,20 +556,20 @@ LrdScrollEdit::UpdateCursor(
     )
 {
     //Updates the text control's cursor position
-#pragma warning("TODO: Add update cursor code.")
-    /*
-    QTextCursor tcTmpCur = this->textCursor();
-    if (mstrDatIn.length() > 0)
+    if (mbLocalEcho == true && mbLineMode == true)
     {
-        tcTmpCur.setPosition(mstrDatIn.length()+1+mintCurPos);
+        //Local echo mode and line mode are enabled so move the cursor
+        QTextCursor tcTmpCur = this->textCursor();
+        if (mstrDatIn.length() > 0)
+        {
+            tcTmpCur.setPosition(mstrDatIn.length()+mintCurPos);
+        }
+        else
+        {
+            tcTmpCur.setPosition(mintCurPos);
+        }
+        this->setTextCursor(tcTmpCur);
     }
-    else
-    {
-        tcTmpCur.setPosition(mintCurPos);
-    }
-    this->setTextCursor(tcTmpCur);*/
-
-    this->moveCursor(QTextCursor::End);
 }
 
 //=============================================================================
