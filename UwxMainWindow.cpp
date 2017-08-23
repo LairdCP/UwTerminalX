@@ -1164,8 +1164,7 @@ MainWindow::on_btn_TermClose_clicked(
                 gtmrSpeedTestDelayTimer = 0;
             }
 
-            ui->btn_SpeedStop->setEnabled(false);
-            ui->btn_SpeedStart->setEnabled(false);
+            ui->btn_SpeedStartStop->setEnabled(false);
             ui->combo_SpeedDataType->setEnabled(true);
             if (ui->combo_SpeedDataType->currentIndex() == 1)
             {
@@ -1259,7 +1258,7 @@ MainWindow::on_btn_TermClose_clicked(
         ui->btn_LogFileSelect->setEnabled(true);
 
         //Disable speed testing
-        ui->btn_SpeedStart->setEnabled(false);
+        ui->btn_SpeedStartStop->setEnabled(false);
     }
 
     //Update images
@@ -1379,6 +1378,7 @@ MainWindow::SerialRead(
     {
         //Speed test is not running
         QByteArray baOrigData = gspSerialPort.readAll();
+
 #ifndef SKIPSCRIPTINGFORM
         if (gusScriptingForm != 0 && gbScriptingRunning == true)
         {
@@ -3092,7 +3092,7 @@ MainWindow::OpenDevice(
             ui->btn_LogFileSelect->setEnabled(false);
 
             //Enable speed testing
-            ui->btn_SpeedStart->setEnabled(true);
+            ui->btn_SpeedStartStop->setEnabled(true);
 
             //Open log file
             if (ui->check_LogEnable->isChecked() == true)
@@ -3376,8 +3376,7 @@ MainWindow::SerialError(
                 gtmrSpeedTestDelayTimer = 0;
             }
 
-            ui->btn_SpeedStop->setEnabled(false);
-            ui->btn_SpeedStart->setEnabled(false);
+            ui->btn_SpeedStartStop->setEnabled(false);
             ui->combo_SpeedDataType->setEnabled(true);
             if (ui->combo_SpeedDataType->currentIndex() == 1)
             {
@@ -6745,115 +6744,113 @@ MainWindow::on_btn_SpeedClear_clicked(
 //=============================================================================
 //=============================================================================
 void
+MainWindow::on_btn_SpeedStartStop_clicked(
+    )
+{
+    //Speed test start/stop button pressed
+    if (ui->btn_SpeedStartStop->text().indexOf(tr("ancel")) == -1)
+    {
+        //Speed testing start button pressed, Show speed test menu
+        gpSpeedMenu->popup(QCursor::pos());
+    }
+    else
+    {
+        //Speed testing stop button pressed
+        if (gtmrSpeedTestDelayTimer != 0)
+        {
+            //Clean up delayed send data timer
+            if (gtmrSpeedTestDelayTimer->isActive())
+            {
+                if (gchSpeedTestMode == SpeedModeRecv)
+                {
+                    //Cancel instantly
+                    gchSpeedTestMode = SpeedModeInactive;
+                }
+                gtmrSpeedTestDelayTimer->stop();
+            }
+            disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
+            disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+            delete gtmrSpeedTestDelayTimer;
+            gtmrSpeedTestDelayTimer = 0;
+        }
+
+        if ((gchSpeedTestMode == SpeedModeSendRecv || gchSpeedTestMode == SpeedModeRecv) && (gintSpeedBytesReceived10s > 0 || ui->edit_SpeedBytesRec10s->text().toInt() > 0))
+        {
+            //Data has been received in the past 10 seconds: start a timer before stopping to catch the extra data packets
+            gchSpeedTestMode = SpeedModeRecv;
+            gtmrSpeedTestDelayTimer = new QTimer();
+            gtmrSpeedTestDelayTimer->setSingleShot(true);
+            connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+            gtmrSpeedTestDelayTimer->start(5000);
+
+            //Show message that test will end soon
+            ui->statusBar->showMessage("Waiting 5 seconds for packets to be received... Click cancel again to stop instantly.");
+        }
+        else if (gchSpeedTestMode == SpeedModeSendRecv || gchSpeedTestMode == SpeedModeSend)
+        {
+            //Delay for 5 seconds for buffer to clear
+            gchSpeedTestMode = SpeedModeInactive;
+            gtmrSpeedTestDelayTimer = new QTimer();
+            gtmrSpeedTestDelayTimer->setSingleShot(true);
+            connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+            gtmrSpeedTestDelayTimer->start(5000);
+
+            //Show message that test will end soon
+            ui->statusBar->showMessage("Waiting 5 seconds for buffers to empty... Click cancel again to stop instantly.");
+        }
+        else
+        {
+            //Change control status
+            ui->btn_SpeedStartStop->setText(tr("&Start Test"));
+            ui->combo_SpeedDataType->setEnabled(true);
+            if (ui->combo_SpeedDataType->currentIndex() == 1)
+            {
+                //Enable string options
+                ui->edit_SpeedTestData->setEnabled(true);
+                ui->check_SpeedStringUnescape->setEnabled(true);
+            }
+
+            //Update values
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
+
+            //Set speed test as no longer running
+            gchSpeedTestMode = SpeedModeInactive;
+            gbSpeedTestRunning = false;
+
+            if (gtmrSpeedTimer.isValid())
+            {
+                //Invalidate speed test timer
+                gtmrSpeedTimer.invalidate();
+            }
+            if (gtmrSpeedTestStats.isActive())
+            {
+                //Stop stats update timer
+                gtmrSpeedTestStats.stop();
+            }
+            if (gtmrSpeedTestStats10s.isActive())
+            {
+                //Stop 10 second stats update timer
+                gtmrSpeedTestStats10s.stop();
+            }
+
+            //Clear buffers
+            gbaSpeedMatchData.clear();
+            gbaSpeedReceivedData.clear();
+
+            //Show message that test has finished
+            ui->statusBar->showMessage("Speed testing finished.");
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
 MainWindow::on_btn_SpeedClose_clicked(
     )
 {
     //Close/open port on speed test page pressed
     on_btn_TermClose_clicked();
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_SpeedStart_clicked(
-    )
-{
-    //Show speed test menu
-    gpSpeedMenu->popup(QCursor::pos());
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::on_btn_SpeedStop_clicked(
-    )
-{
-    //Speed testing stop button pressed
-    if (gtmrSpeedTestDelayTimer != 0)
-    {
-        //Clean up delayed send data timer
-        if (gtmrSpeedTestDelayTimer->isActive())
-        {
-            if (gchSpeedTestMode == SpeedModeRecv)
-            {
-                //Cancel instantly
-                gchSpeedTestMode = SpeedModeInactive;
-            }
-            gtmrSpeedTestDelayTimer->stop();
-        }
-        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
-        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
-        delete gtmrSpeedTestDelayTimer;
-        gtmrSpeedTestDelayTimer = 0;
-    }
-
-    if ((gchSpeedTestMode == SpeedModeSendRecv || gchSpeedTestMode == SpeedModeRecv) && (gintSpeedBytesReceived10s > 0 || ui->edit_SpeedBytesRec10s->text().toInt() > 0))
-    {
-        //Data has been received in the past 10 seconds: start a timer before stopping to catch the extra data packets
-        gchSpeedTestMode = SpeedModeRecv;
-        gtmrSpeedTestDelayTimer = new QTimer();
-        gtmrSpeedTestDelayTimer->setSingleShot(true);
-        connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
-        gtmrSpeedTestDelayTimer->start(5000);
-
-        //Show message that test will end soon
-        ui->statusBar->showMessage("Waiting 5 seconds for packets to be received... Click cancel again to stop instantly.");
-    }
-    else if (gchSpeedTestMode == SpeedModeSendRecv || gchSpeedTestMode == SpeedModeSend)
-    {
-        //Delay for 5 seconds for buffer to clear
-        gchSpeedTestMode = SpeedModeInactive;
-        gtmrSpeedTestDelayTimer = new QTimer();
-        gtmrSpeedTestDelayTimer->setSingleShot(true);
-        connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
-        gtmrSpeedTestDelayTimer->start(5000);
-
-        //Show message that test will end soon
-        ui->statusBar->showMessage("Waiting 5 seconds for buffers to empty... Click cancel again to stop instantly.");
-    }
-    else
-    {
-        //Change control status
-        ui->btn_SpeedStop->setEnabled(false);
-        ui->btn_SpeedStart->setEnabled(true);
-        ui->combo_SpeedDataType->setEnabled(true);
-        if (ui->combo_SpeedDataType->currentIndex() == 1)
-        {
-            //Enable string options
-            ui->edit_SpeedTestData->setEnabled(true);
-            ui->check_SpeedStringUnescape->setEnabled(true);
-        }
-
-        //Update values
-        OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
-
-        //Set speed test as no longer running
-        gchSpeedTestMode = SpeedModeInactive;
-        gbSpeedTestRunning = false;
-
-        if (gtmrSpeedTimer.isValid())
-        {
-            //Invalidate speed test timer
-            gtmrSpeedTimer.invalidate();
-        }
-        if (gtmrSpeedTestStats.isActive())
-        {
-            //Stop stats update timer
-            gtmrSpeedTestStats.stop();
-        }
-        if (gtmrSpeedTestStats10s.isActive())
-        {
-            //Stop 10 second stats update timer
-            gtmrSpeedTestStats10s.stop();
-        }
-
-        //Clear buffers
-        gbaSpeedMatchData.clear();
-        gbaSpeedReceivedData.clear();
-
-        //Show message that test has finished
-        ui->statusBar->showMessage("Speed testing finished.");
-    }
 }
 
 //=============================================================================
@@ -6886,8 +6883,7 @@ MainWindow::SpeedMenuSelected(
         gintSpeedTestStartStopParityBits = gspSerialPort.stopBits() + 1 + (gspSerialPort.parity() == QSerialPort::NoParity ? 0 : 1); //Odd/even parity is one bit and include start bit
         gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
         gbSpeedTestRunning = true;
-        ui->btn_SpeedStop->setEnabled(true);
-        ui->btn_SpeedStart->setEnabled(false);
+        ui->btn_SpeedStartStop->setText(tr("&Cancel"));
         ui->combo_SpeedDataType->setEnabled(false);
         ui->edit_SpeedTestData->setEnabled(false);
         ui->check_SpeedStringUnescape->setEnabled(false);
@@ -7545,8 +7541,7 @@ MainWindow::SpeedTestStopTimer(
     disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
     delete gtmrSpeedTestDelayTimer;
     gtmrSpeedTestDelayTimer = 0;
-    ui->btn_SpeedStop->setEnabled(false);
-    ui->btn_SpeedStart->setEnabled(true);
+    ui->btn_SpeedStartStop->setText(tr("&Start Test"));
     ui->combo_SpeedDataType->setEnabled(true);
     if (ui->combo_SpeedDataType->currentIndex() == 1)
     {
@@ -7600,19 +7595,19 @@ MainWindow::OutputSpeedTestAvgStats(
         if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
             //Data bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*gintSpeedTestDataBits/(lngElapsed-gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*(quint64)gintSpeedTestDataBits/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
         }
         else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
         {
             //All bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/(lngElapsed-gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
         }
         else
         {
             //Bytes
-            ui->edit_SpeedBytesSentAvg->setText(QString::number(gintSpeedBytesSent/(lngElapsed-gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
         }
-        ui->edit_SpeedPacketsSentAvg->setText(QString::number(gintSpeedBytesSent/gintSpeedTestMatchDataLength/lngElapsed));
+        ui->edit_SpeedPacketsSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/(quint64)gintSpeedTestMatchDataLength/(quint64)lngElapsed));
     }
 
     if ((gchSpeedTestMode & SpeedModeRecv) == SpeedModeRecv)
@@ -7621,22 +7616,22 @@ MainWindow::OutputSpeedTestAvgStats(
         if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
             //Data bits
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived*gintSpeedTestDataBits/lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*(quint64)gintSpeedTestDataBits/(quint64)lngElapsed));
         }
         else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
         {
             //All bits
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived*(gintSpeedTestDataBits + gintSpeedTestStartStopParityBits)/lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/(quint64)lngElapsed));
         }
         else
         {
             //Bytes
-            ui->edit_SpeedBytesRecAvg->setText(QString::number(gintSpeedBytesReceived/lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/(quint64)lngElapsed));
         }
         if (ui->combo_SpeedDataType->currentIndex() != 0)
         {
             //Show stats about packets
-            ui->edit_SpeedPacketsRecAvg->setText(QString::number(gintSpeedBytesReceived/gintSpeedTestMatchDataLength/lngElapsed));
+            ui->edit_SpeedPacketsRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/(quint64)gintSpeedTestMatchDataLength/(quint64)lngElapsed));
         }
     }
 }
