@@ -7,6 +7,8 @@
 #DEFINES += "SKIPERRORCODEFORM"
 #Uncomment to exclude building scripting form
 #DEFINES += "SKIPSCRIPTINGFORM=1"
+#Uncomment to exclude building speed test functionality
+#DEFINES += "SKIPSPEEDTEST=1"
 
 
 QT       += core gui serialport network

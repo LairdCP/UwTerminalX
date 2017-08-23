@@ -78,6 +78,65 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Setup the GUI
     ui->setupUi(this);
 
+#if SKIPSPEEDTEST == 1
+    //Delete speed test elements to reduce RAM usage
+    ui->tab_SpeedTest->setEnabled(false);
+    ui->edit_SpeedBytesRec->deleteLater();
+    ui->edit_SpeedBytesRec10s->deleteLater();
+    ui->edit_SpeedBytesRecAvg->deleteLater();
+    ui->edit_SpeedBytesSent->deleteLater();
+    ui->edit_SpeedBytesSent10s->deleteLater();
+    ui->edit_SpeedBytesSentAvg->deleteLater();
+    ui->edit_SpeedPacketsBad->deleteLater();
+    ui->edit_SpeedPacketsErrorRate->deleteLater();
+    ui->edit_SpeedPacketsGood->deleteLater();
+    ui->edit_SpeedPacketsRec->deleteLater();
+    ui->edit_SpeedTestData->deleteLater();
+    ui->text_SpeedEditData->deleteLater();
+    ui->combo_SpeedDataDisplay->deleteLater();
+    ui->combo_SpeedDataType->deleteLater();
+    ui->check_SpeedDTR->deleteLater();
+    ui->check_SpeedRTS->deleteLater();
+    ui->check_SpeedShowErrors->deleteLater();
+    ui->check_SpeedShowRX->deleteLater();
+    ui->check_SpeedShowTX->deleteLater();
+    ui->check_SpeedStringUnescape->deleteLater();
+    ui->check_SpeedSyncReceive->deleteLater();
+    ui->btn_SpeedClear->deleteLater();
+    ui->btn_SpeedClose->deleteLater();
+    ui->btn_SpeedCopy->deleteLater();
+    ui->btn_SpeedStartStop->deleteLater();
+    ui->edit_SpeedBytesRec->deleteLater();
+    ui->edit_SpeedBytesRec10s->deleteLater();
+    ui->edit_SpeedBytesRecAvg->deleteLater();
+    ui->edit_SpeedBytesSent->deleteLater();
+    ui->edit_SpeedBytesSent10s->deleteLater();
+    ui->edit_SpeedBytesSentAvg->deleteLater();
+    ui->edit_SpeedPacketsBad->deleteLater();
+    ui->edit_SpeedPacketsErrorRate->deleteLater();
+    ui->edit_SpeedPacketsGood->deleteLater();
+    ui->edit_SpeedPacketsRec->deleteLater();
+    ui->edit_SpeedTestData->deleteLater();
+    ui->tab_SpeedTest->deleteLater();
+#endif
+
+    //Output build information
+#if SKIPAUTOMATIONFORM == 1 || SKIPERRORCODEFORM == 1 || SKIPSCRIPTINGFORM == 1 || SKIPSPEEDTEST == 1
+    ui->text_Terms->appendPlainText("");
+#endif
+#if SKIPAUTOMATIONFORM == 1
+    ui->text_Terms->appendPlainText("[Built without Automation support]");
+#endif
+#if SKIPERRORCODEFORM == 1
+    ui->text_Terms->appendPlainText("[Built without Error code form]");
+#endif
+#if SKIPSCRIPTINGFORM == 1
+    ui->text_Terms->appendPlainText("[Built without Scripting support]");
+#endif
+#if SKIPSPEEDTEST == 1
+    ui->text_Terms->appendPlainText("[Built without Speed test support]");
+#endif
+
 #if TARGET_OS_MAC
     //On mac, get the directory of the bundle (which will be <location>/Term.app/Contents/MacOS) and go up to the folder with the file in
     QDir BundleDir(QCoreApplication::applicationDirPath());
@@ -157,8 +216,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbErrorsLoaded = false;
     gbAutoBaud = false;
     gnmManager = 0;
+#if SKIPSPEEDTEST != 1
     gtmrSpeedTestDelayTimer = 0;
     gbSpeedTestRunning = false;
+#endif
 
 #ifndef SKIPAUTOMATIONFORM
     guaAutomationForm = 0;
@@ -183,7 +244,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpMainLog = new LrdLogger();
 
     //Move to 'About' tab
-    ui->selector_Tab->setCurrentIndex(TabAbout);
+    ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_About));
 
     //Set default values for combo boxes on 'Config' tab
     ui->combo_Baud->setCurrentIndex(8);
@@ -249,6 +310,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Populate the list of devices
     RefreshSerialDevices();
 
+#if SKIPSPEEDTEST != 1
     //Setup speed test mode timers
     gtmrSpeedTestStats.setInterval(SpeedTestStatUpdateTime);
     gtmrSpeedTestStats.setSingleShot(false);
@@ -256,6 +318,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrSpeedTestStats10s.setInterval(10000);
     gtmrSpeedTestStats10s.setSingleShot(false);
     connect(&gtmrSpeedTestStats10s, SIGNAL(timeout()), this, SLOT(OutputSpeedTestStats()));
+#endif
 
     //Display version
     ui->statusBar->showMessage(QString("UwTerminalX")
@@ -311,6 +374,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpBalloonMenu->addAction("Show UwTerminalX")->setData(BalloonActionShow);
     gpBalloonMenu->addAction("Exit")->setData(BalloonActionExit);
 
+#if SKIPSPEEDTEST != 1
     //Create speed test button items
     gpSpeedMenu = new QMenu(this);
     gpSpeedMenu->addAction("Receive-only test")->setData(SpeedMenuActionRecv);
@@ -319,6 +383,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSpeedMenu->addAction("Send && receive test (delay 5 seconds)")->setData(SpeedMenuActionSendRecv5Delay);
     gpSpeedMenu->addAction("Send && receive test (delay 10 seconds)")->setData(SpeedMenuActionSendRecv10Delay);
     gpSpeedMenu->addAction("Send && receive test (delay 15 seconds)")->setData(SpeedMenuActionSendRecv15Delay);
+#endif
 
     //Disable unimplemented actions
     gpSMenu3->actions()[3]->setEnabled(false); //Multi Data File +
@@ -335,7 +400,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(gpMenu, SIGNAL(triggered(QAction*)), this, SLOT(MenuSelected(QAction*)), Qt::AutoConnection);
     connect(gpMenu, SIGNAL(aboutToHide()), this, SLOT(ContextMenuClosed()), Qt::AutoConnection);
     connect(gpBalloonMenu, SIGNAL(triggered(QAction*)), this, SLOT(balloontriggered(QAction*)), Qt::AutoConnection);
+#if SKIPSPEEDTEST != 1
     connect(gpSpeedMenu, SIGNAL(triggered(QAction*)), this, SLOT(SpeedMenuSelected(QAction*)), Qt::AutoConnection);
+#endif
 
     //Configure the module timeout timer
     gtmrDownloadTimeoutTimer.setSingleShot(true);
@@ -357,10 +424,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrTextUpdateTimer.setInterval(gpTermSettings->value("TextUpdateInterval", DefaultTextUpdateInterval).toInt());
     connect(&gtmrTextUpdateTimer, SIGNAL(timeout()), this, SLOT(UpdateReceiveText()));
 
+#if SKIPSPEEDTEST != 1
     //Set update speed display timer to be single shot only and connect to slot
     gtmrSpeedUpdateTimer.setSingleShot(true);
     gtmrSpeedUpdateTimer.setInterval(gpTermSettings->value("TextUpdateInterval", DefaultTextUpdateInterval).toInt());
     connect(&gtmrSpeedUpdateTimer, SIGNAL(timeout()), this, SLOT(UpdateDisplayText()));
+#endif
 
     //Setup timer for batch file timeout
     gtmrBatchTimeoutTimer.setSingleShot(true);
@@ -465,14 +534,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         on_combo_PredefinedDevice_currentIndexChanged(ui->combo_PredefinedDevice->currentIndex());
     }
 
-    //Add tooltips
-    ui->check_SkipDL->setToolTip("Enable this to skip displaying the commands sent/received to the module when downloading a file to it.");
-    ui->check_ShowCLRF->setToolTip("Enable this to escape various characters (CR will show as \\r, LF will show as \\n and Tab will show as \\t).");
-    ui->check_EnableSSL->setToolTip("Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.");
-    ui->check_ShowFileSize->setToolTip("Enable this to see the filesize of compiled applications.");
-    ui->check_ConfirmClear->setToolTip("Enable this in order to confirm clearing the filesystem or resetting the module configuration to factory settings.");
-    ui->check_LineSeparator->setToolTip("When enabled, pressing shit+enter in the terminal will create a line separator allowing for multiple lines to be sent when enter is pressed. If disabled then shift+enter will behave the same as pressing enter and send the line.");
-
     //Give focus to accept button
     if (ui->btn_Accept->isEnabled() == true)
     {
@@ -550,8 +611,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
     ui->text_LogData->setFont(fntTmpFnt2);
     ui->text_LogData->setTabStopWidth(tmTmpFM.width(" ")*6);
+#if SKIPSPEEDTEST != 1
     ui->text_SpeedEditData->setFont(fntTmpFnt2);
     ui->text_SpeedEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+#endif
 
     //Set resolved hostname to be empty
     gstrResolvedServer = "";
@@ -584,7 +647,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             ui->btn_Decline->setEnabled(false);
 
             //Switch to config tab
-            ui->selector_Tab->setCurrentIndex(TabConfig);
+            ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Config));
 
             //Default empty images
             ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
@@ -856,6 +919,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         }
     }
 
+    //(Unlisted option) Setup display buffer automatic trimming
+    gbAutoTrimDBuffer = gpTermSettings->value("AutoTrimDBuffer", DefaultAutoDTrimBuffer).toBool();
+    gintAutoTrimBufferDThreshold = gpTermSettings->value("AutoTrimDBufferThreshold", DefaultAutoTrimDBufferThreshold).toULongLong();
+    gintAutoTrimBufferDSize = gpTermSettings->value("AutoTrimDBufferSize", DefaultAutoTrimDBufferSize).toULongLong();
+
 #if __APPLE__
     //Show a warning to Mac users with the FTDI driver installed
     if ((QFile::exists("/System/Library/Extensions/FTDIUSBSerialDriver.kext") || QFile::exists("/Library/Extensions/FTDIUSBSerialDriver.kext")) && gpTermSettings->value("MacFTDIDriverWarningShown").isNull())
@@ -889,12 +957,13 @@ MainWindow::~MainWindow(){
     disconnect(this, SLOT(SerialError(QSerialPort::SerialPortError)));
     disconnect(this, SLOT(SerialBytesWritten(qint64)));
     disconnect(this, SLOT(UpdateReceiveText()));
-    disconnect(this, SLOT(UpdateDisplayText()));
     disconnect(this, SLOT(SerialPortClosing()));
     disconnect(this, SLOT(BatchTimeoutSlot()));
     disconnect(this, SLOT(replyFinished(QNetworkReply*)));
     disconnect(this, SLOT(DetectBaudTimeout()));
     disconnect(this, SLOT(MessagePass(QByteArray,bool,bool)));
+#if SKIPSPEEDTEST != 1
+    disconnect(this, SLOT(UpdateDisplayText()));
     disconnect(this, SLOT(UpdateSpeedTestValues()));
     disconnect(this, SLOT(OutputSpeedTestStats()));
 
@@ -911,6 +980,7 @@ MainWindow::~MainWindow(){
         disconnect(this, SLOT(SpeedTestStopTimer()));
         delete gtmrSpeedTestDelayTimer;
     }
+#endif
 
     if (gspSerialPort.isOpen() == true)
     {
@@ -1013,7 +1083,9 @@ MainWindow::~MainWindow(){
     delete gpTermSettings;
     delete gpErrorMessages;
     delete gpSignalTimer;
+#if SKIPSPEEDTEST != 1
     delete gpSpeedMenu;
+#endif
     delete gpBalloonMenu;
     delete gpSMenu3;
     delete gpSMenu2;
@@ -1078,7 +1150,7 @@ MainWindow::on_btn_Accept_clicked(
     ui->btn_Decline->setEnabled(false);
 
     //Switch to config tab
-    ui->selector_Tab->setCurrentIndex(TabConfig);
+    ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Config));
 
     //Default empty images
     ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
@@ -1099,10 +1171,10 @@ MainWindow::on_selector_Tab_currentChanged(
     int intIndex
     )
 {
-    if (ui->btn_Accept->isEnabled() == true && intIndex != TabAbout)
+    if (ui->btn_Accept->isEnabled() == true && intIndex != ui->selector_Tab->indexOf(ui->tab_About))
     {
         //Not accepted the terms yet
-        ui->selector_Tab->setCurrentIndex(TabAbout);
+        ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_About));
     }
 }
 
@@ -1152,6 +1224,7 @@ MainWindow::on_btn_TermClose_clicked(
             delete gpStreamFileHandle;
             gbaBatchReceive.clear();
         }
+#if SKIPSPEEDTEST != 1
         else if (gbSpeedTestRunning == true)
         {
             //Clear up speed testing
@@ -1165,6 +1238,7 @@ MainWindow::on_btn_TermClose_clicked(
             }
 
             ui->btn_SpeedStartStop->setEnabled(false);
+            ui->check_SpeedSyncReceive->setEnabled(true);
             ui->combo_SpeedDataType->setEnabled(true);
             if (ui->combo_SpeedDataType->currentIndex() == 1)
             {
@@ -1203,6 +1277,7 @@ MainWindow::on_btn_TermClose_clicked(
             //Show finished message in status bar
             ui->statusBar->showMessage("Speed testing failed due to serial port being closed.");
         }
+#endif
 
         //Close the serial port
         while (gspSerialPort.isOpen() == true)
@@ -1218,11 +1293,13 @@ MainWindow::on_btn_TermClose_clicked(
         //Disable active checkboxes
         ui->check_Break->setEnabled(false);
         ui->check_DTR->setEnabled(false);
-        ui->check_SpeedDTR->setEnabled(false);
         ui->check_Echo->setEnabled(false);
         ui->check_Line->setEnabled(false);
         ui->check_RTS->setEnabled(false);
+#if SKIPSPEEDTEST != 1
+        ui->check_SpeedDTR->setEnabled(false);
         ui->check_SpeedRTS->setEnabled(false);
+#endif
 
         //Disable text entry
 //        ui->text_TermEditData->setReadOnly(true);
@@ -1232,7 +1309,9 @@ MainWindow::on_btn_TermClose_clicked(
 
         //Change button text
         ui->btn_TermClose->setText("&Open Port");
+#if SKIPSPEEDTEST != 1
         ui->btn_SpeedClose->setText("&Open Port");
+#endif
 
 #ifndef SKIPAUTOMATIONFORM
         //Notify automation form
@@ -1257,8 +1336,10 @@ MainWindow::on_btn_TermClose_clicked(
         ui->check_LogAppend->setEnabled(true);
         ui->btn_LogFileSelect->setEnabled(true);
 
+#if SKIPSPEEDTEST != 1
         //Disable speed testing
         ui->btn_SpeedStartStop->setEnabled(false);
+#endif
     }
 
     //Update images
@@ -1369,6 +1450,7 @@ MainWindow::SerialRead(
     )
 {
     //Read the data into a buffer and copy it to edit for the display data
+#if SKIPSPEEDTEST != 1
     if (gbSpeedTestRunning == true)
     {
         //Serial test is running, pass to speed test function
@@ -1376,6 +1458,7 @@ MainWindow::SerialRead(
     }
     else
     {
+#endif
         //Speed test is not running
         QByteArray baOrigData = gspSerialPort.readAll();
 
@@ -1763,7 +1846,9 @@ MainWindow::SerialRead(
                 }
             }
         }
+#if SKIPSPEEDTEST != 1
     }
+#endif
 }
 
 //=============================================================================
@@ -2160,8 +2245,10 @@ MainWindow::MenuSelected(
             QFontMetrics tmTmpFM(fntTmpFnt);
             ui->text_TermEditData->setFont(fntTmpFnt);
             ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+#if SKIPSPEEDTEST != 1
             ui->text_SpeedEditData->setFont(fntTmpFnt);
             ui->text_SpeedEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+#endif
         }
     }
     else if (intItem == MenuActionRun2 && gbTermBusy == false && gbSpeedTestRunning == false)
@@ -3016,7 +3103,9 @@ MainWindow::OpenDevice(
             //Successful
             ui->statusBar->showMessage(QString("[").append(ui->combo_COM->currentText()).append(":").append(ui->combo_Baud->currentText()).append(",").append((ui->combo_Parity->currentIndex() == 0 ? "N" : ui->combo_Parity->currentIndex() == 1 ? "O" : ui->combo_Parity->currentIndex() == 2 ? "E" : "")).append(",").append(ui->combo_Data->currentText()).append(",").append(ui->combo_Stop->currentText()).append(",").append((ui->combo_Handshake->currentIndex() == 0 ? "N" : ui->combo_Handshake->currentIndex() == 1 ? "H" : ui->combo_Handshake->currentIndex() == 2 ? "S" : "")).append("]{").append((ui->radio_LCR->isChecked() ? "cr" : (ui->radio_LLF->isChecked() ? "lf" : (ui->radio_LCRLF->isChecked() ? "cr lf" : (ui->radio_LLFCR->isChecked() ? "lf cr" : ""))))).append("}"));
             ui->label_TermConn->setText(ui->statusBar->currentMessage());
+#if SKIPSPEEDTEST != 1
             ui->label_SpeedConn->setText(ui->statusBar->currentMessage());
+#endif
 
             //Update tooltip of system tray
             if (gbSysTrayEnabled == true)
@@ -3025,9 +3114,9 @@ MainWindow::OpenDevice(
             }
 
             //Switch to Terminal tab if not on terminal or speed testing tab
-            if (ui->selector_Tab->currentIndex() != TabTerminal && ui->selector_Tab->currentIndex() != TabSpeedTest)
+            if (ui->selector_Tab->currentIndex() != ui->selector_Tab->indexOf(ui->tab_Term) && ui->selector_Tab->currentIndex() != ui->selector_Tab->indexOf(ui->tab_SpeedTest))
             {
-                ui->selector_Tab->setCurrentIndex(TabTerminal);
+                ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Term));
             }
 
             //Disable read-only mode
@@ -3041,13 +3130,17 @@ MainWindow::OpenDevice(
             {
                 //Hardware handshaking
                 ui->check_RTS->setEnabled(false);
+#if SKIPSPEEDTEST != 1
                 ui->check_SpeedRTS->setEnabled(false);
+#endif
             }
             else
             {
                 //Not hardware handshaking - RTS
                 ui->check_RTS->setEnabled(true);
+#if SKIPSPEEDTEST != 1
                 ui->check_SpeedRTS->setEnabled(true);
+#endif
                 gspSerialPort.setRequestToSend(ui->check_RTS->isChecked());
             }
 
@@ -3057,13 +3150,17 @@ MainWindow::OpenDevice(
             //Enable checkboxes
             ui->check_Break->setEnabled(true);
             ui->check_DTR->setEnabled(true);
+#if SKIPSPEEDTEST != 1
             ui->check_SpeedDTR->setEnabled(true);
+#endif
             ui->check_Echo->setEnabled(true);
             ui->check_Line->setEnabled(true);
 
             //Update button text
             ui->btn_TermClose->setText("C&lose Port");
+#if SKIPSPEEDTEST != 1
             ui->btn_SpeedClose->setText("C&lose Port");
+#endif
 
             //Signal checking
             SerialStatus(1);
@@ -3091,8 +3188,10 @@ MainWindow::OpenDevice(
             ui->check_LogAppend->setEnabled(false);
             ui->btn_LogFileSelect->setEnabled(false);
 
+#if SKIPSPEEDTEST != 1
             //Enable speed testing
             ui->btn_SpeedStartStop->setEnabled(true);
+#endif
 
             //Open log file
             if (ui->check_LogEnable->isChecked() == true)
@@ -3270,11 +3369,13 @@ MainWindow::on_check_RTS_stateChanged(
 {
     //RTS status changed
     gspSerialPort.setRequestToSend(ui->check_RTS->isChecked());
+#if SKIPSPEEDTEST != 1
     if (ui->check_SpeedRTS->isChecked() != ui->check_RTS->isChecked())
     {
         //Update speed form checkbox
         ui->check_SpeedRTS->setChecked(ui->check_RTS->isChecked());
     }
+#endif
 }
 
 //=============================================================================
@@ -3285,11 +3386,13 @@ MainWindow::on_check_DTR_stateChanged(
 {
     //DTR status changed
     gspSerialPort.setDataTerminalReady(ui->check_DTR->isChecked());
+#if SKIPSPEEDTEST != 1
     if (ui->check_SpeedDTR->isChecked() != ui->check_DTR->isChecked())
     {
         //Update speed form checkbox
         ui->check_SpeedDTR->setChecked(ui->check_DTR->isChecked());
     }
+#endif
 }
 
 //=============================================================================
@@ -3364,6 +3467,7 @@ MainWindow::SerialError(
             delete gpStreamFileHandle;
             gbaBatchReceive.clear();
         }
+#if SKIPSPEEDTEST != 1
         else if (gbSpeedTestRunning == true)
         {
             //Clear up speed testing
@@ -3377,6 +3481,7 @@ MainWindow::SerialError(
             }
 
             ui->btn_SpeedStartStop->setEnabled(false);
+            ui->check_SpeedSyncReceive->setEnabled(true);
             ui->combo_SpeedDataType->setEnabled(true);
             if (ui->combo_SpeedDataType->currentIndex() == 1)
             {
@@ -3415,6 +3520,7 @@ MainWindow::SerialError(
             //Show finished message in status bar
             ui->statusBar->showMessage("Speed testing failed due to serial port error.");
         }
+#endif
 
         //No longer busy
         gbTermBusy = false;
@@ -3427,11 +3533,13 @@ MainWindow::SerialError(
         //Disable active checkboxes
         ui->check_Break->setEnabled(false);
         ui->check_DTR->setEnabled(false);
-        ui->check_SpeedDTR->setEnabled(false);
         ui->check_Echo->setEnabled(false);
         ui->check_Line->setEnabled(false);
         ui->check_RTS->setEnabled(false);
+#if SKIPSPEEDTEST != 1
+        ui->check_SpeedDTR->setEnabled(false);
         ui->check_SpeedRTS->setEnabled(false);
+#endif
 
         //Disable text entry
         ui->text_TermEditData->setReadOnly(true);
@@ -3441,7 +3549,9 @@ MainWindow::SerialError(
 
         //Change button text
         ui->btn_TermClose->setText("&Open Port");
+#if SKIPSPEEDTEST != 1
         ui->btn_SpeedClose->setText("&Open Port");
+#endif
 
         //Update images
         UpdateImages();
@@ -3586,12 +3696,14 @@ MainWindow::SerialBytesWritten(
     )
 {
     //Updates the display with the number of bytes written
+#if SKIPSPEEDTEST != 1
     if (gbSpeedTestRunning == true)
     {
         //Speed test is running, pass to speed test function
         SpeedTestBytesWritten(intByteCount);
     }
     else
+#endif
     {
         //Not running speed test
         gintTXBytes += intByteCount;
@@ -3819,6 +3931,14 @@ MainWindow::UpdateReceiveText(
     //Updates the receive text buffer
     ui->text_TermEditData->AddDatInText(&gbaDisplayBuffer);
     gbaDisplayBuffer.clear();
+
+    //(Unlisted option) Trim display buffer if required
+    if (gbAutoTrimDBuffer == true)
+    {
+        //Trim display buffer (this may split UTF-8 characters up)
+        ui->text_TermEditData->TrimDatIn(gintAutoTrimBufferDThreshold, gintAutoTrimBufferDSize);
+#pragma warning("TODO: Document trim options/add to GUI")
+    }
 }
 
 //=============================================================================
@@ -5428,7 +5548,7 @@ MainWindow::event(
     QEvent *evtEvent
     )
 {
-    if (evtEvent->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == TabTerminal)
+    if (evtEvent->type() == QEvent::WindowActivate && gspSerialPort.isOpen() == true && ui->selector_Tab->currentIndex() == ui->selector_Tab->indexOf(ui->tab_Term))
     {
         //Focus on the terminal
         ui->text_TermEditData->setFocus();
@@ -5578,7 +5698,7 @@ void
 MainWindow::on_btn_LogRefresh_clicked(
     )
 {
-    //Refreshes the log files availanble for viewing
+    //Refreshes the log files available for viewing
     ui->combo_LogFile->clear();
     ui->combo_LogFile->addItem("- No file selected -");
     QString strDirPath;
@@ -6110,6 +6230,18 @@ MainWindow::LoadSettings(
         {
             gpTermSettings->setValue("ShiftEnterLineSeparator", DefaultShiftEnterLineSeparator); //Shift+enter input (1 = line separater, 0 = newline character)
         }
+        if (gpTermSettings->value("AutoTrimDBuffer").isNull())
+        {
+            gpTermSettings->setValue("AutoTrimDBuffer", DefaultAutoDTrimBuffer); //(Unlisted option) Automatically trim display buffer if size exceeds threshold (1 = enable, 0 = disable)
+        }
+        if (gpTermSettings->value("AutoTrimDBufferThreshold").isNull())
+        {
+            gpTermSettings->setValue("AutoTrimDBufferThreshold", DefaultAutoTrimDBufferThreshold); //(Unlisted option) Threshold level for automatically trimming display buffer
+        }
+        if (gpTermSettings->value("AutoTrimDBufferSize").isNull())
+        {
+            gpTermSettings->setValue("AutoTrimDBufferSize", DefaultAutoTrimDBufferSize); //(Unlisted option) Amount of data to leave after trimming display buffer
+        }
 #ifdef UseSSL
         if (gpTermSettings->value("SSLEnable").isNull())
         {
@@ -6331,7 +6463,7 @@ MainWindow::on_combo_LogFile_currentIndexChanged(
         if (fileLogFile.open(QFile::ReadOnly | QFile::Text))
         {
             //Get the contents of the log file
-            ui->text_LogData->setPlainText(fileLogFile.readAll());
+            ui->text_LogData->setPlainText(fileLogFile.readAll().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
             fileLogFile.close();
 
             //Information about the log file
@@ -6523,7 +6655,9 @@ MainWindow::on_btn_DetectBaud_clicked(
                 {
                     //Disable DTR as it is usually connected to the autorun pin on development boards
                     ui->check_DTR->setChecked(false);
+#if SKIPSPEEDTEST != 1
                     ui->check_SpeedDTR->setChecked(false);
+#endif
                     gspSerialPort.setBreakEnabled(true);
 
                     //This is a short time for a BREAK as modules should not be operating at 2400 baud.
@@ -6709,6 +6843,7 @@ MainWindow::ScriptFinished(
 }
 #endif
 
+#if SKIPSPEEDTEST != 1
 //=============================================================================
 //=============================================================================
 void
@@ -6802,6 +6937,7 @@ MainWindow::on_btn_SpeedStartStop_clicked(
         {
             //Change control status
             ui->btn_SpeedStartStop->setText(tr("&Start Test"));
+            ui->check_SpeedSyncReceive->setEnabled(true);
             ui->combo_SpeedDataType->setEnabled(true);
             if (ui->combo_SpeedDataType->currentIndex() == 1)
             {
@@ -6884,6 +7020,7 @@ MainWindow::SpeedMenuSelected(
         gintSpeedTestBytesBits = ui->combo_SpeedDataDisplay->currentIndex();
         gbSpeedTestRunning = true;
         ui->btn_SpeedStartStop->setText(tr("&Cancel"));
+        ui->check_SpeedSyncReceive->setEnabled(false);
         ui->combo_SpeedDataType->setEnabled(false);
         ui->edit_SpeedTestData->setEnabled(false);
         ui->check_SpeedStringUnescape->setEnabled(false);
@@ -6906,6 +7043,8 @@ MainWindow::SpeedMenuSelected(
         gintSpeedTestReceiveIndex = 0;
         gintSpeedTestStatSuccess = 0;
         gintSpeedTestStatErrors = 0;
+        gbSpeedTestReceived = false;
+        gintDelayedSpeedTestReceive = 0;
 
         //Clear all text boxes
         ui->edit_SpeedPacketsBad->setText("0");
@@ -6954,7 +7093,7 @@ MainWindow::SpeedMenuSelected(
         }
 
         //By default, no send delay
-        gintDelayedSpeedTest = 0;
+        gintDelayedSpeedTestSend = 0;
 
         if (chItem == SpeedMenuActionRecv)
         {
@@ -6977,7 +7116,7 @@ MainWindow::SpeedMenuSelected(
             if (chItem == SpeedMenuActionSendRecv5Delay || chItem == SpeedMenuActionSendRecv10Delay || chItem == SpeedMenuActionSendRecv15Delay)
             {
                 //Send after delay
-                gintDelayedSpeedTest = (chItem == SpeedMenuActionSendRecv15Delay ? 15 : (chItem == SpeedMenuActionSendRecv10Delay ? 10 : 5));
+                gintDelayedSpeedTestSend = (chItem == SpeedMenuActionSendRecv15Delay ? 15 : (chItem == SpeedMenuActionSendRecv10Delay ? 10 : 5));
                 gtmrSpeedTestDelayTimer = new QTimer();
                 gtmrSpeedTestDelayTimer->setSingleShot(true);
                 connect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
@@ -6988,6 +7127,12 @@ MainWindow::SpeedMenuSelected(
                 //Send immediately
                 SendSpeedTestData(SpeedTestChunkSize);
             }
+        }
+
+        if (!ui->check_SpeedSyncReceive->isChecked())
+        {
+            //Do not synchronise the receive delay when the first data packet is received
+            gbSpeedTestReceived = true;
         }
 
         //Show message in status bar
@@ -7264,6 +7409,12 @@ MainWindow::on_btn_SpeedCopy_clicked(
         append(QString::number(baTmpBA.size())).
         append("\r\n    > Unescape: ").
         append((ui->check_SpeedStringUnescape->isChecked() ? "Yes" : "No")).
+        append("\r\n    > Send Delay: ").
+        append(QString::number(gintDelayedSpeedTestSend)).
+        append("\r\n    > Synchronise receive timer: ").
+        append((ui->check_SpeedSyncReceive->isChecked() ? "Yes" : "No")).
+        append("\r\n    > Receive Delay: ").
+        append(QString::number(gintDelayedSpeedTestReceive)).
         append("\r\n    > Test Type: ").
         append((gchSpeedTestMode == SpeedModeSendRecv ? "Send/Receive" : (gchSpeedTestMode == SpeedModeSend ? "Send" : (gchSpeedTestMode == SpeedModeRecv ? "Receive" : "Inactive")))).
         append("\r\n---------------------------------\r\nResults:\r\n    > Test time: ").
@@ -7359,11 +7510,19 @@ MainWindow::SpeedTestReceive(
 {
     //Receieved data from serial port in speed test mode
     QByteArray baOrigData = gspSerialPort.readAll();
+
     if ((gchSpeedTestMode & SpeedModeRecv) == SpeedModeRecv)
     {
         //Check data as in receieve mode
         gintSpeedBytesReceived += baOrigData.size();
         gintSpeedBytesReceived10s += baOrigData.size();
+
+        if (ui->check_SpeedSyncReceive->isChecked() && gbSpeedTestReceived == false)
+        {
+            //Data has now been received, update the delay timer
+            gbSpeedTestReceived = true;
+            gintDelayedSpeedTestReceive = gtmrSpeedTimer.nsecsElapsed()/1000000000;
+        }
 
         if (ui->check_SpeedShowRX->isChecked() == true)
         {
@@ -7542,6 +7701,7 @@ MainWindow::SpeedTestStopTimer(
     delete gtmrSpeedTestDelayTimer;
     gtmrSpeedTestDelayTimer = 0;
     ui->btn_SpeedStartStop->setText(tr("&Start Test"));
+    ui->check_SpeedSyncReceive->setEnabled(true);
     ui->combo_SpeedDataType->setEnabled(true);
     if (ui->combo_SpeedDataType->currentIndex() == 1)
     {
@@ -7595,19 +7755,19 @@ MainWindow::OutputSpeedTestAvgStats(
         if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
             //Data bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*(quint64)gintSpeedTestDataBits/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*(quint64)gintSpeedTestDataBits/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestSend)));
         }
         else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
         {
             //All bits
-            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestSend)));
         }
         else
         {
             //Bytes
-            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/((quint64)lngElapsed-(quint64)gintDelayedSpeedTest)));
+            ui->edit_SpeedBytesSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestSend)));
         }
-        ui->edit_SpeedPacketsSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/(quint64)gintSpeedTestMatchDataLength/(quint64)lngElapsed));
+        ui->edit_SpeedPacketsSentAvg->setText(QString::number((quint64)gintSpeedBytesSent/(quint64)gintSpeedTestMatchDataLength/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestSend)));
     }
 
     if ((gchSpeedTestMode & SpeedModeRecv) == SpeedModeRecv)
@@ -7616,22 +7776,22 @@ MainWindow::OutputSpeedTestAvgStats(
         if (ui->combo_SpeedDataDisplay->currentIndex() == 1)
         {
             //Data bits
-            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*(quint64)gintSpeedTestDataBits/(quint64)lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*(quint64)gintSpeedTestDataBits/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestReceive)));
         }
         else if (ui->combo_SpeedDataDisplay->currentIndex() == 2)
         {
             //All bits
-            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/(quint64)lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived*((quint64)gintSpeedTestDataBits + (quint64)gintSpeedTestStartStopParityBits)/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestReceive)));
         }
         else
         {
             //Bytes
-            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/(quint64)lngElapsed));
+            ui->edit_SpeedBytesRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestReceive)));
         }
         if (ui->combo_SpeedDataType->currentIndex() != 0)
         {
             //Show stats about packets
-            ui->edit_SpeedPacketsRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/(quint64)gintSpeedTestMatchDataLength/(quint64)lngElapsed));
+            ui->edit_SpeedPacketsRecAvg->setText(QString::number((quint64)gintSpeedBytesReceived/(quint64)gintSpeedTestMatchDataLength/((quint64)lngElapsed-(quint64)gintDelayedSpeedTestReceive)));
         }
     }
 }
@@ -7726,35 +7886,6 @@ MainWindow::on_combo_SpeedDataDisplay_currentIndexChanged(
 
 //=============================================================================
 //=============================================================================
-void
-MainWindow::on_check_CheckLicense_stateChanged(
-    int
-    )
-{
-    //Option for checking module license on download changed
-    gpTermSettings->setValue("LicenseCheck", (ui->check_CheckLicense->isChecked() == true ? 1 : 0));
-}
-
-//=============================================================================
-//=============================================================================
-void
-MainWindow::ClearFileDataList(
-    )
-{
-    //Clears the file data list and deletes all list entries
-    qint16 i = lstFileData.length()-1;
-    while (i >= 0)
-    {
-        //Free up each element and delete it
-        FileSStruct *tempFileS = lstFileData.at(i);
-        lstFileData.removeAt(i);
-        delete tempFileS;
-        --i;
-    }
-}
-
-//=============================================================================
-//=============================================================================
 quint64
 MainWindow::BitsBytesConvert(
     quint64 iCount,
@@ -7789,6 +7920,36 @@ MainWindow::BitsBytesConvert(
 
     //Return the value
     return iTemp;
+}
+#endif
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_CheckLicense_stateChanged(
+    int
+    )
+{
+    //Option for checking module license on download changed
+    gpTermSettings->setValue("LicenseCheck", (ui->check_CheckLicense->isChecked() == true ? 1 : 0));
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ClearFileDataList(
+    )
+{
+    //Clears the file data list and deletes all list entries
+    qint16 i = lstFileData.length()-1;
+    while (i >= 0)
+    {
+        //Free up each element and delete it
+        FileSStruct *tempFileS = lstFileData.at(i);
+        lstFileData.removeAt(i);
+        delete tempFileS;
+        --i;
+    }
 }
 
 //=============================================================================
