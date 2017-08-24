@@ -106,17 +106,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->btn_SpeedClose->deleteLater();
     ui->btn_SpeedCopy->deleteLater();
     ui->btn_SpeedStartStop->deleteLater();
-    ui->edit_SpeedBytesRec->deleteLater();
-    ui->edit_SpeedBytesRec10s->deleteLater();
-    ui->edit_SpeedBytesRecAvg->deleteLater();
-    ui->edit_SpeedBytesSent->deleteLater();
-    ui->edit_SpeedBytesSent10s->deleteLater();
-    ui->edit_SpeedBytesSentAvg->deleteLater();
-    ui->edit_SpeedPacketsBad->deleteLater();
-    ui->edit_SpeedPacketsErrorRate->deleteLater();
-    ui->edit_SpeedPacketsGood->deleteLater();
-    ui->edit_SpeedPacketsRec->deleteLater();
-    ui->edit_SpeedTestData->deleteLater();
     ui->tab_SpeedTest->deleteLater();
 #endif
 
