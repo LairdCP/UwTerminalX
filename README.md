@@ -38,6 +38,10 @@ There are various instructions and help pages available on the [wiki site](https
 
 Laird encourages people to branch/fork UwTerminalX to modify the code and accepts pull requests to merge these changes back into the main repository.
 
+## Speed/Throughput testing
+
+There is a quick guide available giving an overview of the speed testing feature of UwTerminalX, https://github.com/LairdCP/UwTerminalX/wiki/Using-the-Speed-Test-feature
+
 ## Companian Applications
 
  * [TermNotify](https://github.com/LairdCP/TermNotify): an application that displays a popup notification when a new serial port is detected, which will open UwTerminalX if clicked.
