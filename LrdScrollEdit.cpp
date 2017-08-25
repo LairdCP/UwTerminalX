@@ -340,7 +340,7 @@ LrdScrollEdit::AddDatInText(
 {
     //Adds data to the DatIn buffer
     bool bIsEmpty = mstrDatIn.isEmpty();
-    mstrDatIn += QString(baDat->replace("\r", "\n"));
+    mstrDatIn += QString(baDat->replace("\r\n", "\n").replace("\r", "\n"));
     if (bIsEmpty == true && (baDat[0] == "\r" || baDat[0] == "\n"))
     {
         //Remove first newline
