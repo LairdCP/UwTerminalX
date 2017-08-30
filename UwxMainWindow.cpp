@@ -209,6 +209,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrSpeedTestDelayTimer = 0;
     gbSpeedTestRunning = false;
 #endif
+    gupdUpdateCheck = UpdateCheckTypes::TypeNone;
+    gstrUpdateCheckString = 0;
 
 #ifndef SKIPAUTOMATIONFORM
     guaAutomationForm = 0;
@@ -629,6 +631,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     bool bStartScript = false;
     while (chi < slArgs.length())
     {
+        if (slArgs[chi].toUpper() == "DUPLICATE")
+        {
+            //Duplicate window so move to the top
+            this->activateWindow();
+            this->raise();
+        }
         if (slArgs[chi].toUpper() == "ACCEPT")
         {
             //Skip the front panel - disable buttons
@@ -908,6 +916,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         }
     }
 
+    //Set the weekly update checkbox status
+    ui->check_EnableWeeklyUpdateCheck->setChecked(gpTermSettings->value("UpdateCheckEnable", DefaultUpdateCheckEnable).toBool());
+
     //(Unlisted option) Setup display buffer automatic trimming
     gbAutoTrimDBuffer = gpTermSettings->value("AutoTrimDBuffer", DefaultAutoDTrimBuffer).toBool();
     gintAutoTrimBufferDThreshold = gpTermSettings->value("AutoTrimDBufferThreshold", DefaultAutoTrimDBufferThreshold).toULongLong();
@@ -1066,6 +1077,12 @@ MainWindow::~MainWindow(){
         ClearFileDataList();
     }
 
+    if (gstrUpdateCheckString != NULL)
+    {
+        //Clear up update checking string
+        delete gstrUpdateCheckString;
+    }
+
     //Delete variables
     delete gpMainLog;
     delete gpPredefinedDevice;
@@ -1164,6 +1181,23 @@ MainWindow::on_selector_Tab_currentChanged(
     {
         //Not accepted the terms yet
         ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_About));
+    }
+
+    if (gpTermSettings->value("UpdateCheckEnable", DefaultUpdateCheckEnable).toBool() == true && (intIndex == ui->selector_Tab->indexOf(ui->tab_Config) || intIndex == ui->selector_Tab->indexOf(ui->tab_Term)) && ui->btn_Accept->isEnabled() == false)
+    {
+        //Check for UwTerminalX and error code file updates
+        if (gpTermSettings->value("UpdateCheckLast", DefaultUpdateCheckLast).toDate() == DefaultUpdateCheckLast)
+        {
+            //First run, test in a week
+            gpTermSettings->setValue("UpdateCheckLast", QDate::currentDate());
+        }
+        else if ((QDate::currentDate().toJulianDay() - gpTermSettings->value("UpdateCheckLast", DefaultUpdateCheckLast).toDate().toJulianDay() > 6))
+        {
+            //Run update check functions
+            gpTermSettings->setValue("UpdateCheckLast", QDate::currentDate());
+            gupdUpdateCheck = UpdateCheckTypes::TypeWekely;
+            UwTerminalXUpdateCheck(false);
+        }
     }
 }
 
@@ -1557,7 +1591,7 @@ MainWindow::SerialRead(
                         if (ui->check_OnlineXComp->isChecked() == true)
                         {
                             //Check if online XCompiler supports this device
-                            if (LookupDNSName() == true)
+                            if (LookupDNSName(true) == true)
                             {
                                 gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                             }
@@ -1624,7 +1658,7 @@ MainWindow::SerialRead(
                         if (ui->check_OnlineXComp->isChecked() == true)
                         {
                             //XCompiler not found, try Online XCompiler
-                            if (LookupDNSName() == true)
+                            if (LookupDNSName(true) == true)
                             {
                                 gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                                 ui->statusBar->showMessage("Device support request sent...", 2000);
@@ -3588,7 +3622,7 @@ MainWindow::on_btn_Duplicate_clicked(
 {
     //Duplicates instance of UwTerminalX
     QProcess DuplicateProcess;
-    DuplicateProcess.startDetached(QCoreApplication::applicationFilePath(), QStringList() << "ACCEPT" << tr("COM=").append(ui->combo_COM->currentText()) << tr("BAUD=").append(ui->combo_Baud->currentText()) << tr("STOP=").append(ui->combo_Stop->currentText()) << tr("DATA=").append(ui->combo_Data->currentText()) << tr("PAR=").append(ui->combo_Parity->currentText()) << tr("FLOW=").append(QString::number(ui->combo_Handshake->currentIndex())) << tr("ENDCHR=").append((ui->radio_LCR->isChecked() == true ? "0" : ui->radio_LLF->isChecked() == true ? "1" : ui->radio_LCRLF->isChecked() == true ? "2" : "3")) << tr("LOCALECHO=").append((ui->check_Echo->isChecked() == true ? "1" : "0")) << tr("LINEMODE=").append((ui->check_Line->isChecked() == true ? "1" : "0")) << "NOCONNECT");
+    DuplicateProcess.startDetached(QCoreApplication::applicationFilePath(), QStringList() << "DUPLICATE" << "ACCEPT" << tr("COM=").append(ui->combo_COM->currentText()) << tr("BAUD=").append(ui->combo_Baud->currentText()) << tr("STOP=").append(ui->combo_Stop->currentText()) << tr("DATA=").append(ui->combo_Data->currentText()) << tr("PAR=").append(ui->combo_Parity->currentText()) << tr("FLOW=").append(QString::number(ui->combo_Handshake->currentIndex())) << tr("ENDCHR=").append((ui->radio_LCR->isChecked() == true ? "0" : ui->radio_LLF->isChecked() == true ? "1" : ui->radio_LCRLF->isChecked() == true ? "2" : "3")) << tr("LOCALECHO=").append((ui->check_Echo->isChecked() == true ? "1" : "0")) << tr("LINEMODE=").append((ui->check_Line->isChecked() == true ? "1" : "0")) << "NOCONNECT");
 }
 
 //=============================================================================
@@ -4384,7 +4418,7 @@ MainWindow::replyFinished(
                         gchTermMode2 = MODE_SERVER_COMPILE;
 
                         //Compile application
-                        if (LookupDNSName() == true)
+                        if (LookupDNSName(true) == true)
                         {
                             //Setup the request and add the original application filename
                             QFileInfo fiFileInfo(gstrTermFilename);
@@ -4878,7 +4912,7 @@ MainWindow::replyFinished(
                 else if (joJsonObject["Result"].toString() == "1")
                 {
                     //Version is OK
-                    ui->label_ErrorCodeUpdate->setText("No updates avialable.");
+                    ui->label_ErrorCodeUpdate->setText("No updates available.");
                     QPalette palBGColour = QPalette();
                     ui->label_ErrorCodeUpdate->setPalette(palBGColour);
                 }
@@ -4889,6 +4923,37 @@ MainWindow::replyFinished(
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
+
+                if (gupdUpdateCheck == UpdateCheckTypes::TypeWekely)
+                {
+                    //Doing weekly update check
+                    if (joJsonObject["Result"].toString() == "-1")
+                    {
+                        //Error code file is outdated
+                        if (gstrUpdateCheckString == NULL)
+                        {
+                            gstrUpdateCheckString = new QString("Weekly update check:\r\n\r\n\tUwTerminalX: Current\r\n\tError codes: Outdated\r\n\r\nUpdate the error codes file from the Update tab.");
+                        }
+                        else
+                        {
+                            gstrUpdateCheckString->append("\r\n\tError codes: Outdated\r\n\r\nUpdate UwTerminalX and the error codes file from the Update tab.");
+                        }
+                    }
+                    else if (gstrUpdateCheckString != NULL)
+                    {
+                        //Error code file is updated and UwTerminalX version is outdated
+                        gstrUpdateCheckString->append("\r\n\tError codes: Current\r\n\r\nUpdate UwTerminalX from the Update tab.");
+                    }
+
+                    if (gstrUpdateCheckString != NULL)
+                    {
+                        //Show update message
+                        gpmErrorForm->show();
+                        gpmErrorForm->SetMessage(gstrUpdateCheckString);
+                        delete gstrUpdateCheckString;
+                        gstrUpdateCheckString = NULL;
+                    }
+                }
             }
             else
             {
@@ -4898,6 +4963,7 @@ MainWindow::replyFinished(
                 gpmErrorForm->SetMessage(&strMessage);
             }
 
+            //Back to non-busy mode
             gchTermMode = 0;
             gchTermMode2 = 0;
             gbTermBusy = false;
@@ -4908,6 +4974,9 @@ MainWindow::replyFinished(
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->btn_OnlineXComp_Supported->setEnabled(true);
             ui->statusBar->showMessage("");
+
+            //Not currently looking for updates
+            gupdUpdateCheck = UpdateCheckTypes::TypeNone;
         }
         else if (gchTermMode == MODE_CHECK_UWTERMINALX_VERSIONS)
         {
@@ -4935,14 +5004,14 @@ MainWindow::replyFinished(
                 else if (joJsonObject["Result"].toString() == "-2")
                 {
                     //Server error
-                    QString strMessage = QString("A server error was encountered whilst checking for an updated error code file.");
+                    QString strMessage = QString("A server error was encountered whilst checking for an updated UwTerminalX version.");
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
                 else if (joJsonObject["Result"].toString() == "1")
                 {
                     //Version is OK
-                    ui->label_UwTerminalXUpdate->setText("No updates avialable.");
+                    ui->label_UwTerminalXUpdate->setText("No updates available.");
                     QPalette palBGColour = QPalette();
                     ui->label_UwTerminalXUpdate->setPalette(palBGColour);
                 }
@@ -4953,6 +5022,22 @@ MainWindow::replyFinished(
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
+
+                if (gupdUpdateCheck == UpdateCheckTypes::TypeWekely)
+                {
+                    //Performing weekly update check
+                    if (joJsonObject["Result"].toString() == "-1")
+                    {
+                        //UwTerminalX version is outdated
+                        gstrUpdateCheckString = new QString("Weekly update check:\r\n\r\n\tUwTerminalX: Outdated, ");
+                        gstrUpdateCheckString->append(joJsonObject["Version"].toString()).append(" available");
+                    }
+                }
+                else
+                {
+                    //No longer checking for updates
+                    gupdUpdateCheck = UpdateCheckTypes::TypeNone;
+                }
             }
             else
             {
@@ -4962,6 +5047,7 @@ MainWindow::replyFinished(
                 gpmErrorForm->SetMessage(&strMessage);
             }
 
+            //Back to non-busy mode
             gchTermMode = 0;
             gchTermMode2 = 0;
             gbTermBusy = false;
@@ -4972,6 +5058,12 @@ MainWindow::replyFinished(
             ui->btn_ModuleFirmware->setEnabled(true);
             ui->btn_OnlineXComp_Supported->setEnabled(true);
             ui->statusBar->showMessage("");
+
+            if (gupdUpdateCheck == UpdateCheckTypes::TypeWekely)
+            {
+                //Weekly check for error code file updates
+                ErrorCodeUpdateCheck(false);
+            }
         }
         else if (gchTermMode == MODE_UPDATE_ERROR_CODE)
         {
@@ -5204,24 +5296,12 @@ void
 MainWindow::on_btn_ErrorCodeUpdate_clicked(
     )
 {
-    //Check for updates to error codes
+    //Check for updates to the error code file
     if (gbTermBusy == false)
     {
-        //Send request
-        if (LookupDNSName() == true)
-        {
-            gbTermBusy = true;
-            gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
-            gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
-            ui->btn_Cancel->setEnabled(true);
-            ui->btn_ErrorCodeUpdate->setEnabled(false);
-            ui->btn_ErrorCodeDownload->setEnabled(false);
-            ui->btn_UwTerminalXUpdate->setEnabled(false);
-            ui->btn_ModuleFirmware->setEnabled(false);
-            ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
-            ui->statusBar->showMessage("Checking for Error Code file updates...");
-        }
+        //Check for update
+        gupdUpdateCheck = UpdateCheckTypes::TypeNormal;
+        ErrorCodeUpdateCheck(true);
     }
 }
 
@@ -5234,21 +5314,9 @@ MainWindow::on_btn_UwTerminalXUpdate_clicked(
     //Check for updates to UwTerminalX
     if (gbTermBusy == false)
     {
-        //Send request
-        if (LookupDNSName() == true)
-        {
-            gbTermBusy = true;
-            gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
-            gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
-            ui->btn_Cancel->setEnabled(true);
-            ui->btn_ErrorCodeUpdate->setEnabled(false);
-            ui->btn_ErrorCodeDownload->setEnabled(false);
-            ui->btn_UwTerminalXUpdate->setEnabled(false);
-            ui->btn_ModuleFirmware->setEnabled(false);
-            ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
-            ui->statusBar->showMessage("Checking for UwTerminalX updates...");
-        }
+        //Check for update
+        gupdUpdateCheck = UpdateCheckTypes::TypeNormal;
+        UwTerminalXUpdateCheck(true);
     }
 }
 
@@ -5273,7 +5341,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        if (LookupDNSName() == true)
+        if (LookupDNSName(true) == true)
         {
             gbTermBusy = true;
             gchTermMode = MODE_UPDATE_ERROR_CODE;
@@ -5502,7 +5570,7 @@ MainWindow::on_btn_ModuleFirmware_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        if (LookupDNSName() == true)
+        if (LookupDNSName(true) == true)
         {
             gbTermBusy = true;
             gchTermMode = MODE_CHECK_FIRMWARE_VERSIONS;
@@ -5750,7 +5818,7 @@ MainWindow::on_btn_OnlineXComp_Supported_clicked(
     if (gbTermBusy == false)
     {
         //Send request
-        if (LookupDNSName() == true)
+        if (LookupDNSName(true) == true)
         {
             gbTermBusy = true;
             gchTermMode = MODE_CHECK_FIRMWARE_SUPPORT;
@@ -5782,6 +5850,7 @@ MainWindow::on_check_SkipDL_stateChanged(
 //=============================================================================
 bool
 MainWindow::LookupDNSName(
+    bool bShowError
     )
 {
     //Function to lookup hostname of the cloud XCompile server (a workaround for a bug causing a segmentation fault on Linux)
@@ -5795,9 +5864,13 @@ MainWindow::LookupDNSName(
             if (hiIP.addresses().isEmpty())
             {
                 //No results returned
-                QString strMessage = QString("Failed to retrieve an IP address for the cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): No IP address is listed for this host.");
-                gpmErrorForm->show();
-                gpmErrorForm->SetMessage(&strMessage);
+                if (bShowError == true)
+                {
+                    //Show error
+                    QString strMessage = QString("Failed to retrieve an IP address for the cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): No IP address is listed for this host.");
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
                 return false;
             }
             else
@@ -5817,16 +5890,20 @@ MainWindow::LookupDNSName(
         else
         {
             //Failed to resolve hostname
-            QString strMessage = QString("Failed to resolve cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): ").append(hiIP.errorString())
+            if (bShowError == true)
+            {
+                //Show error
+                QString strMessage = QString("Failed to resolve cloud XCompile hostname (").append(gpTermSettings->value("OnlineXCompServer", ServerHost).toString()).append("): ").append(hiIP.errorString())
 #ifndef _WIN32
 #ifndef __APPLE__
                     //Linux, show warning regarding missing DNS libraries
                     .append("\r\n\r\nHave you installed the required additional packages? Please see https://github.com/LairdCP/UwTerminalX/wiki/Installing for further details under the Linux section.")
 #endif
 #endif
-            ;
-            gpmErrorForm->show();
-            gpmErrorForm->SetMessage(&strMessage);
+                ;
+                gpmErrorForm->show();
+                gpmErrorForm->SetMessage(&strMessage);
+            }
             return false;
         }
     }
@@ -6230,6 +6307,14 @@ MainWindow::LoadSettings(
         if (gpTermSettings->value("AutoTrimDBufferSize").isNull())
         {
             gpTermSettings->setValue("AutoTrimDBufferSize", DefaultAutoTrimDBufferSize); //(Unlisted option) Amount of data to leave after trimming display buffer
+        }
+        if (gpTermSettings->value("UpdateCheckEnable").isNull())
+        {
+            gpTermSettings->setValue("UpdateCheckEnable", DefaultUpdateCheckEnable); //Enables or disables weekly update checking
+        }
+        if (gpTermSettings->value("UpdateCheckLast").isNull())
+        {
+            gpTermSettings->setValue("UpdateCheckLast", QDate::currentDate()); //When the last weekly update check was performed
         }
 #ifdef UseSSL
         if (gpTermSettings->value("SSLEnable").isNull())
@@ -7970,6 +8055,65 @@ MainWindow::SetLoopBackMode(
             gtmrTextUpdateTimer.start();
         }
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::UwTerminalXUpdateCheck(
+    bool bShowError
+    )
+{
+    //Send request to check for UwTerminalX updates
+    if (LookupDNSName(bShowError) == true)
+    {
+        gbTermBusy = true;
+        gchTermMode = MODE_CHECK_UWTERMINALX_VERSIONS;
+        gchTermMode2 = MODE_CHECK_UWTERMINALX_VERSIONS;
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
+        ui->btn_OnlineXComp_Supported->setEnabled(false);
+        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
+        ui->statusBar->showMessage("Checking for UwTerminalX updates...");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ErrorCodeUpdateCheck(
+    bool bShowError
+    )
+{
+    //Send request to check for error code file updates
+    if (LookupDNSName(bShowError) == true)
+    {
+        gbTermBusy = true;
+        gchTermMode = MODE_CHECK_ERROR_CODE_VERSIONS;
+        gchTermMode2 = MODE_CHECK_ERROR_CODE_VERSIONS;
+        ui->btn_Cancel->setEnabled(true);
+        ui->btn_ErrorCodeUpdate->setEnabled(false);
+        ui->btn_ErrorCodeDownload->setEnabled(false);
+        ui->btn_UwTerminalXUpdate->setEnabled(false);
+        ui->btn_ModuleFirmware->setEnabled(false);
+        ui->btn_OnlineXComp_Supported->setEnabled(false);
+        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+        ui->statusBar->showMessage("Checking for Error Code file updates...");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_EnableWeeklyUpdateCheck_stateChanged(
+    int
+    )
+{
+    //
+    gpTermSettings->setValue("UpdateCheckEnable", ui->check_EnableWeeklyUpdateCheck->isChecked());
 }
 
 /******************************************************************************/

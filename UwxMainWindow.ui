@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>655</width>
-    <height>386</height>
+    <height>380</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -943,35 +943,57 @@
                 <number>2</number>
                </property>
                <item>
-                <widget class="QRadioButton" name="radio_LCR">
-                 <property name="text">
-                  <string>CR</string>
+                <layout class="QFormLayout" name="formLayout">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SetDefaultConstraint</enum>
                  </property>
-                 <property name="checked">
-                  <bool>true</bool>
+                 <property name="fieldGrowthPolicy">
+                  <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
                  </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="radio_LLF">
-                 <property name="text">
-                  <string>LF</string>
+                 <property name="horizontalSpacing">
+                  <number>2</number>
                  </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="radio_LCRLF">
-                 <property name="text">
-                  <string>CR LF</string>
+                 <property name="verticalSpacing">
+                  <number>2</number>
                  </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="radio_LLFCR">
-                 <property name="text">
-                  <string>LF CR</string>
+                 <property name="leftMargin">
+                  <number>2</number>
                  </property>
-                </widget>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item row="0" column="0">
+                  <widget class="QRadioButton" name="radio_LCR">
+                   <property name="text">
+                    <string>CR</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QRadioButton" name="radio_LLF">
+                   <property name="text">
+                    <string>LF</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QRadioButton" name="radio_LCRLF">
+                   <property name="text">
+                    <string>CR LF</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QRadioButton" name="radio_LLFCR">
+                   <property name="text">
+                    <string>LF CR</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
                <item>
                 <layout class="QGridLayout" name="gridLayout_16">
@@ -1094,6 +1116,19 @@
                  </property>
                  <property name="text">
                   <string>Enable SSL</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_EnableWeeklyUpdateCheck">
+                 <property name="toolTip">
+                  <string>Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.</string>
+                 </property>
+                 <property name="text">
+                  <string>Weekly update check</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -4256,10 +4291,6 @@ You should have received a copy of the GNU General Public License along with thi
   <tabstop>combo_Stop</tabstop>
   <tabstop>combo_Data</tabstop>
   <tabstop>combo_Handshake</tabstop>
-  <tabstop>radio_LCR</tabstop>
-  <tabstop>radio_LLF</tabstop>
-  <tabstop>radio_LCRLF</tabstop>
-  <tabstop>radio_LLFCR</tabstop>
   <tabstop>check_SkipDL</tabstop>
   <tabstop>check_ShowCLRF</tabstop>
   <tabstop>check_PreXCompRun</tabstop>

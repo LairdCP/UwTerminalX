@@ -103,7 +103,7 @@ const qint8 MODE_UPDATE_ERROR_CODE            = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
 //Constants for version and functions
-const QString UwVersion                       = "1.09a"; //Version string
+const QString UwVersion                       = "1.09b"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
@@ -134,6 +134,8 @@ const bool DefaultShowFileSize                = 1;
 const bool DefaultConfirmClear                = 1;
 const bool DefaultShiftEnterLineSeparator     = 1;
 const bool DefaultLicenceCheckMode            = 1;
+const bool DefaultUpdateCheckEnable           = 1;
+const QDate DefaultUpdateCheckLast            = QDate(1970, 1, 1);
 const bool DefaultAutoDTrimBuffer             = 0; //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferThreshold = 0; //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferSize      = 0; //(Unlisted option)
@@ -217,6 +219,14 @@ enum class BitByteTypes
     TypeBytes,
     TypeDataBits,
     TypeAllBits
+};
+
+//Enum used for specifying type of data
+enum class UpdateCheckTypes
+{
+    TypeNone,
+    TypeNormal,
+    TypeWekely
 };
 
 /******************************************************************************/
@@ -476,6 +486,7 @@ private slots:
         );
     bool
     LookupDNSName(
+        bool bShowError
         );
     void
     on_btn_WebBrowse_clicked(
@@ -600,6 +611,10 @@ private slots:
     on_check_CheckLicense_stateChanged(
         int
         );
+    void
+    on_check_EnableWeeklyUpdateCheck_stateChanged(
+        int
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -690,6 +705,14 @@ private:
     void
     SetLoopBackMode(
         bool bNewMode
+        );
+    void
+    UwTerminalXUpdateCheck(
+        bool bShowError
+        );
+    void
+    ErrorCodeUpdateCheck(
+        bool bShowError
         );
 
     //Private variables
@@ -808,6 +831,8 @@ private:
     quint32 gintDelayedSpeedTestReceive; //Stores the delay before data started being received after a speed test begins (in seconds)
     bool gbSpeedTestReceived; //Set to true when data has been received in a speed test
 #endif
+    UpdateCheckTypes gupdUpdateCheck; //Type of update check being performed
+    QString *gstrUpdateCheckString; //String message for displaying weekly update message
     bool gbAutoTrimDBuffer; //(Unlisted option) Set to true to automatically trim the display buffer when it reaches a threashold
     quint32 gintAutoTrimBufferDThreshold; //(Unlisted option) Number of bytes at which to trim the display buffer
     quint32 gintAutoTrimBufferDSize; //(Unlisted option) Number of bytes to trim the recieve buffer
