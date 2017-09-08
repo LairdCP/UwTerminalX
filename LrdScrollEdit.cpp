@@ -175,9 +175,9 @@ LrdScrollEdit::eventFilter(
                     while (mintCurPos > 0)
                     {
                         --mintCurPos;
-                        if (mstrDatOut.at(mintCurPos) == ' ')
+                        if (mstrDatOut.at(mintCurPos) == ' ' || mstrDatOut.at(mintCurPos) == '\r' || mstrDatOut.at(mintCurPos) == '\n')
                         {
-                            //Found a space
+                            //Found a space or newline character
                             break;
                         }
                     }
@@ -200,9 +200,9 @@ LrdScrollEdit::eventFilter(
                     while (mintCurPos < mstrDatOut.length())
                     {
                         ++mintCurPos;
-                        if (mstrDatOut.at(mintCurPos) == ' ')
+                        if (mintCurPos < mstrDatOut.length() && (mstrDatOut.at(mintCurPos) == ' ' || mstrDatOut.at(mintCurPos) == '\r' || mstrDatOut.at(mintCurPos) == '\n'))
                         {
-                            //Found a space
+                            //Found a space or newline character
                             break;
                         }
                     }
@@ -233,7 +233,7 @@ LrdScrollEdit::eventFilter(
                 if (!(keyEvent->modifiers() & Qt::ControlModifier))
                 {
                     //Move to end of line
-                    mintCurPos = mstrDatOut.length()-1;
+                    mintCurPos = mstrDatOut.length();
                     this->UpdateCursor();
                 }
                 return true;
