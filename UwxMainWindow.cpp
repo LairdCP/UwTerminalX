@@ -8112,7 +8112,7 @@ MainWindow::on_check_EnableWeeklyUpdateCheck_stateChanged(
     int
     )
 {
-    //
+    //Update check checkbox has been toggled
     gpTermSettings->setValue("UpdateCheckEnable", ui->check_EnableWeeklyUpdateCheck->isChecked());
 }
 

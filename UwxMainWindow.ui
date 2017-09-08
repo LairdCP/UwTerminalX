@@ -3731,7 +3731,7 @@ COM=n
     Mac: /dev/[device] specifies a TTY device
 
 BAUD=n
-    [1200..921600] Could be limited to 115200 depending on PC hardware (limited to 230400 on most Macs)
+    [1200..5000000] Could be limited to 115200 depending on PC hardware (limited to 230400 on most Macs)
 
 STOP=n
     [1..2]
