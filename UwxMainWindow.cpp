@@ -634,6 +634,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         if (slArgs[chi].toUpper() == "DUPLICATE")
         {
             //Duplicate window so move to the top
+            this->activateWindow();
             this->raise();
         }
         if (slArgs[chi].toUpper() == "ACCEPT")
@@ -4539,7 +4540,8 @@ MainWindow::replyFinished(
                                     else
                                     {
                                         //Remove quotes
-                                        strIncludeName = strIncludeName.replace("\"", "");
+                                        strIncludeName = strIncludeName.left(strIncludeName.indexOf("\"", strIncludeName.indexOf("\"")+1));
+                                        strIncludeName = strIncludeName.right(strIncludeName.length()-strIncludeName.indexOf("\"")-1);
                                     }
 
                                     //Open the file
