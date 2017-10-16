@@ -4540,7 +4540,8 @@ MainWindow::replyFinished(
                                     else
                                     {
                                         //Remove quotes
-                                        strIncludeName = strIncludeName.replace("\"", "");
+                                        strIncludeName = strIncludeName.left(strIncludeName.indexOf("\"", strIncludeName.indexOf("\"")+1));
+                                        strIncludeName = strIncludeName.right(strIncludeName.length()-strIncludeName.indexOf("\"")-1);
                                     }
 
                                     //Open the file
