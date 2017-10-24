@@ -70,6 +70,20 @@
     #endif
 #endif
 
+//Functions used for sorting local XCompiler versions
+#ifdef _WIN32
+    bool
+    CompByATI3(
+        const XCompInfoStruct &a,
+        const XCompInfoStruct &b
+        );
+    bool
+    CompByDevName(
+        const XCompDevStruct &a,
+        const XCompDevStruct &b
+        );
+#endif
+
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
@@ -154,6 +168,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Increase Linux window size to cope with possible large Linux fonts
     resize(this->width()+50, this->height()+20);
 #endif
+
+    //Disable local XCompiler information button
+    ui->btn_Local_XCompilers->setEnabled(false);
+    ui->btn_Local_XCompilers->deleteLater();
 #endif
 
 #ifndef _WIN32
@@ -2899,17 +2917,8 @@ MainWindow::process_finished(
         RunPrePostExecutable(gstrTermFilename);
     }
 
-    //Exit code 1: Fail, Exit code 0: Success
-    if (intExitCode == 1)
-    {
-        //Display an error message
-        QString strMessage = tr("Error during XCompile:\n").append(gprocCompileProcess.readAllStandardOutput());
-        gpmErrorForm->show();
-        gpmErrorForm->SetMessage(&strMessage);
-        gbTermBusy = false;
-        ui->btn_Cancel->setEnabled(false);
-    }
-    else if (intExitCode == 0)
+    //Check the XCompile exit code
+    if (intExitCode == XCOMP_OK)
     {
         //Success
         if (gchTermMode == MODE_COMPILE)
@@ -2982,10 +2991,20 @@ MainWindow::process_finished(
             }
         }
     }
+    else if ((intExitCode >= XCOMP_GENERIC_FAIL && intExitCode <= XCOMP_XCMPEXEFILE_OPEN_ERROR) || intExitCode == XCOMP_UNEXPECTED_ENDOF_FILE || intExitCode == XCOMP_NEWXCMPEXEFILE_OPEN_ERROR || intExitCode == XCOMP_SBXFULLPATH_MALLOC_FAIL || intExitCode == XCOMP_SBX_DATABASE_MISSING || intExitCode == XCOMP_MISSING_FILE_LEGACY || intExitCode == XCOMP_XCMPEXEFILE_OPEN_ERROR_LEGACY || intExitCode > 255)
+    {
+        //Display an error message
+        QString strMessage = tr("Error during XCompile (").append(XCompile_Error_Message(intExitCode)).append("):\n").append(gprocCompileProcess.readAllStandardOutput());
+        gpmErrorForm->show();
+        gpmErrorForm->SetMessage(&strMessage);
+        gbTermBusy = false;
+        ui->btn_Cancel->setEnabled(false);
+
+    }
     else
     {
         //Unknown exit reason
-        QString strMessage = tr("Err code: ").append(QString::number(intExitCode));
+        QString strMessage = tr("XCompile error, exit code: ").append(QString::number(intExitCode));
         gpmErrorForm->show();
         gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
@@ -3709,6 +3728,17 @@ MainWindow::LookupErrorCode(
         gtmrTextUpdateTimer.start();
     }
     ui->text_TermEditData->moveCursor(QTextCursor::End);
+}
+
+//=============================================================================
+//=============================================================================
+QString
+MainWindow::LookupErrorCodeXCompile(
+    unsigned int intErrorCode
+    )
+{
+    //Looks up an error code and returns the error text as a string
+    return gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString();
 }
 
 //=============================================================================
@@ -8077,7 +8107,40 @@ MainWindow::UwTerminalXUpdateCheck(
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion))));
+        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion).append("&OS=").append(
+#ifdef _WIN32
+    //Windows
+    #ifdef _WIN64
+        //Windows 64-bit
+        "W64"
+        #define OS "Windows (x86_64)"
+    #else
+        //Windows 32-bit
+        "W32"
+    #endif
+#elif __APPLE__
+        //OSX
+        "OSX"
+#else
+    //Assume Linux
+    #ifdef __aarch64__
+        //ARM64
+        "LxARM64"
+    #elif __arm__
+        //ARM
+        "LxARM"
+    #elif __x86_64__
+        //x86_64
+        "Lx86_64"
+    #elif __i386
+        //x86
+        "Lx86"
+    #else
+        //Unknown
+        "LxOth"
+    #endif
+#endif
+        ))));
         ui->statusBar->showMessage("Checking for UwTerminalX updates...");
     }
 }
@@ -8116,6 +8179,366 @@ MainWindow::on_check_EnableWeeklyUpdateCheck_stateChanged(
     //Update check checkbox has been toggled
     gpTermSettings->setValue("UpdateCheckEnable", ui->check_EnableWeeklyUpdateCheck->isChecked());
 }
+
+//=============================================================================
+//=============================================================================
+QString
+MainWindow::XCompile_Error_Message(
+    int intExitCode
+    )
+{
+    if (intExitCode == XCOMP_GENERIC_FAIL)
+    {
+        //Generic fail
+        return "Generic failure";
+    }
+    else if (intExitCode == XCOMP_FILENAME_EMPTY)
+    {
+        //Filename empty
+        return "Filename empty";
+    }
+    else if (intExitCode == XCOMP_FACTORY_FILE_OPEN_ERROR)
+    {
+        //Factory file open error
+        return "Factory file open error";
+    }
+    else if (intExitCode == XCOMP_RAWLINE_MALLOC_FAIL)
+    {
+        //Rawline malloc fail
+        return "Rawline malloc failed";
+    }
+    else if (intExitCode == XCOMP_OUTFILE_NAME_CREATION)
+    {
+        //Outfile name creation error
+        return "Output file creation failed";
+    }
+    else if (intExitCode == XCOMP_PREPARSE_ERROR)
+    {
+        //Preparser error
+        return "Pre-parser error";
+    }
+    else if (intExitCode == XCOMP_TOKENISELINE_ERROR)
+    {
+        //Tokenise line error
+        return "Tokenise line error";
+    }
+    else if (intExitCode == XCOMP_GENERIC_ERROR)
+    {
+        //Generic error
+        return "Generic error";
+    }
+    else if (intExitCode == XCOMP_ARGS_PARSING_ERROR)
+    {
+        //Argument parsing error
+        return "Argument parsing error";
+    }
+    else if (intExitCode == XCOMP_EMPTY_FILENAME)
+    {
+        //Empty filename error
+        return "Empty filename";
+    }
+    else if (intExitCode == XCOMP_MAINSCRIPTFILE_OPEN_ERROR)
+    {
+        //Main script file open error
+        return "Main script file open failied";
+    }
+    else if (intExitCode == XCOMP_TOKPUBOPEN_FAIL)
+    {
+        //Token pub open fail
+        return "Token public open failed";
+    }
+    else if (intExitCode == XCOMP_NOT_ENOUGH_ARGS)
+    {
+        //No enough args
+        return "Insufficient arguments";
+    }
+    else if (intExitCode == XCOMP_MISSING_FILE || intExitCode == XCOMP_MISSING_FILE_LEGACY)
+    {
+        //Missing file
+        return "File specified is missing";
+    }
+    else if (intExitCode == XCOMP_XCMPEXEFILE_OPEN_ERROR || intExitCode == XCOMP_NEWXCMPEXEFILE_OPEN_ERROR || intExitCode == XCOMP_XCMPEXEFILE_OPEN_ERROR_LEGACY)
+    {
+        //XComp exe file open error
+        return "Failed to open XCompile executable file";
+    }
+    else if (intExitCode == XCOMP_UNEXPECTED_ENDOF_FILE)
+    {
+        //Unexpected end of line
+        return "Unexpected end of file";
+    }
+    else if (intExitCode == XCOMP_SBXFULLPATH_MALLOC_FAIL)
+    {
+        //SBX full path malloc fail
+        return "Failed to malloc SBX file path";
+    }
+    else if (intExitCode == XCOMP_SBX_DATABASE_MISSING)
+    {
+        //SBX database missing
+        return "SBX database file missing";
+    }
+    else if (gbErrorsLoaded == true && intExitCode >= 0x100 && intExitCode <= 0xFFFF)
+    {
+        //Error code file loaded, search for error code
+        return LookupErrorCodeXCompile(intExitCode);
+    }
+    else
+    {
+        //Error code file not loaded or code out of range, return generic error
+        return QString("Error code database not loaded, error code 0x").append(QString::number(intExitCode, 16)).append(" not known.");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+#ifdef _WIN32
+void
+MainWindow::on_btn_Local_XCompilers_clicked(
+)
+{
+    //Finds local XCompilers on the PC and lists information about them
+    QProcess procXCompileVersion;
+    QString strMessage;
+    int i = 0;
+
+    //Output message to screen to be patient as this may time some time
+    this->statusBar()->showMessage("Listing all local XCompilers - please be patient this may take some time...");
+
+    QDir dirXCompDir;
+    if (gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString().length() == 0)
+    {
+        //Use current directory
+        dirXCompDir.setPath(".//");
+    }
+    else
+    {
+        //Use compiler directory from configuration
+        dirXCompDir.setPath(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append("/"));
+    }
+
+    //List of devices
+    QList<XCompDevStruct> DeviceList;
+
+    //Regular expression matches for firmware
+    QRegularExpression reTempREPlatform("PLATFORM([\\s]+): ([a-zA-Z0-9\\-_]+)\r", QRegularExpression::MultilineOption);
+    QRegularExpression reTempREATI3("VERSION_ATI3([\\s]+): ([a-zA-Z0-9\\-_\\.]+)\r", QRegularExpression::MultilineOption);
+    QRegularExpression reTempRELanguage("LANGUAGE_HASH([\\s]+): ([a-zA-Z0-9]{4}) ([a-zA-Z0-9]{4})\r", QRegularExpression::MultilineOption);
+
+    if (gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true)
+    {
+        //Using sub-directories
+        QFileInfoList Directories = dirXCompDir.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot, QDir::NoSort);
+
+        //Scan each sub-directory
+        while (i < Directories.length())
+        {
+            //Check for XCompilers in this directory
+            QFileInfoList Files = QDir(QString(Directories[i].filePath()).append("/")).entryInfoList(QStringList(QString("xcomp_").append(Directories[i].fileName().append("_*.exe"))));
+            int a = 0;
+            if (Files.length() > 0)
+            {
+                //Add device type to list
+                XCompDevStruct Device;
+                Device.DeviceName = Directories[i].fileName().toUpper();
+                DeviceList.append(Device);
+            }
+
+            while (a < Files.length())
+            {
+                //Prase through each XCompiler for this module
+                procXCompileVersion.start(Files[a].filePath(), QStringList("/I"));
+                procXCompileVersion.waitForFinished(XCompATIRespTimeout);
+                QString strOutput = procXCompileVersion.readAll();
+
+                if (procXCompileVersion.state() == QProcess::ProcessState::Running)
+                {
+                    //Kill process as it's taking too long to run
+                    procXCompileVersion.kill();
+                }
+                else
+                {
+                    //Extract data
+                    QRegularExpressionMatch remTempREMPlatform = reTempREPlatform.match(strOutput);
+                    QRegularExpressionMatch remTempREMATI3 = reTempREATI3.match(strOutput);
+                    QRegularExpressionMatch remTempREMLanguage = reTempRELanguage.match(strOutput);
+                    if (remTempREMPlatform.hasMatch() == true && remTempREMATI3.hasMatch() == true && remTempREMLanguage.hasMatch() == true && remTempREMPlatform.captured(2).toUpper() == Directories[i].fileName().toUpper())
+                    {
+                        //Information extracted
+                        XCompInfoStruct ThisXCompInfo;
+                        ThisXCompInfo.ATI3 = remTempREMATI3.captured(2);
+                        ThisXCompInfo.LanguageHash = QString(remTempREMLanguage.captured(2)).append(" ") .append(remTempREMLanguage.captured(3));
+
+                        //Add firmware to list
+                        DeviceList.last().Firmwares.append(ThisXCompInfo);
+                    }
+                }
+
+                //Next XCompiler
+                strMessage.append("\t").append(Files[a].fileName()).append("\r\n");
+                ++a;
+            }
+
+            //Next folder
+            ++i;
+        }
+
+        //Remove empty types
+        i = DeviceList.length()-1;
+        while (i >= 0)
+        {
+            if (DeviceList[i].Firmwares.count() == 0)
+            {
+                //Empty, remove
+                DeviceList.removeAt(i);
+            }
+            --i;
+        }
+    }
+    else
+    {
+        //All XCompilers in a single directory
+        QFileInfoList Files = dirXCompDir.entryInfoList(QStringList("xcomp_*.exe"));
+
+        //Scan each XComp executable
+        while (i < Files.length())
+        {
+            //Run the process with the info command line argument
+            procXCompileVersion.start(QString(dirXCompDir.path()).append(Files[i].fileName()), QStringList("/I"));
+            procXCompileVersion.waitForFinished(XCompATIRespTimeout);
+            QString strOutput = procXCompileVersion.readAll();
+
+            if (procXCompileVersion.state() == QProcess::ProcessState::Running)
+            {
+                //Kill process as it's taking too long to run
+                procXCompileVersion.kill();
+            }
+            else
+            {
+                //Extract data from XCompiler output
+                QRegularExpressionMatch remTempREMPlatform = reTempREPlatform.match(strOutput);
+                QRegularExpressionMatch remTempREMATI3 = reTempREATI3.match(strOutput);
+                QRegularExpressionMatch remTempREMLanguage = reTempRELanguage.match(strOutput);
+                if (remTempREMPlatform.hasMatch() == true && remTempREMATI3.hasMatch() == true && remTempREMLanguage.hasMatch() == true)
+                {
+                    //Information successfully extracted
+                    XCompInfoStruct ThisXCompInfo;
+                    ThisXCompInfo.ATI3 = remTempREMATI3.captured(2);
+                    ThisXCompInfo.LanguageHash = QString(remTempREMLanguage.captured(2)).append(" ") .append(remTempREMLanguage.captured(3));
+                    int a = 0;
+
+                    //Search for module type
+                    while (a < DeviceList.length())
+                    {
+                        if (DeviceList[a].DeviceName == remTempREMPlatform.captured(2).toUpper())
+                        {
+                            break;
+                        }
+                        ++a;
+                    }
+
+                    //Create a new module type
+                    if (a == DeviceList.length())
+                    {
+                        //
+                        XCompDevStruct Device;
+                        Device.DeviceName = remTempREMPlatform.captured(2).toUpper();
+                        DeviceList.append(Device);
+                    }
+
+                    //Append firmware to the module list
+                    DeviceList[a].Firmwares.append(ThisXCompInfo);
+                }
+            }
+
+            //Next XCompiler
+            ++i;
+        }
+    }
+
+    //Sort the modules and firmware devices
+    std::sort(DeviceList.begin(), DeviceList.end(), CompByDevName);
+    i = 0;
+    while (i < DeviceList.length())
+    {
+        std::sort(DeviceList[i].Firmwares.begin(), DeviceList[i].Firmwares.end(), CompByATI3);
+        ++i;
+    }
+
+    //Start output of information text
+    if (gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true)
+    {
+        //Sub-directory XCompilers
+        strMessage = QString("Local XCompilers available on this PC in sub-directories of: ").append(dirXCompDir.absolutePath()).append(" are:\r\n\r\n");
+    }
+    else
+    {
+        //Single directory XCompilers
+        strMessage = QString("Local XCompilers available on this PC in: ").append(dirXCompDir.absolutePath()).append(" are:\r\n\r\n");
+    }
+
+    //Output data
+    i = 0;
+    while (i < DeviceList.length())
+    {
+        //Get information for each module type
+        strMessage.append(DeviceList[i].DeviceName).append(":\r\n");
+        int a = 0;
+        while (a < DeviceList[i].Firmwares.length())
+        {
+            //Get information for each firmware
+            strMessage.append("\t").append(DeviceList[i].Firmwares[a].ATI3).append(" (").append(DeviceList[i].Firmwares[a].LanguageHash).append(")\r\n");
+            ++a;
+        }
+        strMessage.append("\r\n");
+        ++i;
+    }
+    strMessage.remove(strMessage.length()-2, 2);
+
+    //Check if no XCompilers were detected
+    if (DeviceList.count() == 0)
+    {
+        //No local XCompilers detected
+        strMessage = "No local XCompilers were found on this PC. If you are using the online XCompile service then this is expected, if you have a local XCompiler exe which you which to use with UwTerminalX then you need to ";
+        if (gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true)
+        {
+            strMessage.append("place it in a sub-directory of: ").append(dirXCompDir.absolutePath()).append("\r\n\r\nSo if for example you want to use a BL600 XCompiler with the filename XComp_BL600r2_ABCD_DEFG.exe then you need to create the sub-directory: ").append(dirXCompDir.absolutePath()).append("/BL600r2/ and place the exectuable in this sub-directory.");
+        }
+        else
+        {
+            strMessage.append("place it in this folder: ").append(dirXCompDir.absolutePath());
+        }
+    }
+
+    //Display the output and clear the status bar text
+    gpmErrorForm->show();
+    gpmErrorForm->SetMessage(&strMessage);
+    ui->statusBar->clearMessage();
+}
+
+//=============================================================================
+//=============================================================================
+bool
+CompByATI3(
+    const XCompInfoStruct &a,
+    const XCompInfoStruct &b
+    )
+{
+    //Sort by ATI3 response
+    return a.ATI3 < b.ATI3;
+}
+
+//=============================================================================
+//=============================================================================
+bool
+CompByDevName(
+    const XCompDevStruct &a,
+    const XCompDevStruct &b
+    )
+{
+    //Sort be device name
+    return a.DeviceName < b.DeviceName;
+}
+#endif
 
 /******************************************************************************/
 // END OF FILE

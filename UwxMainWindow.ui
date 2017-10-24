@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>655</width>
-    <height>380</height>
+    <height>386</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>4</number>
+         <number>1</number>
         </property>
         <property name="elideMode">
          <enum>Qt::ElideNone</enum>
@@ -1399,6 +1399,13 @@
                       <number>0</number>
                      </property>
                      <item>
+                      <widget class="QPushButton" name="btn_Local_XCompilers">
+                       <property name="text">
+                        <string>Local XCompilers</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
                       <widget class="QCheckBox" name="check_OnlineXComp">
                        <property name="text">
                         <string>Online XCompile</string>
@@ -1411,7 +1418,7 @@
                      <item>
                       <widget class="QPushButton" name="btn_OnlineXComp_Supported">
                        <property name="text">
-                        <string>Supported Devices</string>
+                        <string>Cloud XCompilers</string>
                        </property>
                       </widget>
                      </item>

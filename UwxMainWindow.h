@@ -87,58 +87,59 @@
 /******************************************************************************/
 // Constants
 /******************************************************************************/
-const QString ServerHost                      = "uwterminalx.no-ip.org"; //Hostname/IP of online xcompile server
+const QString ServerHost                        = "uwterminalx.no-ip.org"; //Hostname/IP of online xcompile server
 //Constants for various file download functions
-const qint8 MODE_COMPILE                      = 1;
-const qint8 MODE_COMPILE_LOAD                 = 2;
-const qint8 MODE_COMPILE_LOAD_RUN             = 3;
-const qint8 MODE_LOAD                         = 4;
-const qint8 MODE_LOAD_RUN                     = 5;
-const qint8 MODE_SERVER_COMPILE               = 9;
-const qint8 MODE_SERVER_COMPILE_LOAD          = 10;
-const qint8 MODE_SERVER_COMPILE_LOAD_RUN      = 11;
-const qint8 MODE_CHECK_ERROR_CODE_VERSIONS    = 14;
-const qint8 MODE_CHECK_UWTERMINALX_VERSIONS   = 15;
-const qint8 MODE_UPDATE_ERROR_CODE            = 16;
-const qint8 MODE_CHECK_FIRMWARE_VERSIONS      = 17;
-const qint8 MODE_CHECK_FIRMWARE_SUPPORT       = 18;
+const qint8 MODE_COMPILE                        = 1;
+const qint8 MODE_COMPILE_LOAD                   = 2;
+const qint8 MODE_COMPILE_LOAD_RUN               = 3;
+const qint8 MODE_LOAD                           = 4;
+const qint8 MODE_LOAD_RUN                       = 5;
+const qint8 MODE_SERVER_COMPILE                 = 9;
+const qint8 MODE_SERVER_COMPILE_LOAD            = 10;
+const qint8 MODE_SERVER_COMPILE_LOAD_RUN        = 11;
+const qint8 MODE_CHECK_ERROR_CODE_VERSIONS      = 14;
+const qint8 MODE_CHECK_UWTERMINALX_VERSIONS     = 15;
+const qint8 MODE_UPDATE_ERROR_CODE              = 16;
+const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
+const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                       = "1.09e"; //Version string
+const QString UwVersion                         = "1.09f"; //Version string
 //Constants for timeouts and streaming
-const qint16 FileReadBlock                    = 512;     //Number of bytes to read per block when streaming files
-const qint16 StreamProgress                   = 10000;   //Number of bytes between streaming progress updates
-const qint16 BatchTimeout                     = 4000;    //Time (in ms) to wait for getting a response from a batch command for
-const qint16 PrePostXCompTimeout              = 15000;   //Time (in ms) to allow a pre/post XCompilation process to execute for
-const qint16 ModuleTimeout                    = 4000;    //Time (in ms) that a download stage command/process times out (module)
-const qint8 MaxOldDevNameSize                 = 8;       //Size (in characters) to allow for older module device names (characters past this point will be chopped off)
-const qint8 MaxDevNameSize                    = 18;      //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
-const qint16 AutoBaudTimeout                  = 1200;    //Time (in ms) to wait before checking the next baud rate when automatically detecting the module's baud rate
+const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
+const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
+const qint16 BatchTimeout                       = 4000;    //Time (in ms) to wait for getting a response from a batch command for
+const qint16 PrePostXCompTimeout                = 15000;   //Time (in ms) to allow a pre/post XCompilation process to execute for
+const qint16 ModuleTimeout                      = 4000;    //Time (in ms) that a download stage command/process times out (module)
+const qint8 MaxOldDevNameSize                   = 8;       //Size (in characters) to allow for older module device names (characters past this point will be chopped off)
+const qint8 MaxDevNameSize                      = 18;      //Size (in characters) to allow for a module device name (characters past this point will be chopped off)
+const qint16 AutoBaudTimeout                    = 1200;    //Time (in ms) to wait before checking the next baud rate when automatically detecting the module's baud rate
+const qint16 XCompATIRespTimeout                = 1200;    //Time (in ms) to wait to get a version response from an XCompiler before killing the process
 //Constants for default config values
-const QString DefaultLogFile                  = "UwTerminalX.log";
-const bool DefaultLogMode                     = 0;
-const bool DefaultLogEnable                   = 0;
-const QString DefaultCompilerDir              = "compilers/";
-const bool DefaultCompilerSubDirs             = 0;
-const bool DefaultDelUWCAfterDownload         = 0;
-const bool DefaultSysTrayIcon                 = 1;
-const qint16 DefaultSerialSignalCheckInterval = 50;
-const bool DefaultPrePostXCompRun             = 0;
-const bool DefaultPrePostXCompFail            = 0;
-const bool DefaultPrePostXCompMode            = 0;
-const QString DefaultPrePostXCompPath         = "";
-const bool DefaultOnlineXComp                 = 1;
-const qint16 DefaultTextUpdateInterval        = 80;
-const bool DefaultSkipDownloadDisplay         = 1;
-const bool DefaultSSLEnable                   = 1;
-const bool DefaultShowFileSize                = 1;
-const bool DefaultConfirmClear                = 1;
-const bool DefaultShiftEnterLineSeparator     = 1;
-const bool DefaultLicenceCheckMode            = 1;
-const bool DefaultUpdateCheckEnable           = 1;
-const QDate DefaultUpdateCheckLast            = QDate(1970, 1, 1);
-const bool DefaultAutoDTrimBuffer             = 0; //(Unlisted option)
-const quint32 DefaultAutoTrimDBufferThreshold = 0; //(Unlisted option)
-const quint32 DefaultAutoTrimDBufferSize      = 0; //(Unlisted option)
+const QString DefaultLogFile                    = "UwTerminalX.log";
+const bool DefaultLogMode                       = 0;
+const bool DefaultLogEnable                     = 0;
+const QString DefaultCompilerDir                = "compilers/";
+const bool DefaultCompilerSubDirs               = 0;
+const bool DefaultDelUWCAfterDownload           = 0;
+const bool DefaultSysTrayIcon                   = 1;
+const qint16 DefaultSerialSignalCheckInterval   = 50;
+const bool DefaultPrePostXCompRun               = 0;
+const bool DefaultPrePostXCompFail              = 0;
+const bool DefaultPrePostXCompMode              = 0;
+const QString DefaultPrePostXCompPath           = "";
+const bool DefaultOnlineXComp                   = 1;
+const qint16 DefaultTextUpdateInterval          = 80;
+const bool DefaultSkipDownloadDisplay           = 1;
+const bool DefaultSSLEnable                     = 1;
+const bool DefaultShowFileSize                  = 1;
+const bool DefaultConfirmClear                  = 1;
+const bool DefaultShiftEnterLineSeparator       = 1;
+const bool DefaultLicenceCheckMode              = 1;
+const bool DefaultUpdateCheckEnable             = 1;
+const QDate DefaultUpdateCheckLast              = QDate(1970, 1, 1);
+const bool DefaultAutoDTrimBuffer               = 0; //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferThreshold   = 0; //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferSize        = 0; //(Unlisted option)
 //Constants the protocol
 #ifndef UseSSL
     //HTTP
@@ -195,6 +196,29 @@ const qint8 SpeedModeSendRecv                 = 0b11;
 const qint16 SpeedTestChunkSize               = 512;  //Maximum number of bytes to send per chunk when speed testing
 const qint16 SpeedTestMinBufSize              = 128;  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
 const qint16 SpeedTestStatUpdateTime          = 500;  //Time (in ms) between status updates for speed test mode
+//XCompile exit codes
+const int XCOMP_OK                            = 0;
+const int XCOMP_GENERIC_FAIL                  = 1;
+const int XCOMP_FILENAME_EMPTY                = 2;
+const int XCOMP_FACTORY_FILE_OPEN_ERROR       = 3;
+const int XCOMP_RAWLINE_MALLOC_FAIL           = 4;
+const int XCOMP_OUTFILE_NAME_CREATION         = 5;
+const int XCOMP_PREPARSE_ERROR                = 6;
+const int XCOMP_TOKENISELINE_ERROR            = 7;
+const int XCOMP_GENERIC_ERROR                 = 8;
+const int XCOMP_ARGS_PARSING_ERROR            = 9;
+const int XCOMP_EMPTY_FILENAME                = 10;
+const int XCOMP_TOKPUBOPEN_FAIL               = 12;
+const int XCOMP_MAINSCRIPTFILE_OPEN_ERROR     = 11;
+const int XCOMP_NOT_ENOUGH_ARGS               = 13;
+const int XCOMP_MISSING_FILE                  = 14;
+const int XCOMP_XCMPEXEFILE_OPEN_ERROR        = 15;
+const int XCOMP_UNEXPECTED_ENDOF_FILE         = 20;
+const int XCOMP_NEWXCMPEXEFILE_OPEN_ERROR     = 30;
+const int XCOMP_SBXFULLPATH_MALLOC_FAIL       = 100;
+const int XCOMP_SBX_DATABASE_MISSING          = 101;
+const int XCOMP_MISSING_FILE_LEGACY           = 500;
+const int XCOMP_XCMPEXEFILE_OPEN_ERROR_LEGACY = 2000;
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -212,6 +236,21 @@ typedef struct
     qint16 iEndingLine; //Ending line that file's last data was put on
     qint8 iLineSpaces;
 } FileSStruct;
+
+//Structures used for holding information when listing available XCompilers on the local PC
+#ifdef _WIN32
+typedef struct
+{
+    QString ATI3;
+    QString LanguageHash;
+} XCompInfoStruct;
+
+typedef struct
+{
+    QString DeviceName;
+    QList<XCompInfoStruct> Firmwares;
+} XCompDevStruct;
+#endif
 
 //Enum used for specifying type of data
 enum class BitByteTypes
@@ -615,6 +654,15 @@ private slots:
     on_check_EnableWeeklyUpdateCheck_stateChanged(
         int
         );
+    QString
+    XCompile_Error_Message(
+        int intExitCode
+        );
+#ifdef _WIN32
+    void
+    on_btn_Local_XCompilers_clicked(
+        );
+#endif
 
 private:
     Ui::MainWindow *ui;
@@ -647,6 +695,10 @@ private:
         );
     void
     LookupErrorCode(
+        unsigned int intErrorCode
+        );
+    QString
+    LookupErrorCodeXCompile(
         unsigned int intErrorCode
         );
     void
