@@ -55,25 +55,6 @@
    </property>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QPlainTextEdit" name="text_Message">
-       <property name="font">
-        <font>
-         <family>Lucida Console</family>
-         <pointsize>8</pointsize>
-        </font>
-       </property>
-       <property name="undoRedoEnabled">
-        <bool>false</bool>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-       <property name="plainText">
-        <string/>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="leftMargin">
@@ -119,6 +100,22 @@
         </spacer>
        </item>
       </layout>
+     </item>
+     <item row="0" column="0">
+      <widget class="QPlainTextEdit" name="text_Message">
+       <property name="font">
+        <font>
+         <family>Lucida Console</family>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="undoRedoEnabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

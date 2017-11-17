@@ -6436,6 +6436,12 @@ MainWindow::UpdateSettings(
                 }
             }
         }
+
+        if (intMinor <= 9 && gpTermSettings->value("OnlineXCompServer", ServerHost).toString() == OldServerHost)
+        {
+            //Switch to new XCompiler cloud service hostname
+            gpTermSettings->setValue("OnlineXCompServer", ServerHost);
+        }
     }
 }
 
@@ -8498,7 +8504,7 @@ MainWindow::on_btn_Local_XCompilers_clicked(
     if (DeviceList.count() == 0)
     {
         //No local XCompilers detected
-        strMessage = "No local XCompilers were found on this PC. If you are using the online XCompile service then this is expected, if you have a local XCompiler exe which you which to use with UwTerminalX then you need to ";
+        strMessage = "No local XCompilers were found on this PC. If you are only using the online XCompile service then this is expected, if you have a local XCompiler exe which you want to use with UwTerminalX then you need to ";
         if (gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true)
         {
             strMessage.append("place it in a sub-directory of: ").append(dirXCompDir.absolutePath()).append("\r\n\r\nSo if for example you want to use a BL600 XCompiler with the filename XComp_BL600r2_ABCD_DEFG.exe then you need to create the sub-directory: ").append(dirXCompDir.absolutePath()).append("/BL600r2/ and place the exectuable in this sub-directory.");
@@ -8535,7 +8541,7 @@ CompByDevName(
     const XCompDevStruct &b
     )
 {
-    //Sort be device name
+    //Sort by device name
     return a.DeviceName < b.DeviceName;
 }
 #endif

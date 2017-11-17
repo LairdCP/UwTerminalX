@@ -87,7 +87,8 @@
 /******************************************************************************/
 // Constants
 /******************************************************************************/
-const QString ServerHost                        = "uwterminalx.no-ip.org"; //Hostname/IP of online xcompile server
+const QString OldServerHost                     = "uwterminalx.no-ip.org"; //Old hostname/IP of online xcompile server which is set to be removed
+const QString ServerHost                        = "uwterminalx.lairdtech.com"; //Hostname/IP of online xcompile server
 //Constants for various file download functions
 const qint8 MODE_COMPILE                        = 1;
 const qint8 MODE_COMPILE_LOAD                   = 2;
@@ -103,7 +104,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.09f"; //Version string
+const QString UwVersion                         = "1.09g"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -137,9 +138,9 @@ const bool DefaultShiftEnterLineSeparator       = 1;
 const bool DefaultLicenceCheckMode              = 1;
 const bool DefaultUpdateCheckEnable             = 1;
 const QDate DefaultUpdateCheckLast              = QDate(1970, 1, 1);
-const bool DefaultAutoDTrimBuffer               = 0; //(Unlisted option)
-const quint32 DefaultAutoTrimDBufferThreshold   = 0; //(Unlisted option)
-const quint32 DefaultAutoTrimDBufferSize        = 0; //(Unlisted option)
+const bool DefaultAutoDTrimBuffer               = false; //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferThreshold   = 0;     //(Unlisted option)
+const quint32 DefaultAutoTrimDBufferSize        = 0;     //(Unlisted option)
 //Constants the protocol
 #ifndef UseSSL
     //HTTP
