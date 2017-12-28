@@ -335,8 +335,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     .append("-SSL")
 #endif
     .append(" version ").append(UwVersion).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
-#ifdef UseSSL
+#ifdef UseSSL                               
+#if TARGET_OS_MAC
+    .append(", ").append(QString(QSslSocket::sslLibraryBuildVersionString()).replace(",", ":"))
+#else
     .append(", ").append(QString(QSslSocket::sslLibraryBuildVersionString()).left(QSslSocket::sslLibraryBuildVersionString().indexOf(" ", 9)))
+#endif
 #endif
 #ifdef QT_DEBUG
     .append(" [DEBUG BUILD]")
