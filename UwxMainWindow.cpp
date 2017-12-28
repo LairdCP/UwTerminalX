@@ -243,8 +243,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gusScriptingForm = 0;
 #endif
 
-    //Clear display buffer byte array.
+    //Clear display buffer byte array and reserve 128KB of RAM to reduce mallocs (should allow faster speed testing at 1M baud)
     gbaDisplayBuffer.clear();
+    gbaDisplayBuffer.reserve(131072);
 
     //Load settings from configuration files
     LoadSettings();
@@ -328,13 +329,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gtmrSpeedTestStats10s.setSingleShot(false);
     connect(&gtmrSpeedTestStats10s, SIGNAL(timeout()), this, SLOT(OutputSpeedTestStats()));
 #endif
-
     //Display version
     ui->statusBar->showMessage(QString("UwTerminalX")
 #ifdef UseSSL
     .append("-SSL")
 #endif
     .append(" version ").append(UwVersion).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
+#ifdef UseSSL
+    .append(", ").append(QString(QSslSocket::sslLibraryBuildVersionString()).left(QSslSocket::sslLibraryBuildVersionString().indexOf(" ", 9)))
+#endif
 #ifdef QT_DEBUG
     .append(" [DEBUG BUILD]")
 #endif
@@ -1101,6 +1104,9 @@ MainWindow::~MainWindow(){
         delete gstrUpdateCheckString;
     }
 
+    //Release reserved memory by display buffer
+    gbaDisplayBuffer.squeeze();
+
     //Delete variables
     delete gpMainLog;
     delete gpPredefinedDevice;
@@ -1490,6 +1496,9 @@ void
 MainWindow::SerialRead(
     )
 {
+    //Update the last received field
+    ui->label_LastRx->setText(QDateTime::currentDateTime().toString("dd/MM @ hh:mm:ss"));
+
     //Read the data into a buffer and copy it to edit for the display data
 #if SKIPSPEEDTEST != 1
     if (gbSpeedTestRunning == true)
@@ -1515,8 +1524,12 @@ MainWindow::SerialRead(
             //Update the display with the data
             QByteArray baDispData = baOrigData;
 
-            //Add to log
-            gpMainLog->WriteRawLogData(baOrigData);
+            //Check if this should be passed to the logger
+            if (ui->check_LogEnable->isChecked())
+            {
+                //Add to log
+                gpMainLog->WriteRawLogData(baOrigData);
+            }
 
             if (ui->check_ShowCLRF->isChecked() == true)
             {

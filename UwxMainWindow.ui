@@ -83,7 +83,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>4</number>
         </property>
         <property name="elideMode">
          <enum>Qt::ElideNone</enum>
@@ -153,7 +153,7 @@
               <item>
                <widget class="QLabel" name="label_16">
                 <property name="text">
-                 <string>Download TX Remaining:</string>
+                 <string>Download Tx Left:</string>
                 </property>
                </widget>
               </item>
@@ -241,6 +241,34 @@
               </item>
               <item>
                <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_44">
+                <property name="text">
+                 <string>Last Rx:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_10">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_LastRx">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_9">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>

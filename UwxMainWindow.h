@@ -83,6 +83,9 @@
 #ifndef QT_NO_SSL
     #define UseSSL //By default enable SSL if Qt supports it (requires OpenSSL runtime libraries). Comment this line out to build without SSL support or if you get errors when communicating with the server
 #endif
+#ifdef UseSSL
+    #include <QSslSocket>
+#endif
 
 /******************************************************************************/
 // Constants
@@ -104,7 +107,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.09g"; //Version string
+const QString UwVersion                         = "1.09h"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
