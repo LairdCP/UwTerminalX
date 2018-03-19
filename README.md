@@ -20,7 +20,7 @@ If using the SSL version of UwTerminalX, then the Visual Studio 2015 runtime fil
 
 ### Mac:
 
-Download and open the dmg file, open it to mount it as a drive on your computer, go to the disk drive and copy the file UwTerminalX to folder on your computer. You can run UwTerminalX by double clicking the icon.
+(**Mac OS X version 10.10 or later is required if using the pre-compiled binaries, as Secure Transport is built into OS X there is no non-SSL build available for OS X systems**): Download and open the dmg file, open it to mount it as a drive on your computer, go to the disk drive and copy the file UwTerminalX to folder on your computer. You can run UwTerminalX by double clicking the icon.
 
 ### Linux (Including Raspberry Pi):
 
