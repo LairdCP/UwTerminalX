@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -37,11 +37,6 @@
 #include <QClipboard>
 
 /******************************************************************************/
-// Defines
-/******************************************************************************/
-#define ItemAllow 20 //Number of scrollback items to allow
-
-/******************************************************************************/
 // Class definitions
 /******************************************************************************/
 class LrdScrollEdit : public QPlainTextEdit
@@ -51,6 +46,12 @@ public:
     explicit
     LrdScrollEdit(
         QWidget *parent = 0
+        );
+    ~LrdScrollEdit(
+        );
+    bool
+    SetupScrollback(
+        quint16 nLines
         );
     void
     SetLineMode(
@@ -112,10 +113,9 @@ signals:
         QString strFilename
         );
 
-private slots:
-
 private:
-    QString mstrItemArray[ItemAllow+1]; //Item text
+    QString *mstrItemArray; //Item text
+    quint16 nItemArraySize; //Array size
     unsigned char mchItems; //Number of items
     unsigned char mchPosition; //Current position
     bool mbLineMode; //True enables line mode

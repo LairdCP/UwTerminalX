@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2016 The Qt Company with modifications by Laird
+** Copyright (C) 2016-2018 The Qt Company with modifications by Laird
 **
 ** Project: UwTerminalX
 **
@@ -31,9 +31,9 @@
 #include <QtWidgets>
 
 /******************************************************************************/
-// Defines
+// Constants
 /******************************************************************************/
-#define IndicationAreaWidth 11
+const qint8 IndicationAreaWidth = 11;
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions

@@ -273,7 +273,7 @@
         <string>This is the maximum size of the receive buffer, if the expected data is not found after this number of bytes have been received then the script will fail.</string>
        </property>
        <property name="text">
-        <string>Maximum receive buffer size:</string>
+        <string>Max receive buffer size:</string>
        </property>
       </widget>
      </item>
@@ -308,7 +308,7 @@
         <string>This is the maximum time to wait for the recieve buffer to contain the expected data before the script fails.</string>
        </property>
        <property name="text">
-        <string>Maximum receive time (seconds): </string>
+        <string>Max receive time (seconds): </string>
        </property>
       </widget>
      </item>
@@ -334,6 +334,41 @@
        </property>
        <property name="value">
         <number>900</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="toolTip">
+        <string>This is the maximum time to wait for the recieve buffer to contain the expected data before the script fails.</string>
+       </property>
+       <property name="text">
+        <string>Repeats: </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spin_Repeats">
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>This is the number of times to repeat the script (0 will not repeat the script, -1 will infinitely repeat the script).</string>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::NoButtons</enum>
+       </property>
+       <property name="minimum">
+        <number>-1</number>
+       </property>
+       <property name="maximum">
+        <number>999999</number>
+       </property>
+       <property name="value">
+        <number>0</number>
        </property>
       </widget>
      </item>

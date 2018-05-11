@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2016-2017 Laird
+** Copyright (C) 2016-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -47,19 +47,31 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define ScriptingDataIn                '<'   //Command that waits for data to be received
-#define ScriptingDataOut               '>'   //Command that sends data out to module
-#define ScriptingWaitTime              '~'   //Command that waits for a period of time (in ms)
-#define ScriptingComment               "//"  //A null-function command that is used to explain/comment code
-#define ScriptingActionDataIn          1     //Action ID when waiting to receive data
-#define ScriptingActionDataOut         2     //Action ID when sending data out
-#define ScriptingActionWaitTime        3     //Action ID when waiting for a period of time
-#define ScriptingActionOther           4     //Action ID when doing no action (empty line/comment)
-#define MenuActionChangeFont           1     //Menu action ID for changing font
-#define MenuActionExportStringPlayer   2     //Menu action ID for exporting to string player
-#define ScriptingReasonOK              0     //Return code for no error
-#define ScriptingReasonPortClosed      1     //Return code if serial port is not open
-#define ScriptingReasonTermBusy        2     //Return code if terminal is busy
+//Decides if generic data types will be 32 or 64-bit
+#if _WIN64 || __aarch64__ || TARGET_OS_MAC || __x86_64__
+    //64-bit OS
+    #define OS32_64INT qint64
+#else
+    //32-bit or other OS
+    #define OS32_64INT qint32
+#endif
+
+/******************************************************************************/
+// Constants
+/******************************************************************************/
+const QChar   ScriptingDataIn              = '<';  //Command that waits for data to be received
+const QChar   ScriptingDataOut             = '>';  //Command that sends data out to module
+const QChar   ScriptingWaitTime            = '~';  //Command that waits for a period of time (in ms)
+const QString ScriptingComment             = "//"; //A null-function command that is used to explain/comment code
+const qint8   ScriptingActionDataIn        = 1;    //Action ID when waiting to receive data
+const qint8   ScriptingActionDataOut       = 2;    //Action ID when sending data out
+const qint8   ScriptingActionWaitTime      = 3;    //Action ID when waiting for a period of time
+const qint8   ScriptingActionOther         = 4;    //Action ID when doing no action (empty line/comment)
+const qint8   MenuActionChangeFont         = 1;    //Menu action ID for changing font
+const qint8   MenuActionExportStringPlayer = 2;    //Menu action ID for exporting to string player
+const qint8   ScriptingReasonOK            = 0;    //Return code for no error
+const qint8   ScriptingReasonPortClosed    = 1;    //Return code if serial port is not open
+const qint8   ScriptingReasonTermBusy      = 2;    //Return code if terminal is busy
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -201,6 +213,7 @@ private:
     QMenu *gpOptionsMenu; //Options menu
     QMenu *gpSOptionsMenu1; //Options export sub-menu
     QShortcut *qaKeyShortcuts[5]; //Shortcut object handles for various keyboard shortcuts
+    OS32_64INT mnRepeats; //Number of script repeats completed (when specific mode is enabled)
 
 signals:
     void ScriptFinished(

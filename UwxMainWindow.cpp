@@ -1,5 +1,5 @@
 ﻿/******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -43,9 +43,9 @@
         //Windows 32-bit
         #define OS "Windows (x86)"
     #endif
-#elif __APPLE__
+#elif defined(__APPLE__)
     #include "TargetConditionals.h"
-    #if TARGET_OS_MAC
+    #ifdef TARGET_OS_MAC
         //Mac OSX
         #define OS "Mac"
         QString gstrMacBundlePath;
@@ -140,7 +140,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->text_Terms->appendPlainText("[Built without Speed test support]");
 #endif
 
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
     //On mac, get the directory of the bundle (which will be <location>/Term.app/Contents/MacOS) and go up to the folder with the file in
     QDir BundleDir(QCoreApplication::applicationDirPath());
     BundleDir.cdUp();
@@ -335,8 +335,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     .append("-SSL")
 #endif
     .append(" version ").append(UwVersion).append(" (").append(OS).append("), Built ").append(__DATE__).append(" Using QT ").append(QT_VERSION_STR)
-#ifdef UseSSL                               
-#if TARGET_OS_MAC
+#ifdef UseSSL
+#ifdef TARGET_OS_MAC
     .append(", ").append(QString(QSslSocket::sslLibraryBuildVersionString()).replace(",", ":"))
 #else
     .append(", ").append(QString(QSslSocket::sslLibraryBuildVersionString()).left(QSslSocket::sslLibraryBuildVersionString().indexOf(" ", 9)))
@@ -410,6 +410,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifdef SKIPSCRIPTINGFORM
     //Disable scripting option
     gpMenu->actions()[12]->setEnabled(false);
+#endif
+
+#if defined(TARGET_OS_MAC) || (defined(SKIPUSBRECOVERY) && SKIPUSBRECOVERY == 1)
+    //Remove exit autorun button on mac
+    ui->btn_ExitAutorun->deleteLater();
 #endif
 
     //Connect the menu actions
@@ -488,45 +493,45 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
     {
-        //Create default device configurations... BT900
-        gpPredefinedDevice->setValue(QString("Port1Name"), "BT900");
+        //Create default device configurations... BL65x
+        gpPredefinedDevice->setValue(QString("Port1Name"), "BL65x");
         gpPredefinedDevice->setValue(QString("Port1Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port1Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port1Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port1Data"), "8");
         gpPredefinedDevice->setValue(QString("Port1Flow"), "1");
 
-        //BL600/BL620
-        gpPredefinedDevice->setValue(QString("Port2Name"), "BL600/BL620");
-        gpPredefinedDevice->setValue(QString("Port2Baud"), "9600");
+        //RM186/RM191
+        gpPredefinedDevice->setValue(QString("Port2Name"), "RM186/RM191");
+        gpPredefinedDevice->setValue(QString("Port2Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port2Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port2Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port2Data"), "8");
         gpPredefinedDevice->setValue(QString("Port2Flow"), "1");
 
-        //BL620-US
-        gpPredefinedDevice->setValue(QString("Port3Name"), "BL620-US");
-        gpPredefinedDevice->setValue(QString("Port3Baud"), "9600");
+        //BT900
+        gpPredefinedDevice->setValue(QString("Port3Name"), "BT900");
+        gpPredefinedDevice->setValue(QString("Port3Baud"), "115200");
         gpPredefinedDevice->setValue(QString("Port3Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port3Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port3Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port3Flow"), "0");
+        gpPredefinedDevice->setValue(QString("Port3Flow"), "1");
 
-        //BL652
-        gpPredefinedDevice->setValue(QString("Port4Name"), "BL652");
-        gpPredefinedDevice->setValue(QString("Port4Baud"), "115200");
+        //BL600/BL620
+        gpPredefinedDevice->setValue(QString("Port4Name"), "BL600/BL620");
+        gpPredefinedDevice->setValue(QString("Port4Baud"), "9600");
         gpPredefinedDevice->setValue(QString("Port4Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port4Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port4Data"), "8");
         gpPredefinedDevice->setValue(QString("Port4Flow"), "1");
 
-        //RM186/RM191
-        gpPredefinedDevice->setValue(QString("Port5Name"), "RM186/RM191");
-        gpPredefinedDevice->setValue(QString("Port5Baud"), "115200");
+        //BL620-US
+        gpPredefinedDevice->setValue(QString("Port5Name"), "BL620-US");
+        gpPredefinedDevice->setValue(QString("Port5Baud"), "9600");
         gpPredefinedDevice->setValue(QString("Port5Parity"), "0");
         gpPredefinedDevice->setValue(QString("Port5Stop"), "1");
         gpPredefinedDevice->setValue(QString("Port5Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port5Flow"), "1");
+        gpPredefinedDevice->setValue(QString("Port5Flow"), "0");
 
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
@@ -646,6 +651,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         certFile.close();
     }
 #endif
+
+    //Setup the terminal scrollback buffer size
+    ui->text_TermEditData->SetupScrollback(gpTermSettings->value("ScrollbackBufferSize", DefaultScrollbackBufferSize).toUInt());
 
     //Check command line
     QStringList slArgs = QCoreApplication::arguments();
@@ -949,7 +957,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gintAutoTrimBufferDThreshold = gpTermSettings->value("AutoTrimDBufferThreshold", DefaultAutoTrimDBufferThreshold).toULongLong();
     gintAutoTrimBufferDSize = gpTermSettings->value("AutoTrimDBufferSize", DefaultAutoTrimDBufferSize).toULongLong();
 
-#if __APPLE__
+#ifdef __APPLE__
     //Show a warning to Mac users with the FTDI driver installed
     if ((QFile::exists("/System/Library/Extensions/FTDIUSBSerialDriver.kext") || QFile::exists("/Library/Extensions/FTDIUSBSerialDriver.kext")) && gpTermSettings->value("MacFTDIDriverWarningShown").isNull())
     {
@@ -1245,12 +1253,12 @@ void
 MainWindow::on_btn_TermClose_clicked(
     )
 {
-    if (ui->btn_TermClose->text() == "&Open Port")
+    if (ui->btn_TermClose->text() == "&Open Port" || ui->btn_TermClose->text() == "Open Port")
     {
         //Open connection
         OpenDevice();
     }
-    else if (ui->btn_TermClose->text() == "C&lose Port")
+    else if (ui->btn_TermClose->text() == "C&lose Port" || ui->btn_TermClose->text() == "Close Port")
     {
         //Close, but first clear up from download/streaming
         gbTermBusy = false;
@@ -1299,7 +1307,7 @@ MainWindow::on_btn_TermClose_clicked(
             }
 
             //Update values
-            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000LL ? 1000000000LL : gtmrSpeedTimer.nsecsElapsed()/1000000000LL));
 
             //Set speed test as no longer running
             gchSpeedTestMode = SpeedModeInactive;
@@ -2556,7 +2564,7 @@ MainWindow::balloontriggered(
     if (intItem == BalloonActionShow)
     {
         //Make UwTerminalX the active window
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         //Bugfix for mac (icon vanishes when clicked)
         gpSysTray->setIcon(QIcon(*gpUw16Pixmap));
 #endif
@@ -3252,11 +3260,14 @@ MainWindow::OpenDevice(
             ui->btn_SpeedStartStop->setEnabled(true);
 #endif
 
+            //Clear last received date/time
+            ui->label_LastRx->setText("N/A");
+
             //Open log file
             if (ui->check_LogEnable->isChecked() == true)
             {
                 //Logging is enabled
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
                 if (gpMainLog->OpenLogFile(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/").append(ui->edit_LogFile->text())) == LOG_OK)
 #else
                 if (gpMainLog->OpenLogFile(ui->edit_LogFile->text()) == LOG_OK)
@@ -3550,7 +3561,7 @@ MainWindow::SerialError(
             }
 
             //Update values
-            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000LL ? 1000000000LL : gtmrSpeedTimer.nsecsElapsed()/1000000000LL));
 
             //Set speed test as no longer running
             gchSpeedTestMode = SpeedModeInactive;
@@ -3927,13 +3938,13 @@ MainWindow::FinishStream(
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n"));
         ui->statusBar->showMessage("File streaming cancelled.");
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n"));
         ui->statusBar->showMessage("File streaming complete!");
     }
 
@@ -3964,13 +3975,13 @@ MainWindow::FinishBatch(
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds)\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds)\n"));
         ui->statusBar->showMessage("Batch file sending cancelled.");
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("\nFinished sending batch file, ").append(QString::number(gintStreamBytesRead)).append(" lines sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000))).append(" seconds\n"));
+        gbaDisplayBuffer.append(QString("\nFinished sending batch file, ").append(QString::number(gintStreamBytesRead)).append(" lines sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds\n"));
         ui->statusBar->showMessage("Batch file sending complete!");
     }
 
@@ -4041,20 +4052,20 @@ MainWindow::on_combo_COM_currentIndexChanged(
     //Serial port selection has been changed, update text
     if (ui->combo_COM->currentText().length() > 0)
     {
-        QSerialPortInfo SerialInfo(ui->combo_COM->currentText());
-        if (SerialInfo.isValid())
+        QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
+        if (spiSerialInfo.isValid())
         {
             //Port exists
-            QString strDisplayText(SerialInfo.description());
-            if (SerialInfo.manufacturer().length() > 1)
+            QString strDisplayText(spiSerialInfo.description());
+            if (spiSerialInfo.manufacturer().length() > 1)
             {
                 //Add manufacturer
-                strDisplayText.append(" (").append(SerialInfo.manufacturer()).append(")");
+                strDisplayText.append(" (").append(spiSerialInfo.manufacturer()).append(")");
             }
-            if (SerialInfo.serialNumber().length() > 1)
+            if (spiSerialInfo.serialNumber().length() > 1)
             {
                 //Add serial
-                strDisplayText.append(" [").append(SerialInfo.serialNumber()).append("]");
+                strDisplayText.append(" [").append(spiSerialInfo.serialNumber()).append("]");
             }
             ui->label_SerialInfo->setText(strDisplayText);
         }
@@ -4766,7 +4777,7 @@ MainWindow::replyFinished(
                         {
                             //File and line error information available, translate into the proper file
                             qint32 iLineNumber = strMessage.mid(strMessage.indexOf("Line   : ") + 9, strMessage.indexOf("\n", strMessage.indexOf("Line   : "))-strMessage.indexOf("Line   : ")-9).toInt();
-                            if (iLineNumber >= 1 && iLineNumber < 200000)
+                            if (iLineNumber >= 1 && iLineNumber < 200000L)
                             {
                                 //Line number seems valid, search for the file
                                 qint16 iCFile = lstFileData.length()-1;
@@ -5128,7 +5139,7 @@ MainWindow::replyFinished(
 #endif
                 delete gpErrorMessages;
                 gbErrorsLoaded = false;
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
                 if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv")))
                 {
                     //Remove file
@@ -5142,7 +5153,7 @@ MainWindow::replyFinished(
                 }
 #endif
 
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
                 QFile file(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv"));
 #else
                 QFile file("codes.csv");
@@ -5154,7 +5165,7 @@ MainWindow::replyFinished(
                     file.close();
 
                     //Reopen error code file and update status
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
                     gpErrorMessages = new QSettings(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv"), QSettings::IniFormat);
 #else
                     gpErrorMessages = new QSettings(QString("codes.csv"), QSettings::IniFormat);
@@ -5810,7 +5821,7 @@ MainWindow::on_btn_LogRefresh_clicked(
     if (ui->combo_LogDirectory->currentIndex() == 1)
     {
         //Log file directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         QFileInfo a(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
         QFileInfo a(ui->edit_LogFile->text());
@@ -5820,7 +5831,7 @@ MainWindow::on_btn_LogRefresh_clicked(
     else
     {
         //Application directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         strDirPath = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
         strDirPath = "./";
@@ -5851,7 +5862,7 @@ MainWindow::on_btn_Licenses_clicked(
     )
 {
     //Show license text
-    QString strMessage = tr("UwTerminalX uses the Qt framework version 5, which is licensed under the GPLv3 (not including later versions).\nUwTerminalX uses and may be linked statically to various other libraries including Xau, XCB, expat, fontconfig, zlib, bz2, harfbuzz, freetype, udev, dbus, icu, unicode, UPX, OpenSSL. The licenses for these libraries are provided below:\n\n\n\nLib Xau:\n\nCopyright 1988, 1993, 1994, 1998  The Open Group\n\nPermission to use, copy, modify, distribute, and sell this software and its\ndocumentation for any purpose is hereby granted without fee, provided that\nthe above copyright notice appear in all copies and that both that\ncopyright notice and this permission notice appear in supporting\ndocumentation.\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\nOPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN\nAN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\nCONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of The Open Group shall not be\nused in advertising or otherwise to promote the sale, use or other dealings\nin this Software without prior written authorization from The Open Group.\n\n\n\nxcb:\n\nCopyright (C) 2001-2006 Bart Massey, Jamey Sharp, and Josh Triplett.\nAll Rights Reserved.\n\nPermission is hereby granted, free of charge, to any person\nobtaining a copy of this software and associated\ndocumentation files (the 'Software'), to deal in the\nSoftware without restriction, including without limitation\nthe rights to use, copy, modify, merge, publish, distribute,\nsublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so,\nsubject to the following conditions:\n\nThe above copyright notice and this permission notice shall\nbe included in all copies or substantial portions of the\nSoftware.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY\nKIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE\nWARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR\nPURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS\nBE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\nOTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the names of the authors\nor their institutions shall not be used in advertising or\notherwise to promote the sale, use or other dealings in this\nSoftware without prior written authorization from the\nauthors.\n\n\n\nexpat:\n\nCopyright (c) 1998, 1999, 2000 Thai Open Source Software Center Ltd\n   and Clark Cooper\nCopyright (c) 2001, 2002, 2003, 2004, 2005, 2006 Expat maintainers.\nPermission is hereby granted, free of charge, to any person obtaining\na copy of this software and associated documentation files (the\n'Software'), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so, subject to\nthe following conditions:\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\nIN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY\nCLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\nTORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE\nSOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n\n\nfontconfig:\n\nCopyright © 2001,2003 Keith Packard\n\nPermission to use, copy, modify, distribute, and sell this software and its\ndocumentation for any purpose is hereby granted without fee, provided that\nthe above copyright notice appear in all copies and that both that\ncopyright notice and this permission notice appear in supporting\ndocumentation, and that the name of Keith Packard not be used in\nadvertising or publicity pertaining to distribution of the software without\nspecific, written prior permission.  Keith Packard makes no\nrepresentations about the suitability of this software for any purpose.  It\nis provided 'as is' without express or implied warranty.\n\nKEITH PACKARD DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\nINCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO\nEVENT SHALL KEITH PACKARD BE LIABLE FOR ANY SPECIAL, INDIRECT OR\nCONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,\nDATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER\nTORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR\nPERFORMANCE OF THIS SOFTWARE.\n\nz:\n\n (C) 1995-2013 Jean-loup Gailly and Mark Adler\n\n  This software is provided 'as-is', without any express or implied\n  warranty.  In no event will the authors be held liable for any damages\n  arising from the use of this software.\n\n  Permission is granted to anyone to use this software for any purpose,\n  including commercial applications, and to alter it and redistribute it\n  freely, subject to the following restrictions:\n\n  1. The origin of this software must not be misrepresented; you must not\n     claim that you wrote the original software. If you use this software\n     in a product, an acknowledgment in the product documentation would be\n     appreciated but is not required.\n  2. Altered source versions must be plainly marked as such, and must not be\n     misrepresented as being the original software.\n  3. This notice may not be removed or altered from any source distribution.\n\n  Jean-loup Gailly        Mark Adler\n  jloup@gzip.org          madler@alumni.caltech.edu\n\n\n\nbz2:\n\n\nThis program, 'bzip2', the associated library 'libbzip2', and all\ndocumentation, are copyright (C) 1996-2010 Julian R Seward.  All\nrights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions\nare met:\n\n1. Redistributions of source code must retain the above copyright\n   notice, this list of conditions and the following disclaimer.\n\n2. The origin of this software must not be misrepresented; you must\n   not claim that you wrote the original software.  If you use this\n   software in a product, an acknowledgment in the product\n   documentation would be appreciated but is not required.\n\n3. Altered source versions must be plainly marked as such, and must\n   not be misrepresented as being the original software.\n\n4. The name of the author may not be used to endorse or promote\n   products derived from this software without specific prior written\n   permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS\nOR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE\nGOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\nINTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,\nWHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\nJulian Seward, jseward@bzip.org\nbzip2/libbzip2 version 1.0.6 of 6 September 2010\n\n\n\nharfbuzz:\n\nHarfBuzz is licensed under the so-called 'Old MIT' license.  Details follow.\n\nCopyright © 2010,2011,2012  Google, Inc.\nCopyright © 2012  Mozilla Foundation\nCopyright © 2011  Codethink Limited\nCopyright © 2008,2010  Nokia Corporation and/or its subsidiary(-ies)\nCopyright © 2009  Keith Stribley\nCopyright © 2009  Martin Hosken and SIL International\nCopyright © 2007  Chris Wilson\nCopyright © 2006  Behdad Esfahbod\nCopyright © 2005  David Turner\nCopyright © 2004,2007,2008,2009,2010  Red Hat, Inc.\nCopyright © 1998-2004  David Turner and Werner Lemberg\n\nFor full copyright notices consult the individual files in the package.\n\nPermission is hereby granted, without written agreement and without\nlicense or royalty fees, to use, copy, modify, and distribute this\nsoftware and its documentation for any purpose, provided that the\nabove copyright notice and the").append(" following two paragraphs appear in\nall copies of this software.\n\nIN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR\nDIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES\nARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN\nIF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH\nDAMAGE.\n\nTHE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,\nBUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND\nFITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS\nON AN 'AS IS' BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO\nPROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\n\n\n\nfreetype:\n\nThe  FreeType 2  font  engine is  copyrighted  work and  cannot be  used\nlegally  without a  software license.   In  order to  make this  project\nusable  to a vast  majority of  developers, we  distribute it  under two\nmutually exclusive open-source licenses.\n\nThis means  that *you* must choose  *one* of the  two licenses described\nbelow, then obey  all its terms and conditions when  using FreeType 2 in\nany of your projects or products.\n\n  - The FreeType License, found in  the file `FTL.TXT', which is similar\n    to the original BSD license *with* an advertising clause that forces\n    you  to  explicitly cite  the  FreeType  project  in your  product's\n    documentation.  All  details are in the license  file.  This license\n    is  suited  to products  which  don't  use  the GNU  General  Public\n    License.\n\n    Note that  this license  is  compatible  to the  GNU General  Public\n    License version 3, but not version 2.\n\n  - The GNU General Public License version 2, found in  `GPLv2.TXT' (any\n    later version can be used  also), for programs which already use the\n    GPL.  Note  that the  FTL is  incompatible  with  GPLv2 due  to  its\n    advertisement clause.\n\nThe contributed BDF and PCF drivers come with a license similar  to that\nof the X Window System.  It is compatible to the above two licenses (see\nfile src/bdf/README and src/pcf/README).\n\nThe gzip module uses the zlib license (see src/gzip/zlib.h) which too is\ncompatible to the above two licenses.\n\nThe MD5 checksum support (only used for debugging in development builds)\nis in the public domain.\n\n\n\nudev:\n\nCopyright (C) 2003 Greg Kroah-Hartman <greg@kroah.com>\nCopyright (C) 2003-2010 Kay Sievers <kay@vrfy.org>\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 2 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n\n\ndbus:\n\nD-Bus is licensed to you under your choice of the Academic Free\nLicense version 2.1, or the GNU General Public License version 2\n(or, at your option any later version).\n\n\n\nicu:\n\nICU License - ICU 1.8.1 and later\nCOPYRIGHT AND PERMISSION NOTICE\nCopyright (c) 1995-2015 International Business Machines Corporation and others\nAll rights reserved.\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, provided that the above copyright notice(s) and this permission notice appear in all copies of the Software and that both the above copyright notice(s) and this permission notice appear in supporting documentation.\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\nExcept as contained in this notice, the name of a copyright holder shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization of the copyright holder.\n\n\n\nUnicode:\n\nCOPYRIGHT AND PERMISSION NOTICE\n\nCopyright © 1991-2015 Unicode, Inc. All rights reserved.\nDistributed under the Terms of Use in\nhttp://www.unicode.org/copyright.html.\n\nPermission is hereby granted, free of charge, to any person obtaining\na copy of the Unicode data files and any associated documentation\n(the 'Data Files') or Unicode software and any associated documentation\n(the 'Software') to deal in the Data Files or Software\nwithout restriction, including without limitation the rights to use,\ncopy, modify, merge, publish, distribute, and/or sell copies of\nthe Data Files or Software, and to permit persons to whom the Data Files\nor Software are furnished to do so, provided that\n(a) this copyright and permission notice appear with all copies\nof the Data Files or Software,\n(b) this copyright and permission notice appear in associated\ndocumentation, and\n(c) there is clear notice in each modified Data File or in the Software\nas well as in the documentation associated with the Data File(s) or\nSoftware that the data or software has been modified.\n\nTHE DATA FILES AND SOFTWARE ARE PROVIDED 'AS IS', WITHOUT WARRANTY OF\nANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE\nWARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT OF THIRD PARTY RIGHTS.\nIN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS\nNOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL\nDAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,\nDATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER\nTORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR\nPERFORMANCE OF THE DATA FILES OR SOFTWARE.\n\nExcept as contained in this notice, the name of a copyright holder\nshall not be used in advertising or otherwise to promote the sale,\nuse or other dealings in these Data Files or Software without prior\nwritten authorization of the copyright holder.\n\n\nUPX:\n\nCopyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer\nCopyright (C) 1996-2013 László Molnár\nCopyright (C) 2000-2013 John F. Reiser\n\nAll Rights Reserved. This program may be used freely, and you are welcome to redistribute and/or modify it under certain conditions.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the UPX License Agreement for more details: http://upx.sourceforge.net/upx-license.html\r\n\r\n\r\nOpenSSL:\r\n\r\nCopyright (c) 1998-2016 The OpenSSL Project.  All rights reserved.\r\n\r\nRedistribution and use in source and binary forms, with or without\r\nmodification, are permitted provided that the following conditions\r\nare met:\r\n\r\n1. Redistributions of source code must retain the above copyright\r\n   notice, this list of conditions and the following disclaimer. \r\n\r\n2. Redistributions in binary form must reproduce the above copyright\r\n   notice, this list of conditions and the following disclaimer in\r\n   the documentation and/or other materials provided with the\r\n   distribution.\r\n\r\n3. All advertising materials mentioning features or use of this\r\n   software must display the following acknowledgment:\r\n   'This product includes software developed by the OpenSSL Project\r\n   for use in the OpenSSL Toolkit. (http://www.openssl.org/)'\r\n\r\n4. The names 'OpenSSL Toolkit' and 'OpenSSL Project' must not be used to\r\n   endorse or promote products derived from this software without\r\n   prior written permission. For written permission, please contact\r\n   openssl-core@openssl.org.\r\n\r\n5. Products derived from this software may not be called 'OpenSSL'\r\n   nor may 'OpenSSL' appear in their names without prior written\r\n   permission of the OpenSSL Project.\r\n\r\n6. Redistributions of any form whatsoever must retain the following\r\n   acknowledgment:\r\n   'This product includes software developed by the OpenSSL Project\r\n   for use in the OpenSSL Toolkit (http://www.openssl.org/)'\r\n\r\nTHIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY\r\nEXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\r\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\r\nPURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR\r\nITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\r\nSPECIAL, EXEMPLARY, OR").append(" CONSEQUENTIAL DAMAGES (INCLUDING, BUT\r\nNOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\r\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\r\nHOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,\r\nSTRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\r\nARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED\r\nOF THE POSSIBILITY OF SUCH DAMAGE.\r\n====================================================================\r\n\r\nThis product includes cryptographic software written by Eric Young\r\n(eay@cryptsoft.com).  This product includes software written by Tim\r\nHudson (tjh@cryptsoft.com).\r\n\r\n\r\n Original SSLeay License\r\n -----------------------\r\n\r\nCopyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)\r\nAll rights reserved.\r\n\r\nThis package is an SSL implementation written\r\nby Eric Young (eay@cryptsoft.com).\r\nThe implementation was written so as to conform with Netscapes SSL.\r\n\r\nThis library is free for commercial and non-commercial use as long as\r\nthe following conditions are aheared to.  The following conditions\r\napply to all code found in this distribution, be it the RC4, RSA,\r\nlhash, DES, etc., code; not just the SSL code.  The SSL documentation\r\nincluded with this distribution is covered by the same copyright terms\r\nexcept that the holder is Tim Hudson (tjh@cryptsoft.com).\r\n\r\nCopyright remains Eric Young's, and as such any Copyright notices in\r\nthe code are not to be removed.\r\nIf this package is used in a product, Eric Young should be given attribution\r\nas the author of the parts of the library used.\r\nThis can be in the form of a textual message at program startup or\r\nin documentation (online or textual) provided with the package.\r\n\r\nRedistribution and use in source and binary forms, with or without\r\nmodification, are permitted provided that the following conditions\r\nare met:\r\n1. Redistributions of source code must retain the copyright\r\n   notice, this list of conditions and the following disclaimer.\r\n2. Redistributions in binary form must reproduce the above copyright\r\n   notice, this list of conditions and the following disclaimer in the\r\n   documentation and/or other materials provided with the distribution.\r\n3. All advertising materials mentioning features or use of this software\r\n   must display the following acknowledgement:\r\n   'This product includes cryptographic software written by\r\n    Eric Young (eay@cryptsoft.com)'\r\n   The word 'cryptographic' can be left out if the rouines from the library\r\n   being used are not cryptographic related :-).\r\n4. If you include any Windows specific code (or a derivative thereof) from \r\n   the apps directory (application code) you must include an acknowledgement:\r\n   'This product includes software written by Tim Hudson (tjh@cryptsoft.com)'\r\n\r\nTHIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND\r\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\r\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\r\nARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\r\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\r\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\r\nOR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\r\nHOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\r\nLIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\r\nOUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\r\nSUCH DAMAGE.\r\n\r\nThe licence and distribution terms for any publically available version or\r\nderivative of this code cannot be changed.  i.e. this code cannot simply be\r\ncopied and put under another distribution licence\r\n[including the GNU Public Licence.]");
+    QString strMessage = tr("UwTerminalX uses the Qt framework version 5, which is licensed under the GPLv3 (not including later versions).\nUwTerminalX uses and may be linked statically to various other libraries including Xau, XCB, expat, fontconfig, zlib, bz2, harfbuzz, freetype, udev, dbus, icu, unicode, UPX, OpenSSL, libftdi, libusb, FTDI D2XX. The licenses for these libraries are provided below:\n\n\n\nLib Xau:\n\nCopyright 1988, 1993, 1994, 1998  The Open Group\n\nPermission to use, copy, modify, distribute, and sell this software and its\ndocumentation for any purpose is hereby granted without fee, provided that\nthe above copyright notice appear in all copies and that both that\ncopyright notice and this permission notice appear in supporting\ndocumentation.\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\nOPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN\nAN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\nCONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of The Open Group shall not be\nused in advertising or otherwise to promote the sale, use or other dealings\nin this Software without prior written authorization from The Open Group.\n\n\n\nxcb:\n\nCopyright (C) 2001-2006 Bart Massey, Jamey Sharp, and Josh Triplett.\nAll Rights Reserved.\n\nPermission is hereby granted, free of charge, to any person\nobtaining a copy of this software and associated\ndocumentation files (the 'Software'), to deal in the\nSoftware without restriction, including without limitation\nthe rights to use, copy, modify, merge, publish, distribute,\nsublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so,\nsubject to the following conditions:\n\nThe above copyright notice and this permission notice shall\nbe included in all copies or substantial portions of the\nSoftware.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY\nKIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE\nWARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR\nPURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS\nBE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\nOTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the names of the authors\nor their institutions shall not be used in advertising or\notherwise to promote the sale, use or other dealings in this\nSoftware without prior written authorization from the\nauthors.\n\n\n\nexpat:\n\nCopyright (c) 1998, 1999, 2000 Thai Open Source Software Center Ltd\n   and Clark Cooper\nCopyright (c) 2001, 2002, 2003, 2004, 2005, 2006 Expat maintainers.\nPermission is hereby granted, free of charge, to any person obtaining\na copy of this software and associated documentation files (the\n'Software'), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so, subject to\nthe following conditions:\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\nIN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY\nCLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\nTORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE\nSOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n\n\nfontconfig:\n\nCopyright © 2001,2003 Keith Packard\n\nPermission to use, copy, modify, distribute, and sell this software and its\ndocumentation for any purpose is hereby granted without fee, provided that\nthe above copyright notice appear in all copies and that both that\ncopyright notice and this permission notice appear in supporting\ndocumentation, and that the name of Keith Packard not be used in\nadvertising or publicity pertaining to distribution of the software without\nspecific, written prior permission.  Keith Packard makes no\nrepresentations about the suitability of this software for any purpose.  It\nis provided 'as is' without express or implied warranty.\n\nKEITH PACKARD DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\nINCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO\nEVENT SHALL KEITH PACKARD BE LIABLE FOR ANY SPECIAL, INDIRECT OR\nCONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,\nDATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER\nTORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR\nPERFORMANCE OF THIS SOFTWARE.\n\nz:\n\n (C) 1995-2013 Jean-loup Gailly and Mark Adler\n\n  This software is provided 'as-is', without any express or implied\n  warranty.  In no event will the authors be held liable for any damages\n  arising from the use of this software.\n\n  Permission is granted to anyone to use this software for any purpose,\n  including commercial applications, and to alter it and redistribute it\n  freely, subject to the following restrictions:\n\n  1. The origin of this software must not be misrepresented; you must not\n     claim that you wrote the original software. If you use this software\n     in a product, an acknowledgment in the product documentation would be\n     appreciated but is not required.\n  2. Altered source versions must be plainly marked as such, and must not be\n     misrepresented as being the original software.\n  3. This notice may not be removed or altered from any source distribution.\n\n  Jean-loup Gailly        Mark Adler\n  jloup@gzip.org          madler@alumni.caltech.edu\n\n\n\nbz2:\n\n\nThis program, 'bzip2', the associated library 'libbzip2', and all\ndocumentation, are copyright (C) 1996-2010 Julian R Seward.  All\nrights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions\nare met:\n\n1. Redistributions of source code must retain the above copyright\n   notice, this list of conditions and the following disclaimer.\n\n2. The origin of this software must not be misrepresented; you must\n   not claim that you wrote the original software.  If you use this\n   software in a product, an acknowledgment in the product\n   documentation would be appreciated but is not required.\n\n3. Altered source versions must be plainly marked as such, and must\n   not be misrepresented as being the original software.\n\n4. The name of the author may not be used to endorse or promote\n   products derived from this software without specific prior written\n   permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS\nOR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE\nGOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\nINTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,\nWHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\nJulian Seward, jseward@bzip.org\nbzip2/libbzip2 version 1.0.6 of 6 September 2010\n\n\n\nharfbuzz:\n\nHarfBuzz is licensed under the so-called 'Old MIT' license.  Details follow.\n\nCopyright © 2010,2011,2012  Google, Inc.\nCopyright © 2012  Mozilla Foundation\nCopyright © 2011  Codethink Limited\nCopyright © 2008,2010  Nokia Corporation and/or its subsidiary(-ies)\nCopyright © 2009  Keith Stribley\nCopyright © 2009  Martin Hosken and SIL International\nCopyright © 2007  Chris Wilson\nCopyright © 2006  Behdad Esfahbod\nCopyright © 2005  David Turner\nCopyright © 2004,2007,2008,2009,2010  Red Hat, Inc.\nCopyright © 1998-2004  David Turner and Werner Lemberg\n\nFor full copyright notices consult the individual files in the package.\n\nPermission is hereby granted, without written agreement and without\nlicense or royalty fees, to use, copy, modify, and distribute this\nsoftware and its documentation for any purpose, provided that the\nabove copyright notice and the").append(" following two paragraphs appear in\nall copies of this software.\n\nIN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR\nDIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES\nARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN\nIF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH\nDAMAGE.\n\nTHE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,\nBUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND\nFITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS\nON AN 'AS IS' BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO\nPROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\n\n\n\nfreetype:\n\nThe  FreeType 2  font  engine is  copyrighted  work and  cannot be  used\nlegally  without a  software license.   In  order to  make this  project\nusable  to a vast  majority of  developers, we  distribute it  under two\nmutually exclusive open-source licenses.\n\nThis means  that *you* must choose  *one* of the  two licenses described\nbelow, then obey  all its terms and conditions when  using FreeType 2 in\nany of your projects or products.\n\n  - The FreeType License, found in  the file `FTL.TXT', which is similar\n    to the original BSD license *with* an advertising clause that forces\n    you  to  explicitly cite  the  FreeType  project  in your  product's\n    documentation.  All  details are in the license  file.  This license\n    is  suited  to products  which  don't  use  the GNU  General  Public\n    License.\n\n    Note that  this license  is  compatible  to the  GNU General  Public\n    License version 3, but not version 2.\n\n  - The GNU General Public License version 2, found in  `GPLv2.TXT' (any\n    later version can be used  also), for programs which already use the\n    GPL.  Note  that the  FTL is  incompatible  with  GPLv2 due  to  its\n    advertisement clause.\n\nThe contributed BDF and PCF drivers come with a license similar  to that\nof the X Window System.  It is compatible to the above two licenses (see\nfile src/bdf/README and src/pcf/README).\n\nThe gzip module uses the zlib license (see src/gzip/zlib.h) which too is\ncompatible to the above two licenses.\n\nThe MD5 checksum support (only used for debugging in development builds)\nis in the public domain.\n\n\n\nudev:\n\nCopyright (C) 2003 Greg Kroah-Hartman <greg@kroah.com>\nCopyright (C) 2003-2010 Kay Sievers <kay@vrfy.org>\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 2 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n\n\ndbus:\n\nD-Bus is licensed to you under your choice of the Academic Free\nLicense version 2.1, or the GNU General Public License version 2\n(or, at your option any later version).\n\n\n\nicu:\n\nICU License - ICU 1.8.1 and later\nCOPYRIGHT AND PERMISSION NOTICE\nCopyright (c) 1995-2015 International Business Machines Corporation and others\nAll rights reserved.\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, provided that the above copyright notice(s) and this permission notice appear in all copies of the Software and that both the above copyright notice(s) and this permission notice appear in supporting documentation.\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\nExcept as contained in this notice, the name of a copyright holder shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization of the copyright holder.\n\n\n\nUnicode:\n\nCOPYRIGHT AND PERMISSION NOTICE\n\nCopyright © 1991-2015 Unicode, Inc. All rights reserved.\nDistributed under the Terms of Use in\nhttp://www.unicode.org/copyright.html.\n\nPermission is hereby granted, free of charge, to any person obtaining\na copy of the Unicode data files and any associated documentation\n(the 'Data Files') or Unicode software and any associated documentation\n(the 'Software') to deal in the Data Files or Software\nwithout restriction, including without limitation the rights to use,\ncopy, modify, merge, publish, distribute, and/or sell copies of\nthe Data Files or Software, and to permit persons to whom the Data Files\nor Software are furnished to do so, provided that\n(a) this copyright and permission notice appear with all copies\nof the Data Files or Software,\n(b) this copyright and permission notice appear in associated\ndocumentation, and\n(c) there is clear notice in each modified Data File or in the Software\nas well as in the documentation associated with the Data File(s) or\nSoftware that the data or software has been modified.\n\nTHE DATA FILES AND SOFTWARE ARE PROVIDED 'AS IS', WITHOUT WARRANTY OF\nANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE\nWARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT OF THIRD PARTY RIGHTS.\nIN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS\nNOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL\nDAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,\nDATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER\nTORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR\nPERFORMANCE OF THE DATA FILES OR SOFTWARE.\n\nExcept as contained in this notice, the name of a copyright holder\nshall not be used in advertising or otherwise to promote the sale,\nuse or other dealings in these Data Files or Software without prior\nwritten authorization of the copyright holder.\n\n\nUPX:\n\nCopyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer\nCopyright (C) 1996-2013 László Molnár\nCopyright (C) 2000-2013 John F. Reiser\n\nAll Rights Reserved. This program may be used freely, and you are welcome to redistribute and/or modify it under certain conditions.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the UPX License Agreement for more details: http://upx.sourceforge.net/upx-license.html\r\n\r\n\r\nOpenSSL:\r\n\r\nCopyright (c) 1998-2016 The OpenSSL Project.  All rights reserved.\r\n\r\nRedistribution and use in source and binary forms, with or without\r\nmodification, are permitted provided that the following conditions\r\nare met:\r\n\r\n1. Redistributions of source code must retain the above copyright\r\n   notice, this list of conditions and the following disclaimer. \r\n\r\n2. Redistributions in binary form must reproduce the above copyright\r\n   notice, this list of conditions and the following disclaimer in\r\n   the documentation and/or other materials provided with the\r\n   distribution.\r\n\r\n3. All advertising materials mentioning features or use of this\r\n   software must display the following acknowledgment:\r\n   'This product includes software developed by the OpenSSL Project\r\n   for use in the OpenSSL Toolkit. (http://www.openssl.org/)'\r\n\r\n4. The names 'OpenSSL Toolkit' and 'OpenSSL Project' must not be used to\r\n   endorse or promote products derived from this software without\r\n   prior written permission. For written permission, please contact\r\n   openssl-core@openssl.org.\r\n\r\n5. Products derived from this software may not be called 'OpenSSL'\r\n   nor may 'OpenSSL' appear in their names without prior written\r\n   permission of the OpenSSL Project.\r\n\r\n6. Redistributions of any form whatsoever must retain the following\r\n   acknowledgment:\r\n   'This product includes software developed by the OpenSSL Project\r\n   for use in the OpenSSL Toolkit (http://www.openssl.org/)'\r\n\r\nTHIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY\r\nEXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\r\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\r\nPURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR\r\nITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\r\nSPECIAL, EXEMPLARY, OR").append(" CONSEQUENTIAL DAMAGES (INCLUDING, BUT\r\nNOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\r\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\r\nHOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,\r\nSTRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\r\nARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED\r\nOF THE POSSIBILITY OF SUCH DAMAGE.\r\n====================================================================\r\n\r\nThis product includes cryptographic software written by Eric Young\r\n(eay@cryptsoft.com).  This product includes software written by Tim\r\nHudson (tjh@cryptsoft.com).\r\n\r\n\r\n Original SSLeay License\r\n -----------------------\r\n\r\nCopyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)\r\nAll rights reserved.\r\n\r\nThis package is an SSL implementation written\r\nby Eric Young (eay@cryptsoft.com).\r\nThe implementation was written so as to conform with Netscapes SSL.\r\n\r\nThis library is free for commercial and non-commercial use as long as\r\nthe following conditions are aheared to.  The following conditions\r\napply to all code found in this distribution, be it the RC4, RSA,\r\nlhash, DES, etc., code; not just the SSL code.  The SSL documentation\r\nincluded with this distribution is covered by the same copyright terms\r\nexcept that the holder is Tim Hudson (tjh@cryptsoft.com).\r\n\r\nCopyright remains Eric Young's, and as such any Copyright notices in\r\nthe code are not to be removed.\r\nIf this package is used in a product, Eric Young should be given attribution\r\nas the author of the parts of the library used.\r\nThis can be in the form of a textual message at program startup or\r\nin documentation (online or textual) provided with the package.\r\n\r\nRedistribution and use in source and binary forms, with or without\r\nmodification, are permitted provided that the following conditions\r\nare met:\r\n1. Redistributions of source code must retain the copyright\r\n   notice, this list of conditions and the following disclaimer.\r\n2. Redistributions in binary form must reproduce the above copyright\r\n   notice, this list of conditions and the following disclaimer in the\r\n   documentation and/or other materials provided with the distribution.\r\n3. All advertising materials mentioning features or use of this software\r\n   must display the following acknowledgement:\r\n   'This product includes cryptographic software written by\r\n    Eric Young (eay@cryptsoft.com)'\r\n   The word 'cryptographic' can be left out if the rouines from the library\r\n   being used are not cryptographic related :-).\r\n4. If you include any Windows specific code (or a derivative thereof) from \r\n   the apps directory (application code) you must include an acknowledgement:\r\n   'This product includes software written by Tim Hudson (tjh@cryptsoft.com)'\r\n\r\nTHIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND\r\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\r\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\r\nARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\r\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\r\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\r\nOR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\r\nHOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\r\nLIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\r\nOUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\r\nSUCH DAMAGE.\r\n\r\nThe licence and distribution terms for any publically available version or\r\nderivative of this code cannot be changed.  i.e. this code cannot simply be\r\ncopied and put under another distribution licence\r\n[including the GNU Public Licence.]\r\n\r\n\r\nlibftdi:\r\n\r\nThe C library \"libftdi\" is distributed under the\r\nGNU Library General Public License version 2.\r\n\r\n\r\nlibusb:\r\n\r\nThe C library \"libusb\" is distributed under the\r\nGNU Library Lesser General Public License version 2.1.\r\n\r\n\r\nFTDI D2XX:\r\n\r\nThis software is provided by Future Technology Devices International Limited ``as is'' and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall future technology devices international limited be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.\r\nFTDI drivers may be used only in conjunction with products based on FTDI parts.\r\nFTDI drivers may be distributed in any form as long as license information is not modified.");
     gpmErrorForm->show();
     gpmErrorForm->SetMessage(&strMessage);
 }
@@ -5998,18 +6009,18 @@ MainWindow::on_btn_WebBrowse_clicked(
     QString strURL = "";
     if (ui->combo_WebSelection->currentIndex() == 0)
     {
-        //BL600 Github
-        strURL = "https://github.com/LairdCP/BL600-Applications";
+        //BL654 Github
+        strURL = "https://github.com/LairdCP/BL654-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 1)
     {
-        //BL620 Github
-        strURL = "https://github.com/LairdCP/BL620-Applications";
+        //BL652 Github
+        strURL = "https://github.com/LairdCP/BL652-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 2)
     {
-        //BL652 Github
-        strURL = "https://github.com/LairdCP/BL652-Applications";
+        //RM1xx Github
+        strURL = "https://github.com/LairdCP/RM1xx-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 3)
     {
@@ -6018,15 +6029,20 @@ MainWindow::on_btn_WebBrowse_clicked(
     }
     else if (ui->combo_WebSelection->currentIndex() == 4)
     {
-        //RM186/RM191 (RM1xx) Github
-        strURL = "https://github.com/LairdCP/RM1xx-Applications";
+        //BL600 Github
+        strURL = "https://github.com/LairdCP/BL600-Applications";
     }
     else if (ui->combo_WebSelection->currentIndex() == 5)
+    {
+        //BL620 Github
+        strURL = "https://github.com/LairdCP/BL620-Applications";
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 6)
     {
         //Laird Bluetooth modules page
         strURL = "http://www.lairdtech.com/product-categories/embedded-wireless/bluetooth-modules";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 6)
+    else if (ui->combo_WebSelection->currentIndex() == 7)
     {
         //Laird EWS support page
         strURL = "https://laird-ews-support.desk.com";
@@ -6049,7 +6065,7 @@ MainWindow::on_btn_EditViewFolder_clicked(
     )
 {
     //Open application folder
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
     QString strFullDirname = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
     QString strFullDirname = "./";
@@ -6088,7 +6104,7 @@ MainWindow::on_combo_EditFile_currentIndexChanged(
         //Allow edits
         ui->text_EditData->setReadOnly(false);
 
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
         strFullFilename = "./";
@@ -6164,7 +6180,7 @@ MainWindow::on_btn_EditSave_clicked(
         //Save file data
         QString strFullFilename;
 
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
         strFullFilename = "./";
@@ -6229,7 +6245,7 @@ void
 MainWindow::LoadSettings(
     )
 {
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
     if (!QDir().exists(QStandardPaths::writableLocation(QStandardPaths::DataLocation)))
     {
         //Create UwTerminalX directory in application support
@@ -6246,7 +6262,7 @@ MainWindow::LoadSettings(
 #endif
 
     //Check if error code file exists
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
     if (QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/codes.csv")))
 #else
     if (QFile::exists("codes.csv"))
@@ -6257,7 +6273,7 @@ MainWindow::LoadSettings(
     }
 
     //Check settings
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
     if (!QFile::exists(QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/UwTerminalX.ini")) || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
 #else
     if (!QFile::exists("UwTerminalX.ini") || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
@@ -6364,6 +6380,10 @@ MainWindow::LoadSettings(
         {
             gpTermSettings->setValue("UpdateCheckLast", QDate::currentDate()); //When the last weekly update check was performed
         }
+        if (gpTermSettings->value("ScrollbackBufferSize").isNull())
+        {
+            gpTermSettings->setValue("ScrollbackBufferSize", DefaultScrollbackBufferSize); //The number of lines in the terminal scrollback buffer
+        }
 #ifdef UseSSL
         if (gpTermSettings->value("SSLEnable").isNull())
         {
@@ -6425,39 +6445,37 @@ MainWindow::UpdateSettings(
             }
         }
 
-        if (intMinor <= 5)
-        {
-            if (qcDelta.isNull())
-            {
-                //Add new BL652 device
-                int i = 1;
-                while (i < 255)
-                {
-                    if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
-                    {
-                        break;
-                    }
-                    ++i;
-                }
-
-                if (i < 254)
-                {
-                    //BL652
-                    QString strTmpStr = QString("Port").append(QString::number(i));
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "BL652");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
-                }
-            }
-        }
-
         if (intMinor <= 9 && gpTermSettings->value("OnlineXCompServer", ServerHost).toString() == OldServerHost)
         {
             //Switch to new XCompiler cloud service hostname
             gpTermSettings->setValue("OnlineXCompServer", ServerHost);
+        }
+
+        if (intMinor <= 9)
+        {
+            //Migrate BL652 to BL65x
+            int i = 1;
+            while (i < 255)
+            {
+                if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull() || gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).toString() == "BL652")
+                {
+                    //Found empty entry or BL652 entry
+                    break;
+                }
+                ++i;
+            }
+
+            if (i < 254)
+            {
+                //BL65x conversion
+                QString strTmpStr = QString("Port").append(QString::number(i));
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "BL65x");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
+            }
         }
     }
 }
@@ -6477,7 +6495,7 @@ MainWindow::on_btn_LogViewExternal_clicked(
         if (ui->combo_LogDirectory->currentIndex() == 1)
         {
             //Log file directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
             QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
             QFileInfo fiFileInfo(ui->edit_LogFile->text());
@@ -6487,7 +6505,7 @@ MainWindow::on_btn_LogViewExternal_clicked(
         else
         {
             //Application directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
             strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
             strFullFilename = "./";
@@ -6518,7 +6536,7 @@ MainWindow::on_btn_LogViewFolder_clicked(
     if (ui->combo_LogDirectory->currentIndex() == 1)
     {
         //Log file directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
         QFileInfo fiFileInfo(ui->edit_LogFile->text());
@@ -6528,7 +6546,7 @@ MainWindow::on_btn_LogViewFolder_clicked(
     else
     {
         //Application directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         strFullDirname = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
         strFullDirname = "./";
@@ -6562,7 +6580,7 @@ MainWindow::on_combo_LogFile_currentIndexChanged(
     if (ui->combo_LogDirectory->currentIndex() == 1)
     {
         //Log file directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         QFileInfo fiFileInfo(QString((ui->edit_LogFile->text().left(1) == "/" || ui->edit_LogFile->text().left(1) == "\\") ? "" : QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/")).append(ui->edit_LogFile->text()));
 #else
         QFileInfo fiFileInfo(ui->edit_LogFile->text());
@@ -6572,7 +6590,7 @@ MainWindow::on_combo_LogFile_currentIndexChanged(
     else
     {
         //Application directory
-#if TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
         strFullFilename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).append("/");
 #else
         strFullFilename = "./";
@@ -7075,7 +7093,7 @@ MainWindow::on_btn_SpeedStartStop_clicked(
             }
 
             //Update values
-            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000 ? 1000000000 : gtmrSpeedTimer.nsecsElapsed()/1000000000));
+            OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000LL ? 1000000000LL : gtmrSpeedTimer.nsecsElapsed()/1000000000LL));
 
             //Set speed test as no longer running
             gchSpeedTestMode = SpeedModeInactive;
@@ -7327,7 +7345,7 @@ MainWindow::OutputSpeedTestStats(
     }
 
     //Update average speed test statistics
-    OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
+    OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000LL);
 }
 
 //=============================================================================
@@ -7649,7 +7667,7 @@ MainWindow::SpeedTestReceive(
         {
             //Data has now been received, update the delay timer
             gbSpeedTestReceived = true;
-            gintDelayedSpeedTestReceive = gtmrSpeedTimer.nsecsElapsed()/1000000000;
+            gintDelayedSpeedTestReceive = gtmrSpeedTimer.nsecsElapsed()/1000000000LL;
         }
 
         if (ui->check_SpeedShowRX->isChecked() == true)
@@ -7746,9 +7764,9 @@ MainWindow::UpdateSpeedTestValues(
     )
 {
     //Update speed test statistics
-    qint64 lngElapsed = gtmrSpeedTimer.nsecsElapsed()/1000000;
-    unsigned int intHours = (lngElapsed / 3600000);
-    unsigned char chMinutes = (lngElapsed / 60000) % 60;
+    qint64 lngElapsed = gtmrSpeedTimer.nsecsElapsed()/1000000LL;
+    unsigned int intHours = (lngElapsed / 3600000LL);
+    unsigned char chMinutes = (lngElapsed / 60000LL) % 60;
     unsigned char chSeconds = (lngElapsed % 60000) / 1000;
     unsigned int intMiliseconds = (lngElapsed % 600)/10;
     ui->label_SpeedTime->setText(QString((intHours < 10 ? "0" : "")).append(QString::number(intHours)).append((chMinutes < 10 ? ":0" : ":")).append(QString::number(chMinutes)).append((chSeconds < 10 ? ":0" : ":")).append(QString::number(chSeconds)).append((intMiliseconds < 10 ? ".0" : ".")).append(QString::number(intMiliseconds)));
@@ -7839,7 +7857,7 @@ MainWindow::SpeedTestStopTimer(
     }
 
     //Update values
-    OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000);
+    OutputSpeedTestAvgStats(gtmrSpeedTimer.nsecsElapsed()/1000000000LL);
 
     //Set speed test as no longer running
     gchSpeedTestMode = SpeedModeInactive;
@@ -8560,6 +8578,574 @@ CompByDevName(
 {
     //Sort by device name
     return a.DeviceName < b.DeviceName;
+}
+#endif
+
+#if SKIPUSBRECOVERY != 1 && !defined(TARGET_OS_MAC)
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_btn_ExitAutorun_clicked(
+    )
+{
+    //Exits autorun on BL654 USB dongles
+#ifdef _WIN32
+#ifdef _MSC_VER
+    QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
+    if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
+    {
+        //Valid FTDI device, proceed
+        if (QMessageBox::question(this, "Exit autorun?", QString("This allows BL654 USB dongles with an autorun application to be placed into interactive mode, note this only works with BL654 USB dongles. Are you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your Laird BL654 USB dongle?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        {
+            //Windows, MSVC build
+            FT_STATUS ftsStatus;
+            FT_HANDLE fthHandle;
+            bool ReOpen = false;
+            if (gspSerialPort.isOpen())
+            {
+                //
+                ReOpen = true;
+                ui->text_TermEditData->SetSerialOpen(false);
+                gspSerialPort.close();
+
+                if (gbStreamingFile == true)
+                {
+                    //Clear up file stream
+                    gtmrStreamTimer.invalidate();
+                    gbStreamingFile = false;
+                    gpStreamFileHandle->close();
+                    delete gpStreamFileHandle;
+                }
+                else if (gbStreamingBatch == true)
+                {
+                    //Clear up batch
+                    gtmrStreamTimer.invalidate();
+                    gtmrBatchTimeoutTimer.stop();
+                    gbStreamingBatch = false;
+                    gpStreamFileHandle->close();
+                    delete gpStreamFileHandle;
+                    gbaBatchReceive.clear();
+                }
+#if SKIPSPEEDTEST != 1
+                else if (gbSpeedTestRunning == true)
+                {
+                    //Clear up speed testing
+                    if (gtmrSpeedTestDelayTimer != 0)
+                    {
+                        //Clean up timer
+                        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
+                        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+                        delete gtmrSpeedTestDelayTimer;
+                        gtmrSpeedTestDelayTimer = 0;
+                    }
+
+                    ui->btn_SpeedStartStop->setEnabled(false);
+                    ui->check_SpeedSyncReceive->setEnabled(true);
+                    ui->combo_SpeedDataType->setEnabled(true);
+                    if (ui->combo_SpeedDataType->currentIndex() == 1)
+                    {
+                        //Enable string options
+                        ui->edit_SpeedTestData->setEnabled(true);
+                        ui->check_SpeedStringUnescape->setEnabled(true);
+                    }
+
+                    //Update values
+                    OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000LL ? 1000000000LL : gtmrSpeedTimer.nsecsElapsed()/1000000000LL));
+
+                    //Set speed test as no longer running
+                    gchSpeedTestMode = SpeedModeInactive;
+                    gbSpeedTestRunning = false;
+
+                    if (gtmrSpeedTimer.isValid())
+                    {
+                        //Invalidate speed test timer
+                        gtmrSpeedTimer.invalidate();
+                    }
+                    if (gtmrSpeedTestStats.isActive())
+                    {
+                        //Stop stats update timer
+                        gtmrSpeedTestStats.stop();
+                    }
+                    if (gtmrSpeedTestStats10s.isActive())
+                    {
+                        //Stop 10 second stats update timer
+                        gtmrSpeedTestStats10s.stop();
+                    }
+
+                    //Clear buffers
+                    gbaSpeedMatchData.clear();
+                    gbaSpeedReceivedData.clear();
+
+                    //Show finished message in status bar
+                    ui->statusBar->showMessage("Speed testing failed due to serial port error.");
+                }
+#endif
+
+                //No longer busy
+                gbTermBusy = false;
+                gchTermMode = 0;
+                gchTermMode2 = 0;
+
+                //Disable cancel button
+                ui->btn_Cancel->setEnabled(false);
+
+                //Disable active checkboxes
+                ui->check_Break->setEnabled(false);
+                ui->check_DTR->setEnabled(false);
+                ui->check_Echo->setEnabled(false);
+                ui->check_Line->setEnabled(false);
+                ui->check_RTS->setEnabled(false);
+#if SKIPSPEEDTEST != 1
+                ui->check_SpeedDTR->setEnabled(false);
+                ui->check_SpeedRTS->setEnabled(false);
+#endif
+
+                //Disable text entry
+                ui->text_TermEditData->setReadOnly(true);
+
+                //Change status message
+                ui->statusBar->showMessage("");
+
+                //Change button text
+                ui->btn_TermClose->setText("&Open Port");
+#if SKIPSPEEDTEST != 1
+                ui->btn_SpeedClose->setText("&Open Port");
+#endif
+
+                //Update images
+                UpdateImages();
+
+                //Close log file if open
+                if (gpMainLog->IsLogOpen() == true)
+                {
+                    gpMainLog->CloseLogFile();
+                }
+
+                //Enable log options
+                ui->edit_LogFile->setEnabled(true);
+                ui->check_LogEnable->setEnabled(true);
+                ui->check_LogAppend->setEnabled(true);
+                ui->btn_LogFileSelect->setEnabled(true);
+
+#ifndef SKIPAUTOMATIONFORM
+                //Notify automation form
+                if (guaAutomationForm != 0)
+                {
+                    guaAutomationForm->ConnectionChange(false);
+                }
+#endif
+
+                //Disallow file drops
+                setAcceptDrops(false);
+            }
+
+            //Display message
+            ui->statusBar->showMessage("Exiting autorun mode, this may take a few seconds...");
+
+            //Open device in D2xx mode
+            ftsStatus = FT_OpenEx((void*)spiSerialInfo.serialNumber().left(8).toStdString().c_str(), FT_OPEN_BY_SERIAL_NUMBER, &fthHandle);
+            if (ftsStatus == FT_OK)
+            {
+                //Opened successfully
+                char baTxBuffer[1];
+                DWORD unBytesWritten;
+
+                //Set a bit bang baud rate
+                ftsStatus = FT_SetBaudRate(fthHandle, FT_BAUD_1200);
+
+                //Enable syncronous bit bang mode
+                ftsStatus = FT_SetBitMode(fthHandle, (FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO | FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_AUTORUN_DIO), FT_BITMODE_ASYNC_BITBANG);
+
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to set bitbang mode
+                    ui->statusBar->showMessage("Failed to exit autorun mode: setting bitbang mode failed.");
+                    return;
+                }
+
+                //Disable autorun
+                baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+                ftsStatus = FT_Write(fthHandle, baTxBuffer, sizeof(baTxBuffer), &unBytesWritten);
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to write data to port
+                    ui->statusBar->showMessage("Failed to exit autorun mode: device write failed.");
+                    return;
+                }
+                Sleep(FTDI_BL654_USB_RESET_DELAY);
+
+                //Reset module
+                baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+                ftsStatus = FT_Write(fthHandle, baTxBuffer, sizeof(baTxBuffer), &unBytesWritten);
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to write data to port
+                    ui->statusBar->showMessage("Failed to exit autorun mode: device write failed.");
+                    return;
+                }
+                Sleep(FTDI_BL654_USB_RESET_DELAY);
+
+                //Stay out of autorun
+                baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+                ftsStatus = FT_Write(fthHandle, baTxBuffer, sizeof(baTxBuffer), &unBytesWritten);
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to write data to port
+                    ui->statusBar->showMessage("Failed to exit autorun mode: device write failed.");
+                    return;
+                }
+                Sleep(FTDI_BL654_USB_RESET_DELAY);
+
+                //Exit bit bang mode
+                ftsStatus = FT_SetBitMode(fthHandle, 0, FT_BITMODE_RESET);
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to reset port (disable bitbang)
+                    ui->statusBar->showMessage("Failed to exit autorun mode: device reset failed.");
+                    return;
+                }
+
+                //Close direct FTDI access
+                ftsStatus = FT_Close(fthHandle);
+                if (ftsStatus != FT_OK)
+                {
+                    //Failed to close port
+                    ui->statusBar->showMessage("Failed to exit autorun mode: device close failed.");
+                    return;
+                }
+            }
+            else
+            {
+                //Failed to open device
+                ui->statusBar->showMessage("Failed to exit autorun mode: device re-open failed.");
+                return;
+            }
+
+            if (ReOpen == true)
+            {
+                //Re-open port
+                OpenDevice();
+            }
+
+            //Display success message
+            ui->statusBar->showMessage(QString("Exited autorun on device ").append(ui->combo_COM->currentText()).append(" successfully."));
+        }
+    }
+    else
+    {
+        //Invalid or non-FTDI device
+        ui->statusBar->showMessage("Invalid or non-FTDI device detected.");
+    }
+#else
+    //Windows, MinGW (or other) build
+    QMessageBox::information(this, "MinGW builds not supported", "Due to FTDI drivers only being provided for visual studio, the MinGW builds of UwTerminalX are unable to use this functionality, please either use an SSL version of UwTerminalX or build the application manually from source using visual studio.", QMessageBox::Ok);
+#endif
+#else
+    //Linux
+    QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
+    if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
+    {
+        if (QMessageBox::question(this, "Exit autorun?", QString("This allows BL654 USB dongles with an autorun application to be placed into interactive mode, note this only works with BL654 USB dongles. Are you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your Laird BL654 USB dongle?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        {
+            //Exit autorun mode
+            struct ftdi_context *ftContext;
+            int nStatus = 0;
+            unsigned char baTxBuffer[1];
+            libusb_context *usbContext = NULL;
+            libusb_device **usbdDevice = NULL;
+            ssize_t nDevicesFound = 0;
+            unsigned char strSerialNumber[16];
+            bool ReOpen = false;
+
+            if (gspSerialPort.isOpen())
+            {
+                //Mark serial port for re-opening and close it before exiting autorun
+                ReOpen = true;
+                ui->text_TermEditData->SetSerialOpen(false);
+                gspSerialPort.close();
+
+                if (gbStreamingFile == true)
+                {
+                    //Clear up file stream
+                    gtmrStreamTimer.invalidate();
+                    gbStreamingFile = false;
+                    gpStreamFileHandle->close();
+                    delete gpStreamFileHandle;
+                }
+                else if (gbStreamingBatch == true)
+                {
+                    //Clear up batch
+                    gtmrStreamTimer.invalidate();
+                    gtmrBatchTimeoutTimer.stop();
+                    gbStreamingBatch = false;
+                    gpStreamFileHandle->close();
+                    delete gpStreamFileHandle;
+                    gbaBatchReceive.clear();
+                }
+#if SKIPSPEEDTEST != 1
+                else if (gbSpeedTestRunning == true)
+                {
+                    //Clear up speed testing
+                    if (gtmrSpeedTestDelayTimer != 0)
+                    {
+                        //Clean up timer
+                        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStartTimer()));
+                        disconnect(gtmrSpeedTestDelayTimer, SIGNAL(timeout()), this, SLOT(SpeedTestStopTimer()));
+                        delete gtmrSpeedTestDelayTimer;
+                        gtmrSpeedTestDelayTimer = 0;
+                    }
+
+                    ui->btn_SpeedStartStop->setEnabled(false);
+                    ui->check_SpeedSyncReceive->setEnabled(true);
+                    ui->combo_SpeedDataType->setEnabled(true);
+                    if (ui->combo_SpeedDataType->currentIndex() == 1)
+                    {
+                        //Enable string options
+                        ui->edit_SpeedTestData->setEnabled(true);
+                        ui->check_SpeedStringUnescape->setEnabled(true);
+                    }
+
+                    //Update values
+                    OutputSpeedTestAvgStats((gtmrSpeedTimer.nsecsElapsed() < 1000000000LL ? 1000000000LL : gtmrSpeedTimer.nsecsElapsed()/1000000000LL));
+
+                    //Set speed test as no longer running
+                    gchSpeedTestMode = SpeedModeInactive;
+                    gbSpeedTestRunning = false;
+
+                    if (gtmrSpeedTimer.isValid())
+                    {
+                        //Invalidate speed test timer
+                        gtmrSpeedTimer.invalidate();
+                    }
+                    if (gtmrSpeedTestStats.isActive())
+                    {
+                        //Stop stats update timer
+                        gtmrSpeedTestStats.stop();
+                    }
+                    if (gtmrSpeedTestStats10s.isActive())
+                    {
+                        //Stop 10 second stats update timer
+                        gtmrSpeedTestStats10s.stop();
+                    }
+
+                    //Clear buffers
+                    gbaSpeedMatchData.clear();
+                    gbaSpeedReceivedData.clear();
+
+                    //Show finished message in status bar
+                    ui->statusBar->showMessage("Speed testing failed due to serial port error.");
+                }
+#endif
+
+                //No longer busy
+                gbTermBusy = false;
+                gchTermMode = 0;
+                gchTermMode2 = 0;
+
+                //Disable cancel button
+                ui->btn_Cancel->setEnabled(false);
+
+                //Disable active checkboxes
+                ui->check_Break->setEnabled(false);
+                ui->check_DTR->setEnabled(false);
+                ui->check_Echo->setEnabled(false);
+                ui->check_Line->setEnabled(false);
+                ui->check_RTS->setEnabled(false);
+#if SKIPSPEEDTEST != 1
+                ui->check_SpeedDTR->setEnabled(false);
+                ui->check_SpeedRTS->setEnabled(false);
+#endif
+
+                //Disable text entry
+                ui->text_TermEditData->setReadOnly(true);
+
+                //Change status message
+                ui->statusBar->showMessage("");
+
+                //Change button text
+                ui->btn_TermClose->setText("&Open Port");
+#if SKIPSPEEDTEST != 1
+                ui->btn_SpeedClose->setText("&Open Port");
+#endif
+
+                //Update images
+                UpdateImages();
+
+                //Close log file if open
+                if (gpMainLog->IsLogOpen() == true)
+                {
+                    gpMainLog->CloseLogFile();
+                }
+
+                //Enable log options
+                ui->edit_LogFile->setEnabled(true);
+                ui->check_LogEnable->setEnabled(true);
+                ui->check_LogAppend->setEnabled(true);
+                ui->btn_LogFileSelect->setEnabled(true);
+
+#ifndef SKIPAUTOMATIONFORM
+                //Notify automation form
+                if (guaAutomationForm != 0)
+                {
+                    guaAutomationForm->ConnectionChange(false);
+                }
+#endif
+
+                //Disallow file drops
+                setAcceptDrops(false);
+            }
+
+            //Display message
+            ui->statusBar->showMessage("Exiting autorun mode, this may take a few seconds...");
+
+            if ((ftContext = ftdi_new()) == 0)
+            {
+                //Failed to initialise libftdi
+                ui->statusBar->showMessage("Failed to exit autorun mode: libftdi context creation failed.");
+                return;
+            }
+
+            //Open the serial device
+            nStatus = ftdi_usb_open_desc(ftContext, 0x0403, 0x6001, NULL, spiSerialInfo.serialNumber().left(8).toStdString().c_str());
+
+            if (nStatus < 0 && nStatus != -5)
+            {
+                //Failed to open FTDI device
+                ui->statusBar->showMessage(QString("Failed to open FTDI device, error code ").append(QString::number(nStatus)).append(" (").append(ftdi_get_error_string(ftContext)).append(")."));
+                nStatus = ftdi_usb_reset(ftContext);
+                ftdi_free(ftContext);
+                return;
+            }
+
+            //Enable bitbang mode
+            nStatus = ftdi_set_bitmode(ftContext, (FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO | FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_AUTORUN_DIO), BITMODE_BITBANG);
+
+            //Set writes to 1 byte chunks
+            nStatus = ftdi_write_data_set_chunksize(ftContext, 1);
+
+            //Disable autorun
+            baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+            nStatus = ftdi_write_data(ftContext, baTxBuffer, 1);
+            usleep(FTDI_BL654_USB_RESET_DELAY * 1000UL);
+
+            //Reset module
+            baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+            nStatus = ftdi_write_data(ftContext, baTxBuffer, 1);
+            usleep(FTDI_BL654_USB_RESET_DELAY * 1000UL);
+
+            //Exit reset
+            baTxBuffer[0] = FTDI_BL654_USB_VSP_DIO | FTDI_BL654_USB_NRESET_DIO | FTDI_BL654_USB_RX_DIO | FTDI_BL654_USB_RTS_DIO;
+            nStatus = ftdi_write_data(ftContext, baTxBuffer, 1);
+            usleep(FTDI_BL654_USB_RESET_DELAY * 1000UL);
+
+            //Exit bitbang mode
+            nStatus = ftdi_set_bitmode(ftContext, 0, BITMODE_RESET);
+
+            //Reset the FTDI device
+            nStatus = ftdi_usb_reset(ftContext);
+            nStatus = ftdi_usb_close(ftContext);
+
+            //Free the FTDI context
+            ftdi_free(ftContext);
+
+            //Initialise libusb to reset driver
+            nStatus = libusb_init(&usbContext);
+            if (nStatus != 0)
+            {
+                //libusb initialisation failed
+                ui->statusBar->showMessage("Failed to initialise libusb.");
+                return;
+            }
+
+            //Search for the target device
+            nDevicesFound = libusb_get_device_list(usbContext, &usbdDevice);
+            for (ssize_t idx = 0; idx < nDevicesFound; ++idx)
+            {
+                libusb_device *device = usbdDevice[idx];
+                struct libusb_device_descriptor desc;
+
+                nStatus = libusb_get_device_descriptor(device, &desc);
+                if (nStatus != 0)
+                {
+                    //Failed to get device descriptor
+                    ui->statusBar->showMessage("Failed to get device descriptor from libusb.");
+                    return;
+                }
+
+                libusb_device_handle *handle = NULL;
+                nStatus = libusb_open(device, &handle);
+                if (nStatus != 0)
+                {
+                    //Failed to open USB device
+                    ui->statusBar->showMessage("Failed to open USB device using libusb.");
+                    return;
+                }
+
+                //Check device is an FTDI adapter
+                if (desc.idVendor == 0x0403 && desc.idProduct == 0x6001)
+                {
+                    //FTDI device, check serial number
+                    nStatus = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, strSerialNumber, sizeof(strSerialNumber));
+                    if (strcmp((char *)strSerialNumber, (char *)spiSerialInfo.serialNumber().left(8).toStdString().c_str()) == 0)
+                    {
+                        //Found the USB device
+                        if (libusb_kernel_driver_active(handle, 0))
+                        {
+                            //Relinquish FTDI bitbang driver
+                            nStatus = libusb_detach_kernel_driver(handle, 0);
+                        }
+                        nStatus = libusb_claim_interface(handle, 0);
+                        nStatus = libusb_release_interface(handle, 0);
+
+                        //Revert to default (UART) driver
+                        nStatus = libusb_attach_kernel_driver(handle, 0);
+
+                        //Clean up and finish
+                        libusb_close(handle);
+                        libusb_exit(usbContext);
+
+                        //Re-open serial port if it was previously open
+                        if (ReOpen == true)
+                        {
+                            //Refresh list of devices
+                            RefreshSerialDevices();
+
+                            qint8 i = 0;
+                            while (i < ui->combo_COM->count())
+                            {
+                                //Search for device with same serial number
+                                QSerialPortInfo spiTempSerialInfo(ui->combo_COM->itemText(i));
+                                if (spiTempSerialInfo.isValid() && spiTempSerialInfo.manufacturer().indexOf("FTDI") != -1 && spiTempSerialInfo.serialNumber() == spiSerialInfo.serialNumber())
+                                {
+                                    //Device found
+                                    ui->combo_COM->setCurrentIndex(i);
+                                    OpenDevice();
+                                    break;
+                                }
+                                ++i;
+                            }
+                        }
+
+                        //Display success message
+                        ui->statusBar->showMessage(QString("Exited autorun on device ").append(ui->combo_COM->currentText()).append(" successfully."));
+                        return;
+                    }
+                }
+
+                //Close handle
+                libusb_close(handle);
+            }
+
+            //Device was not found
+            libusb_exit(usbContext);
+        }
+        else
+        {
+            //Invalid or non-FTDI device
+            ui->statusBar->showMessage("Invalid or non-FTDI device detected.");
+        }
+    }
+#endif
 }
 #endif
 

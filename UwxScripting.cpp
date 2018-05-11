@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2016-2017 Laird
+** Copyright (C) 2016-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -313,6 +313,7 @@ UwxScripting::on_btn_Run_clicked(
     if (mbSerialStatus == true && on_btn_Compile_clicked() == false)
     {
         //Compile successful, check if main form is busy
+        mnRepeats = 0;
         msbStatusBar->showMessage("Script execution request pending...");
         emit ScriptStartRequest();
     }
@@ -421,8 +422,23 @@ UwxScripting::on_btn_Stop_clicked(
             gtmrRecTimer.invalidate();
         }
 
+        //Update status bar
+        QString strRepeatText;
+        if (mnRepeats > 0)
+        {
+            //Create text for repeat information
+            strRepeatText = QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s").append(", ~");
+            double fElapsed = (double)gtmrScriptTimer.elapsed()/1000.0;
+            if (fElapsed == 0.0)
+            {
+                //Avoid division by zero
+                fElapsed = 1.0;
+            }
+            strRepeatText.append(QString::number(fElapsed/(double)mnRepeats, 'f', 1)).append(" seconds/loop");
+        }
+
         //Show script stopped message
-        msbStatusBar->showMessage(QString("Script stopped after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds"));
+        msbStatusBar->showMessage(QString("Script stopped after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds").append(strRepeatText));
         gtmrScriptTimer.invalidate();
         ui->edit_Script->SetExecutionLineStatus(true);
 
@@ -628,6 +644,26 @@ UwxScripting::AdvanceLine(
     }
 
     //Means execution has finished
+    if (ui->spin_Repeats->value() != 0)
+    {
+        //Script repeating is enabled, check if we need to repeat the script
+        if (ui->spin_Repeats->value() == -1 || mnRepeats < ui->spin_Repeats->value())
+        {
+            //Repeat script and increment loop count
+            mintCLine = 0;
+            mtbExecutionBlock = ui->edit_Script->document()->firstBlock();
+            ++mnRepeats;
+
+            //Clear data buffers
+            mbaRecvData.clear();
+            mbaMatchData.clear();
+            mbWaitingForReceive = false;
+
+            //Advance to the next (first) line
+            AdvanceLine();
+            return;
+        }
+    }
     mintCLine = -1;
     ui->edit_Script->SetExecutionLine(mintCLine);
     mbIsRunning = false;
@@ -636,7 +672,20 @@ UwxScripting::AdvanceLine(
     SetButtonStatus(true);
 
     //Update status bar
-    msbStatusBar->showMessage(QString("Script complete after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds"));
+    QString strRepeatText;
+    if (mnRepeats > 0)
+    {
+        //Create text for repeat information
+        strRepeatText = QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s").append(", ~");
+        double fElapsed = (double)gtmrScriptTimer.elapsed()/1000.0;
+        if (fElapsed == 0.0)
+        {
+            //Avoid division by zero
+            fElapsed = 1.0;
+        }
+        strRepeatText.append(QString::number(fElapsed/(double)mnRepeats, 'f', 1)).append(" seconds/loop");
+    }
+    msbStatusBar->showMessage(QString("Script complete after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds").append(strRepeatText));
     gtmrScriptTimer.invalidate();
 
     //Notify main form that script is no longer executing
@@ -792,13 +841,13 @@ UwxScripting::UpdateStatusBar(
         {
             //Time has expired
             on_btn_Stop_clicked();
-            msbStatusBar->showMessage(QString("Script failed (expected data not found after ").append(ui->spin_MaxRecTime->text()).append(" seconds)."));
+            msbStatusBar->showMessage(QString("Script failed (expected data not found after ").append(ui->spin_MaxRecTime->text()).append(" seconds).").append((mnRepeats > 0 ? QString(" on repeat #").append(QString::number(mnRepeats)) : "")));
             ui->edit_Script->SetExecutionLineStatus(true);
         }
         else
         {
             //Time left
-            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to receive data (").append(QString::number(mbaRecvData.length())).append(" bytes received in ").append(QString::number(dblRecTimeSec, 'f', 1)).append(" seconds)").append("..."));
+            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to receive data (").append(QString::number(mbaRecvData.length())).append(" bytes received in ").append(QString::number(dblRecTimeSec, 'f', 1)).append(" seconds)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
         }
     }
     else if (ucLastAct == ScriptingActionDataOut)
@@ -807,7 +856,7 @@ UwxScripting::UpdateStatusBar(
         if (ui->check_WaitForWrite->isChecked() == true)
         {
             //Sending data and waiting for it to be flushed
-            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to data to be flushed (").append(QString::number(mbBytesWriteRemain)).append(" bytes remaining)..."));
+            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to data to be flushed (").append(QString::number(mbBytesWriteRemain)).append(" bytes remaining)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
         }
         else
         {
@@ -818,7 +867,7 @@ UwxScripting::UpdateStatusBar(
     else if (ucLastAct == ScriptingActionWaitTime)
     {
         //Wait period
-        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine)).append(": Wait period ").append(QString::number(mtmrPauseTimer.interval())).append("ms (").append(QString::number(mtmrPauseTimer.remainingTime())).append("ms left)..."));
+        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine)).append(": Wait period ").append(QString::number(mtmrPauseTimer.interval())).append("ms (").append(QString::number(mtmrPauseTimer.remainingTime())).append("ms left)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
     }
     else
     {

@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -31,12 +31,12 @@
 #include <QDataStream>
 
 /******************************************************************************/
-// Defines
+// Constants
 /******************************************************************************/
-#define LOG_OK 0                //Success
-#define LOG_ERR_OPEN_ALREADY 1  //Log already open
-#define LOG_ERR_ACCESS 2        //Access denied to log file
-#define LOG_NOT_OPEN 3          //Log file not open
+const qint8 LOG_OK               = 0; //Success
+const qint8 LOG_ERR_OPEN_ALREADY = 1; //Log already open
+const qint8 LOG_ERR_ACCESS       = 2; //Access denied to log file
+const qint8 LOG_NOT_OPEN         = 3; //Log file not open
 
 /******************************************************************************/
 // Class definitions

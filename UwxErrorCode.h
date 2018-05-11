@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2016-2017 Laird
+** Copyright (C) 2016-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -34,11 +34,11 @@
 #include <QClipboard>
 
 /******************************************************************************/
-// Defines
+// Constants
 /******************************************************************************/
-#define ErrorCodeLookupTab 0
-#define ErrorCodeListTab   1
-#define ErrorCodeSearchTab 2
+const qint8 ErrorCodeLookupTab = 0;
+const qint8 ErrorCodeListTab   = 1;
+const qint8 ErrorCodeSearchTab = 2;
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions

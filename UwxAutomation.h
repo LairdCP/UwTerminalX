@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -35,8 +35,12 @@
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define AutoItemAllow 200       //Number of items in the list to allow
-#define SaveFilesWithUTF8Header //Define to save files with a UTF8 BOM header
+#define SaveFilesWithUTF8Header    //Define to save files with a UTF8 BOM header
+
+/******************************************************************************/
+// Constants
+/******************************************************************************/
+const quint16 AutoItemAllow = 200; //Number of items in the list to allow
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions

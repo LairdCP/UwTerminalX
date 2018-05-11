@@ -1,9 +1,9 @@
 /******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
-** Module: LrdScrollEdit.cpp
+** Module: LrdEdit.cpp
 **
 ** Notes:
 **
@@ -43,6 +43,30 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
     mstrDatOut = ""; //Data out is empty string
     mintCurPos = 0; //Current cursor position is 0
     mbContextMenuOpen = false; //Context menu not currently open
+    mstrItemArray = NULL;
+    nItemArraySize = 0;
+}
+
+//=============================================================================
+//=============================================================================
+LrdScrollEdit::~LrdScrollEdit()
+{
+    //Destructor
+    delete[] mstrItemArray;
+    nItemArraySize = 0;
+}
+
+//=============================================================================
+//=============================================================================
+bool
+LrdScrollEdit::SetupScrollback(
+    quint16 nLines
+    )
+{
+    //Sets up the scrollback array
+    mstrItemArray = new QString[nLines+1];
+    nItemArraySize = nLines;
+    return (mstrItemArray != NULL);
 }
 
 //=============================================================================
@@ -112,11 +136,11 @@ LrdScrollEdit::eventFilter(
                     if (mstrDatOut != mstrItemArray[mchItems])
                     {
                         //Previous entry is not the same as this entry
-                        if (mchItems > (ItemAllow-1))
+                        if (mchItems > (nItemArraySize-1))
                         {
                             //Shift out last array item
                             unsigned char i = 1;
-                            while (i < ItemAllow)
+                            while (i < nItemArraySize)
                             {
                                 mstrItemArray[(i-1)] = mstrItemArray[i];
                                 ++i;

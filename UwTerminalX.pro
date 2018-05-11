@@ -9,11 +9,11 @@
 #DEFINES += "SKIPSCRIPTINGFORM=1"
 #Uncomment to exclude building speed test functionality
 #DEFINES += "SKIPSPEEDTEST=1"
+#Uncomment to exclude BL654 USB autorun escape functionality
+#DEFINES += "SKIPUSBRECOVERY=1"
 
 
-QT       += core gui serialport network
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui widgets serialport network
 
 TARGET = UwTerminalX
 TEMPLATE = app
@@ -40,16 +40,14 @@ RESOURCES += \
     UwTerminalXImages.qrc
 
 #Automation form
-!contains(DEFINES, SKIPAUTOMATIONFORM)
-{
+!contains(DEFINES, SKIPAUTOMATIONFORM) {
     SOURCES += UwxAutomation.cpp
     HEADERS += UwxAutomation.h
     FORMS += UwxAutomation.ui
 }
 
 #Scripting form
-!contains(DEFINES, SKIPSCRIPTINGFORM)
-{
+!contains(DEFINES, SKIPSCRIPTINGFORM) {
     SOURCES += LrdCodeEditor.cpp \
     LrdHighlighter.cpp \
     UwxScripting.cpp
@@ -62,11 +60,31 @@ RESOURCES += \
 }
 
 #Error code form
-!contains(DEFINES, SKIPERRORCODEFORM)
-{
+!contains(DEFINES, SKIPERRORCODEFORM) {
     SOURCES += UwxErrorCode.cpp
     HEADERS += UwxErrorCode.h
     FORMS += UwxErrorCode.ui
+}
+
+#BL654 USB dongle autorun recovery
+!contains(DEFINES, SKIPUSBRECOVERY) {
+    #Linux libraries
+    unix:!macx: LIBS += -lusb-1.0
+    unix:!macx: LIBS += -lftdi1
+
+    #Windows libraries
+    !contains(QMAKESPEC, g++) {
+        #MSVC build for windows
+        contains(QT_ARCH, i386) {
+            #32-bit windows
+            win32: LIBS += -L$$PWD/FTDI/Win32/ -lftd2xx
+        } else {
+            #64-bit windows
+            win32: LIBS += -L$$PWD/FTDI/Win64/ -lftd2xx
+        }
+
+        HEADERS  += FTDI/ftd2xx.h
+    }
 }
 
 #Windows application version information
@@ -79,4 +97,3 @@ win32:RC_ICONS = images/UwTerminal32.ico
 ICON = MacUwTerminalXIcon.icns
 
 DISTFILES +=
-

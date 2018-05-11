@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2017 Laird
+** Copyright (C) 2015-2018 Laird
 **
 ** Project: UwTerminalX
 **
@@ -76,6 +76,20 @@
 #include "UwxScripting.h"
 #endif
 #include "UwxEscape.h"
+#if SKIPUSBRECOVERY != 1
+//Conditional compile for BL654 USB dongle autorun exit
+#if defined(_WIN32) && defined(_MSC_VER)
+//MSVC build on windows
+#define FTD2XX_STATIC
+#include "FTDI/ftd2xx.h"
+#elif defined(__linux__)
+//Linux
+#include <unistd.h>
+#include <libftdi1/ftdi.h>
+#include <libusb-1.0/libusb.h>
+#include <string.h>
+#endif
+#endif
 
 /******************************************************************************/
 // Defines
@@ -85,6 +99,15 @@
 #endif
 #ifdef UseSSL
     #include <QSslSocket>
+#endif
+
+//Decides if generic data types will be 32 or 64-bit
+#if _WIN64 || __aarch64__ || TARGET_OS_MAC || __x86_64__
+    //64-bit OS
+    #define OS32_64UINT quint64
+#else
+    //32-bit or other OS
+    #define OS32_64UINT quint32
 #endif
 
 /******************************************************************************/
@@ -107,7 +130,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.09h"; //Version string
+const QString UwVersion                         = "1.10"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -144,85 +167,95 @@ const QDate DefaultUpdateCheckLast              = QDate(1970, 1, 1);
 const bool DefaultAutoDTrimBuffer               = false; //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferThreshold   = 0;     //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferSize        = 0;     //(Unlisted option)
+const quint16 DefaultScrollbackBufferSize       = 32;    //(Unlisted option)
 //Constants the protocol
 #ifndef UseSSL
     //HTTP
-    const QString WebProtocol = "http";
+    const QString WebProtocol                   = "http";
 #endif
-const qint8 FilenameIndexApplication          = 0;
-const qint8 FilenameIndexOthers               = 1;
+const qint8 FilenameIndexApplication            = 0;
+const qint8 FilenameIndexOthers                 = 1;
 //Constants for right click menu options
-const qint8 MenuActionXCompile                = 1;
-const qint8 MenuActionXCompileLoad            = 2;
-const qint8 MenuActionXCompileLoadRun         = 3;
-const qint8 MenuActionLoad                    = 4;
-const qint8 MenuActionLoadRun                 = 5;
-const qint8 MenuActionErrorHex                = 6;
-const qint8 MenuActionErrorInt                = 7;
-const qint8 MenuActionLoopback                = 8;
-const qint8 MenuActionLoad2                   = 9;
-const qint8 MenuActionEraseFile               = 10;
-const qint8 MenuActionDir                     = 11;
-const qint8 MenuActionRun                     = 12;
-const qint8 MenuActionDebug                   = 13;
-const qint8 MenuActionDataFile                = 14;
-const qint8 MenuActionEraseFile2              = 15;
-const qint8 MenuActionClearFilesystem         = 16;
-const qint8 MenuActionMultiDataFile           = 17;
-const qint8 MenuActionStreamFile              = 18;
-const qint8 MenuActionFont                    = 19;
-const qint8 MenuActionRun2                    = 20;
-const qint8 MenuActionAutomation              = 21;
-const qint8 MenuActionScripting               = 22;
-const qint8 MenuActionBatch                   = 23;
-const qint8 MenuActionClearModule             = 24;
-const qint8 MenuActionClearDisplay            = 25;
-const qint8 MenuActionClearRxTx               = 26;
-const qint8 MenuActionCopy                    = 27;
-const qint8 MenuActionCopyAll                 = 28;
-const qint8 MenuActionPaste                   = 29;
-const qint8 MenuActionSelectAll               = 30;
+const qint8 MenuActionXCompile                  = 1;
+const qint8 MenuActionXCompileLoad              = 2;
+const qint8 MenuActionXCompileLoadRun           = 3;
+const qint8 MenuActionLoad                      = 4;
+const qint8 MenuActionLoadRun                   = 5;
+const qint8 MenuActionErrorHex                  = 6;
+const qint8 MenuActionErrorInt                  = 7;
+const qint8 MenuActionLoopback                  = 8;
+const qint8 MenuActionLoad2                     = 9;
+const qint8 MenuActionEraseFile                 = 10;
+const qint8 MenuActionDir                       = 11;
+const qint8 MenuActionRun                       = 12;
+const qint8 MenuActionDebug                     = 13;
+const qint8 MenuActionDataFile                  = 14;
+const qint8 MenuActionEraseFile2                = 15;
+const qint8 MenuActionClearFilesystem           = 16;
+const qint8 MenuActionMultiDataFile             = 17;
+const qint8 MenuActionStreamFile                = 18;
+const qint8 MenuActionFont                      = 19;
+const qint8 MenuActionRun2                      = 20;
+const qint8 MenuActionAutomation                = 21;
+const qint8 MenuActionScripting                 = 22;
+const qint8 MenuActionBatch                     = 23;
+const qint8 MenuActionClearModule               = 24;
+const qint8 MenuActionClearDisplay              = 25;
+const qint8 MenuActionClearRxTx                 = 26;
+const qint8 MenuActionCopy                      = 27;
+const qint8 MenuActionCopyAll                   = 28;
+const qint8 MenuActionPaste                     = 29;
+const qint8 MenuActionSelectAll                 = 30;
 //Constants for balloon (notification area) icon options
-const qint8 BalloonActionShow                 = 1;
-const qint8 BalloonActionExit                 = 2;
+const qint8 BalloonActionShow                   = 1;
+const qint8 BalloonActionExit                   = 2;
 //Constants for speed test menu
-const qint8 SpeedMenuActionRecv               = 1;
-const qint8 SpeedMenuActionSend               = 2;
-const qint8 SpeedMenuActionSendRecv           = 3;
-const qint8 SpeedMenuActionSendRecv5Delay     = 4;
-const qint8 SpeedMenuActionSendRecv10Delay    = 5;
-const qint8 SpeedMenuActionSendRecv15Delay    = 6;
-const qint8 SpeedModeInactive                 = 0b00;
-const qint8 SpeedModeRecv                     = 0b01;
-const qint8 SpeedModeSend                     = 0b10;
-const qint8 SpeedModeSendRecv                 = 0b11;
+const qint8 SpeedMenuActionRecv                 = 1;
+const qint8 SpeedMenuActionSend                 = 2;
+const qint8 SpeedMenuActionSendRecv             = 3;
+const qint8 SpeedMenuActionSendRecv5Delay       = 4;
+const qint8 SpeedMenuActionSendRecv10Delay      = 5;
+const qint8 SpeedMenuActionSendRecv15Delay      = 6;
+const qint8 SpeedModeInactive                   = 0b00;
+const qint8 SpeedModeRecv                       = 0b01;
+const qint8 SpeedModeSend                       = 0b10;
+const qint8 SpeedModeSendRecv                   = 0b11;
 //Constants for speed testing
-const qint16 SpeedTestChunkSize               = 512;  //Maximum number of bytes to send per chunk when speed testing
-const qint16 SpeedTestMinBufSize              = 128;  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
-const qint16 SpeedTestStatUpdateTime          = 500;  //Time (in ms) between status updates for speed test mode
+const qint16 SpeedTestChunkSize                 = 512;  //Maximum number of bytes to send per chunk when speed testing
+const qint16 SpeedTestMinBufSize                = 128;  //Minimum buffer size when speed testing, when there are less than this number of bytes in the output buffer it will be topped up
+const qint16 SpeedTestStatUpdateTime            = 500;  //Time (in ms) between status updates for speed test mode
 //XCompile exit codes
-const int XCOMP_OK                            = 0;
-const int XCOMP_GENERIC_FAIL                  = 1;
-const int XCOMP_FILENAME_EMPTY                = 2;
-const int XCOMP_FACTORY_FILE_OPEN_ERROR       = 3;
-const int XCOMP_RAWLINE_MALLOC_FAIL           = 4;
-const int XCOMP_OUTFILE_NAME_CREATION         = 5;
-const int XCOMP_PREPARSE_ERROR                = 6;
-const int XCOMP_TOKENISELINE_ERROR            = 7;
-const int XCOMP_GENERIC_ERROR                 = 8;
-const int XCOMP_ARGS_PARSING_ERROR            = 9;
-const int XCOMP_EMPTY_FILENAME                = 10;
-const int XCOMP_TOKPUBOPEN_FAIL               = 12;
-const int XCOMP_MAINSCRIPTFILE_OPEN_ERROR     = 11;
-const int XCOMP_NOT_ENOUGH_ARGS               = 13;
-const int XCOMP_MISSING_FILE                  = 14;
-const int XCOMP_XCMPEXEFILE_OPEN_ERROR        = 15;
-const int XCOMP_UNEXPECTED_ENDOF_FILE         = 20;
-const int XCOMP_NEWXCMPEXEFILE_OPEN_ERROR     = 30;
-const int XCOMP_SBXFULLPATH_MALLOC_FAIL       = 100;
-const int XCOMP_SBX_DATABASE_MISSING          = 101;
-const int XCOMP_MISSING_FILE_LEGACY           = 500;
-const int XCOMP_XCMPEXEFILE_OPEN_ERROR_LEGACY = 2000;
+const int XCOMP_OK                              = 0;
+const int XCOMP_GENERIC_FAIL                    = 1;
+const int XCOMP_FILENAME_EMPTY                  = 2;
+const int XCOMP_FACTORY_FILE_OPEN_ERROR         = 3;
+const int XCOMP_RAWLINE_MALLOC_FAIL             = 4;
+const int XCOMP_OUTFILE_NAME_CREATION           = 5;
+const int XCOMP_PREPARSE_ERROR                  = 6;
+const int XCOMP_TOKENISELINE_ERROR              = 7;
+const int XCOMP_GENERIC_ERROR                   = 8;
+const int XCOMP_ARGS_PARSING_ERROR              = 9;
+const int XCOMP_EMPTY_FILENAME                  = 10;
+const int XCOMP_TOKPUBOPEN_FAIL                 = 12;
+const int XCOMP_MAINSCRIPTFILE_OPEN_ERROR       = 11;
+const int XCOMP_NOT_ENOUGH_ARGS                 = 13;
+const int XCOMP_MISSING_FILE                    = 14;
+const int XCOMP_XCMPEXEFILE_OPEN_ERROR          = 15;
+const int XCOMP_UNEXPECTED_ENDOF_FILE           = 20;
+const int XCOMP_NEWXCMPEXEFILE_OPEN_ERROR       = 30;
+const int XCOMP_SBXFULLPATH_MALLOC_FAIL         = 100;
+const int XCOMP_SBX_DATABASE_MISSING            = 101;
+const int XCOMP_MISSING_FILE_LEGACY             = 500;
+const int XCOMP_XCMPEXEFILE_OPEN_ERROR_LEGACY   = 2000;
+#if (SKIPUSBRECOVERY != 1) && !defined(TARGET_OS_MAC)
+//Pin definitions for BL654 USB dongle
+const int FTDI_BL654_USB_RX_DIO                 = 1;
+const int FTDI_BL654_USB_RTS_DIO                = 4;
+const int FTDI_BL654_USB_VSP_DIO                = 32;
+const int FTDI_BL654_USB_NRESET_DIO             = 64;
+const int FTDI_BL654_USB_AUTORUN_DIO            = 128;
+const int FTDI_BL654_USB_RESET_DELAY            = 400;
+#endif
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -667,6 +700,11 @@ private slots:
     on_btn_Local_XCompilers_clicked(
         );
 #endif
+#if !defined(SKIPUSBRECOVERY) && !defined(TARGET_OS_MAC)
+    void
+    on_btn_ExitAutorun_clicked(
+        );
+#endif
 
 private:
     Ui::MainWindow *ui;
@@ -775,9 +813,9 @@ private:
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
     bool gbStreamingFile; //True when a file is being streamed
     QSerialPort gspSerialPort; //Contains the handle for the serial port
-    quint32 gintRXBytes; //Number of RX bytes
-    quint32 gintTXBytes; //Number of TX bytes
-    quint32 gintQueuedTXBytes; //Number of TX bytes that have been queued in buffer (not necesserially sent)
+    OS32_64UINT gintRXBytes; //Number of RX bytes
+    OS32_64UINT gintTXBytes; //Number of TX bytes
+    OS32_64UINT gintQueuedTXBytes; //Number of TX bytes that have been queued in buffer (not necesserially sent)
     unsigned char gchTermBusyLines; //Number of commands recieved (for sending applications)
     unsigned char gchTermMode; //What function is being ran when compiling
     unsigned char gchTermMode2; //Current sub-mode of download
@@ -819,9 +857,9 @@ private:
     bool gbDSRStatus; //True when DSR is asserted
     bool gbRIStatus; //True when RI is asserted
     QFile *gpStreamFileHandle; //Handle for the file to stream data from
-    quint32 gintStreamBytesSize; //The size of the file to stream in bytes
-    quint32 gintStreamBytesRead; //The number of bytes read from the stream
-    quint32 gintStreamBytesProgress; //The number of bytes when the next progress output should be made
+    OS32_64UINT gintStreamBytesSize; //The size of the file to stream in bytes
+    OS32_64UINT gintStreamBytesRead; //The number of bytes read from the stream
+    OS32_64UINT gintStreamBytesProgress; //The number of bytes when the next progress output should be made
     QByteArray gbaDisplayBuffer; //Buffer of data to display
     QElapsedTimer gtmrStreamTimer; //Counts how long a stream takes to send
     QTimer gtmrTextUpdateTimer; //Timer for slower updating of display buffer (but less display freezing)
