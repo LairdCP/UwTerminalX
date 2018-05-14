@@ -32,7 +32,7 @@ Where '\~/' is the location of where you want it extracted to, '\~/' will extrac
 
 	./UwTerminalX
 
-Before running, you may need to install some additional libraries, please see https://github.com/LairdCP/UwTerminalX/wiki/Installing for further details
+Before running, you may need to install some additional libraries, please see https://github.com/LairdCP/UwTerminalX/wiki/Installing for further details. You may also be required to add a udev rule to grant non-root users access to USB devices, please see https://github.com/LairdCP/UwTerminalX/wiki/Granting-non-root-USB-device-access-(Linux) for details.
 
 ## Help and contributing
 
