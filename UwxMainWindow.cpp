@@ -9072,19 +9072,19 @@ MainWindow::on_btn_ExitAutorun_clicked(
                     return;
                 }
 
-                libusb_device_handle *handle = NULL;
-                nStatus = libusb_open(device, &handle);
-                if (nStatus != 0)
-                {
-                    //Failed to open USB device
-                    ui->statusBar->showMessage("Failed to open USB device using libusb.");
-                    return;
-                }
-
                 //Check device is an FTDI adapter
                 if (desc.idVendor == 0x0403 && desc.idProduct == 0x6001)
                 {
                     //FTDI device, check serial number
+                    libusb_device_handle *handle = NULL;
+                    nStatus = libusb_open(device, &handle);
+                    if (nStatus != 0)
+                    {
+                        //Failed to open USB device
+                        ui->statusBar->showMessage("Failed to open USB device using libusb.");
+                        return;
+                    }
+
                     nStatus = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, strSerialNumber, sizeof(strSerialNumber));
                     if (strcmp((char *)strSerialNumber, (char *)spiSerialInfo.serialNumber().left(8).toStdString().c_str()) == 0)
                     {
@@ -9130,10 +9130,10 @@ MainWindow::on_btn_ExitAutorun_clicked(
                         ui->statusBar->showMessage(QString("Exited autorun on device ").append(ui->combo_COM->currentText()).append(" successfully."));
                         return;
                     }
-                }
 
-                //Close handle
-                libusb_close(handle);
+                    //Close device
+                    libusb_close(handle);
+                }
             }
 
             //Device was not found
