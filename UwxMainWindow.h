@@ -130,7 +130,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.10"; //Version string
+const QString UwVersion                         = "1.10a"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -163,12 +163,15 @@ const bool DefaultConfirmClear                  = 1;
 const bool DefaultShiftEnterLineSeparator       = 1;
 const bool DefaultLicenceCheckMode              = 1;
 const bool DefaultUpdateCheckEnable             = 1;
+const bool DefaultFirmwareVersionCheckEnable    = 1;
 const QDate DefaultUpdateCheckLast              = QDate(1970, 1, 1);
 const bool DefaultAutoDTrimBuffer               = false; //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferThreshold   = 0;     //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferSize        = 0;     //(Unlisted option)
 const quint16 DefaultScrollbackBufferSize       = 32;    //(Unlisted option)
-//Constants the protocol
+//Constants for URLs
+const QString URLLinuxNonRootSetup = "https://github.com/LairdCP/UwTerminalX/wiki/Granting-non-root-USB-device-access-(Linux)";
+//Constants for the protocol
 #ifndef UseSSL
     //HTTP
     const QString WebProtocol                   = "http";
@@ -705,6 +708,10 @@ private slots:
     on_btn_ExitAutorun_clicked(
         );
 #endif
+    void
+    on_check_EnableModuleFirmwareCheck_stateChanged(
+        int
+        );
 
 private:
     Ui::MainWindow *ui;

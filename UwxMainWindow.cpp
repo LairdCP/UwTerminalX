@@ -154,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     //Fix mac's resize
-    resize(720, 360);
+    resize(740, 400);
 
     //Disable viewing files externally for mac
     ui->btn_EditExternal->setEnabled(false);
@@ -603,10 +603,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Set Online XCompilation mode
 #ifdef _WIN32
     //Windows
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found the source code will be uploaded and compiled remotely on a Laird cloud server. Uploaded data is not stored by Laird.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found, the source code will be uploaded and compiled remotely on a Laird server. Uploaded file data is not stored by Laird but IP addresses are stored in access logs which are used for security purposes only.");
 #else
     //Mac or Linux
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploadeda and compiled remotely on a Laird cloud server. Uploaded data is not stored by Laird.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploadeda and compiled remotely on a Laird server. Uploaded file data is not stored by Laird but IP addresses are stored in access logs which are used for security purposes only.");
 #endif
     ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", DefaultOnlineXComp).toBool());
 
@@ -672,24 +672,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         }
         if (slArgs[chi].toUpper() == "ACCEPT")
         {
-            //Skip the front panel - disable buttons
-            ui->btn_Accept->setEnabled(false);
-            ui->btn_Decline->setEnabled(false);
-
-            //Switch to config tab
-            ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Config));
-
-            //Default empty images
-            ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DSR->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_RI->setPixmap(*gpEmptyCirclePixmap);
-
-            ui->image_CTSb->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DCDb->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_DSRb->setPixmap(*gpEmptyCirclePixmap);
-            ui->image_RIb->setPixmap(*gpEmptyCirclePixmap);
-
+            //Skip the front panel
+            on_btn_Accept_clicked();
             bArgAccept = true;
         }
         else if (slArgs[chi].left(4).toUpper() == "COM=")
@@ -952,6 +936,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Set the weekly update checkbox status
     ui->check_EnableWeeklyUpdateCheck->setChecked(gpTermSettings->value("UpdateCheckEnable", DefaultUpdateCheckEnable).toBool());
 
+    //Set the firmware update checkbox status
+    ui->check_EnableModuleFirmwareCheck->setChecked(gpTermSettings->value("FirmwareVersionCheckEnable", DefaultFirmwareVersionCheckEnable).toBool());
+
     //(Unlisted option) Setup display buffer automatic trimming
     gbAutoTrimDBuffer = gpTermSettings->value("AutoTrimDBuffer", DefaultAutoDTrimBuffer).toBool();
     gintAutoTrimBufferDThreshold = gpTermSettings->value("AutoTrimDBufferThreshold", DefaultAutoTrimDBufferThreshold).toULongLong();
@@ -1191,9 +1178,6 @@ MainWindow::on_btn_Accept_clicked(
     ui->btn_Accept->setEnabled(false);
     ui->btn_Decline->setEnabled(false);
 
-    //Switch to config tab
-    ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Config));
-
     //Default empty images
     ui->image_CTS->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DCD->setPixmap(*gpEmptyCirclePixmap);
@@ -1204,6 +1188,9 @@ MainWindow::on_btn_Accept_clicked(
     ui->image_DCDb->setPixmap(*gpEmptyCirclePixmap);
     ui->image_DSRb->setPixmap(*gpEmptyCirclePixmap);
     ui->image_RIb->setPixmap(*gpEmptyCirclePixmap);
+
+    //Switch to config tab
+    ui->selector_Tab->setCurrentIndex(ui->selector_Tab->indexOf(ui->tab_Config));
 }
 
 //=============================================================================
@@ -2014,6 +2001,8 @@ MainWindow::on_text_TermEditData_customContextMenuRequested(
     ui->text_TermEditData->mbContextMenuOpen = true;
 }
 
+//=============================================================================
+//=============================================================================
 void
 MainWindow::MenuSelected(
     QAction* qaAction
@@ -4480,7 +4469,7 @@ MainWindow::replyFinished(
                         {
                             //Setup the request and add the original application filename
                             QFileInfo fiFileInfo(gstrTermFilename);
-                            QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1")));
+                            QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1").append((ui->check_EnableModuleFirmwareCheck->isChecked() == true ? "&LatestFW=1" : ""))));
                             QByteArray baPostData;
                             baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
                             baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n"));
@@ -4828,6 +4817,14 @@ MainWindow::replyFinished(
             else if (nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
             {
                 //Compiled - save file
+                QString strTmpDevID = gstrDeviceID.left(gstrDeviceID.lastIndexOf("_"));
+                if (ui->check_EnableModuleFirmwareCheck->isChecked() && nrReply->hasRawHeader("Firmware-Latest") && gpTermSettings->value(QString("FWCheckLatest").append(strTmpDevID), "0.0.0.0").toString() != nrReply->rawHeader("Firmware-Latest"))
+                {
+                    //Checked for latest firmware and there is a newer version available
+                    QMessageBox::information(this, "Module firmware outdated", QString("There is a new firmware available for your ").append(strTmpDevID).append(" module, version ").append(nrReply->rawHeader("Firmware-Latest")).append(". You can download this from the Laird website.\r\n\r\nThis message will not be shown again for this module unless a newer firmware is released."), QMessageBox::Ok);
+                    gpTermSettings->setValue(QString("FWCheckLatest").append(strTmpDevID), nrReply->rawHeader("Firmware-Latest"));
+                }
+
                 QList<QString> lstFI = SplitFilePath(gstrTermFilename);
                 if (!QFile::exists(QString(lstFI[0]).append(lstFI[1]).append(".uwc")))
                 {
@@ -5323,6 +5320,9 @@ MainWindow::on_check_OnlineXComp_stateChanged(
     //Online XCompiler checkbox state changed
     ui->label_OnlineXCompInfo->setEnabled(ui->check_OnlineXComp->isChecked());
     gpTermSettings->setValue("OnlineXComp", (ui->check_OnlineXComp->isChecked() == true ? 1 : 0));
+
+    //Disable or enable latest firmware check checkbox
+    ui->check_EnableModuleFirmwareCheck->setEnabled(ui->check_OnlineXComp->isChecked());
 }
 
 //=============================================================================
@@ -6400,7 +6400,28 @@ MainWindow::LoadSettings(
             }
         }
 #endif
-        gpTermSettings->setValue("ConfigVersion", UwVersion);
+        if (gpTermSettings->value("ShowFileSize").isNull())
+        {
+            gpTermSettings->setValue("ShowFileSize", DefaultShowFileSize); //If the size of applications and files should be shown or not
+        }
+        if (gpTermSettings->value("ConfirmClear").isNull())
+        {
+            gpTermSettings->setValue("ConfirmClear", DefaultConfirmClear); //If the erase module option in the menu should require a confirmation or not
+        }
+        if (gpTermSettings->value("LicenseCheck").isNull())
+        {
+            gpTermSettings->setValue("LicenseCheck", DefaultLicenceCheckMode); //If the license on the module should be checked when downloading to it
+        }
+        if (gpTermSettings->value("FirmwareVersionCheckEnable").isNull())
+        {
+            gpTermSettings->setValue("FirmwareVersionCheckEnable", DefaultFirmwareVersionCheckEnable); //If firmware checking when using online XCompilation is enabled
+        }
+
+        if (gpTermSettings->value("ConfigVersion").isNull() || gpTermSettings->value("ConfigVersion").toString() != UwVersion)
+        {
+            //Update configuration version
+            gpTermSettings->setValue("ConfigVersion", UwVersion);
+        }
     }
 }
 
@@ -8595,7 +8616,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
     if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
     {
         //Valid FTDI device, proceed
-        if (QMessageBox::question(this, "Exit autorun?", QString("This allows BL654 USB dongles with an autorun application to be placed into interactive mode, note this only works with BL654 USB dongles. Are you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your Laird BL654 USB dongle?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
         {
             //Windows, MSVC build
             FT_STATUS ftsStatus;
@@ -8845,7 +8866,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
     QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
     if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
     {
-        if (QMessageBox::question(this, "Exit autorun?", QString("This allows BL654 USB dongles with an autorun application to be placed into interactive mode, note this only works with BL654 USB dongles. Are you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your Laird BL654 USB dongle?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
         {
             //Exit autorun mode
             struct ftdi_context *ftContext;
@@ -8856,6 +8877,20 @@ MainWindow::on_btn_ExitAutorun_clicked(
             ssize_t nDevicesFound = 0;
             unsigned char strSerialNumber[16];
             bool ReOpen = false;
+
+            //Show setup warning message
+            if (gpTermSettings->value("LinuxShownNonRootUSBWarning", false).toBool() == false && QMessageBox::warning(this, "Confirm Linux Setup", "Have you followed the instructions on the UwTerminalX wiki page for setting up udev rules for USB devices for non-root users? Without this setup stage being completed, the process for exiting autorun may fail.\r\n\r\nClick 'yes' to be taken to the UwTerminalX Linux setup wiki page. This message will only be displayed once.", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+            {
+                //Open web page with Linux non-root user setup instructions
+                gpTermSettings->setValue("LinuxShownNonRootUSBWarning", true);
+                if (QDesktopServices::openUrl(QUrl(URLLinuxNonRootSetup)) == false)
+                {
+                    //Failed to open URL
+                    QString strMessage = tr("An error occured whilst attempting to open a web browser, please ensure you have a web browser installed and configured. URL: ").append(URLLinuxNonRootSetup);
+                    gpmErrorForm->show();
+                    gpmErrorForm->SetMessage(&strMessage);
+                }
+            }
 
             if (gspSerialPort.isOpen())
             {
@@ -9148,6 +9183,17 @@ MainWindow::on_btn_ExitAutorun_clicked(
 #endif
 }
 #endif
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_EnableModuleFirmwareCheck_stateChanged(
+    int
+    )
+{
+    //Latest firmware version check checkbox has been toggled
+    gpTermSettings->setValue("FirmwareVersionCheckEnable", ui->check_EnableModuleFirmwareCheck->isChecked());
+}
 
 /******************************************************************************/
 // END OF FILE

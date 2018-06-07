@@ -1560,7 +1560,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">
                <property name="spacing">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="leftMargin">
                 <number>2</number>
@@ -1757,10 +1757,23 @@
                <item>
                 <widget class="QCheckBox" name="check_EnableWeeklyUpdateCheck">
                  <property name="toolTip">
-                  <string>Enable this to use HTTPS (SSL) when communicating with UwTerminalX server (when updating or compiling applications), otherwise uses plaintext HTTP.</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable this to check for updates to UwTerminalX and the error code file every week.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Weekly update check</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="check_EnableModuleFirmwareCheck">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable this to check if the firmware version you are XCompiling for is the latest version or not (only supported with online XCompilations).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Latest firmware checking</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -1954,7 +1967,7 @@
             <item>
              <widget class="QPushButton" name="btn_ExitAutorun">
               <property name="text">
-               <string>BL654-US exit autorun</string>
+               <string>BL654 USB Dongle - Exit autorun</string>
               </property>
              </widget>
             </item>
