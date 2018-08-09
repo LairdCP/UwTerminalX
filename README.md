@@ -2,7 +2,7 @@
 
 ## About
 
-UwTerminalX is a cross-platform utility for communicating and downloading applications onto Laird's range of wireless modules, and uses Qt 5. The code uses functionality only supported in Qt 5.5 or greater but with some slight modifications will compile and run fine on earlier versions of Qt 5 (with no loss of functionality). UwTerminalX has been tested on Windows, Mac, Arch Linux and Ubuntu Linux and on the [Raspberry Pi running Raspbian](http://uwterminalx.no-ip.org/Github/rpi.png).
+UwTerminalX is a cross-platform utility for communicating and downloading applications onto Laird's range of wireless modules, and uses Qt 5. The code uses functionality only supported in Qt 5.7 or greater but with some slight modifications will compile and run fine on earlier versions of Qt 5 (with no loss of functionality). UwTerminalX has been tested on Windows, Mac, Arch Linux and Ubuntu Linux and on the [Raspberry Pi running Raspbian](http://uwterminalx.no-ip.org/Github/rpi.png).
 
 ## Downloading
 
@@ -26,7 +26,7 @@ If using the SSL version of UwTerminalX, then the Visual Studio 2015 runtime fil
 
 Download the tar file and extract it's contents to a location on your computer, this can be done using a graphical utility or from the command line using:
 
-	tar xf UwTerminalX.tar.gz ~/
+	tar xf UwTerminalX_<version>.tar.gz -C ~/
 
 Where '\~/' is the location of where you want it extracted to, '\~/' will extract to the home directory of your local user account). To launch UwTerminalX, either double click on the executable and click the 'run' button (if asked), or execute it from a terminal as so:
 
