@@ -36,9 +36,13 @@ Before running, you may need to install some additional libraries, please see ht
 
 ## Help and contributing
 
-There are various instructions and help pages available on the [wiki site](https://github.com/LairdCP/UwTerminalX/wiki/), due to problems with the service the UwTerminalX mailing list is currently unavailable.
+There are various instructions and help pages available on the [wiki site](https://github.com/LairdCP/UwTerminalX/wiki/).
 
 Laird encourages people to branch/fork UwTerminalX to modify the code and accepts pull requests to merge these changes back into the main repository.
+
+## Mailing list/discussion
+
+There is a mailing list available for dicussion about UwTerminalX which is available on https://groups.io/g/UwTerminalX
 
 ## Speed/Throughput testing
 
