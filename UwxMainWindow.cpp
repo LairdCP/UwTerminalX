@@ -301,6 +301,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifdef _WIN32
     //Connect process termination to signal
     connect(&gprocCompileProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(process_finished(int, QProcess::ExitStatus)));
+    connect(&gprocCompileProcess, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(process_error(QProcess::ProcessError)));
 #endif
 
     //Connect quit signals
@@ -959,10 +960,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 //=============================================================================
 //=============================================================================
-MainWindow::~MainWindow(){
+MainWindow::~MainWindow()
+{
     //Disconnect all signals
 #ifdef _WIN32
     disconnect(this, SLOT(process_finished(int, QProcess::ExitStatus)));
+    disconnect(this, SLOT(process_error(int, QProcess::ProcessError)));
 #endif
     disconnect(this, SLOT(close()));
     disconnect(this, SLOT(EnterPressed()));
@@ -3024,6 +3027,21 @@ MainWindow::process_finished(
         gbTermBusy = false;
         ui->btn_Cancel->setEnabled(false);
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::process_error(
+    QProcess::ProcessError
+    )
+{
+    //Executable failed to run, display error
+    QString strMessage = tr("XCompile executable failed to run, process error: ").append(gprocCompileProcess.errorString());
+    gpmErrorForm->show();
+    gpmErrorForm->SetMessage(&strMessage);
+    gbTermBusy = false;
+    ui->btn_Cancel->setEnabled(false);
 }
 #endif
 
