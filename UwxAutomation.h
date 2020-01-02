@@ -31,16 +31,19 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QStatusBar>
+#include <QWheelEvent>
 
 /******************************************************************************/
 // Defines
 /******************************************************************************/
-#define SaveFilesWithUTF8Header    //Define to save files with a UTF8 BOM header
+#define SaveFilesWithUTF8Header        //Define to save files with a UTF8 BOM header
 
 /******************************************************************************/
 // Constants
 /******************************************************************************/
-const quint16 AutoItemAllow = 200; //Number of items in the list to allow
+const quint16 nAutoItemAllow = 200;    //Number of items in the list to allow
+const quint16 nAutoItemsOnScreen = 10; //Number of items in the list to allow
+const quint16 nAutoWheelScroll = 120;  //Number of lines to scroll per scrolls
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -185,6 +188,10 @@ private slots:
     on_check_OnTop_stateChanged(
         int
         );
+    void
+    wheelEvent(
+        QWheelEvent *event
+        );
 
 signals:
     void SendData(
@@ -196,9 +203,8 @@ signals:
 private:
     Ui::UwxAutomation *ui;
     PopupMessage *mFormAuto; //Holds handle of error message dialogue
-    QString mstrAutoItemArray[(AutoItemAllow+1)]; //Holds the text items
+    QString mstrAutoItemArray[(nAutoItemAllow+1)]; //Holds the text items
     unsigned char mchItemPosition; //Current position of the array for the text boxes
-    unsigned char mchItemTotal; //Total number of array entries
     unsigned char mchItemHighest; //Highest number in the array with an entry that has data
     QStatusBar *msbStatusBar; //Pointer to automation status bar
 };

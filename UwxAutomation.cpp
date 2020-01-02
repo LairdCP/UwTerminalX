@@ -37,7 +37,6 @@ UwxAutomation::UwxAutomation(QWidget *parent) : QDialog(parent), ui(new Ui::UwxA
 
     //Default values
     mchItemPosition = 0;
-    mchItemTotal = 20;
     mchItemHighest = 0;
 
     //Update the position label
@@ -179,9 +178,9 @@ UwxAutomation::on_btn_Up_clicked(
     if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
     {
         //Scroll by 10
-        if (mchItemPosition > 9)
+        if (mchItemPosition >= nAutoItemsOnScreen)
         {
-            mchItemPosition = mchItemPosition-10;
+            mchItemPosition = mchItemPosition - nAutoItemsOnScreen;
             LoadTextData();
         }
         else if (mchItemPosition > 0)
@@ -210,22 +209,22 @@ UwxAutomation::on_btn_Down_clicked(
     //Down button clicked
     if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
     {
-        //Scroll by 10
-        if (mchItemPosition < AutoItemAllow-20)
+        //Scroll by 10, check for 20 as it needs to skip 10 items and display 10 items
+        if (mchItemPosition < nAutoItemAllow - (nAutoItemsOnScreen*2))
         {
-            mchItemPosition = mchItemPosition+10;
+            mchItemPosition = mchItemPosition + nAutoItemsOnScreen;
             LoadTextData();
         }
         else
         {
-            mchItemPosition = AutoItemAllow-10;
+            mchItemPosition = nAutoItemAllow - nAutoItemsOnScreen;
             LoadTextData();
         }
     }
     else
     {
         //Scroll by 1
-        if (mchItemPosition < AutoItemAllow-10)
+        if (mchItemPosition < nAutoItemAllow - nAutoItemsOnScreen)
         {
             ++mchItemPosition;
             LoadTextData();
@@ -240,7 +239,7 @@ UwxAutomation::on_btn_Bottom_clicked(
     )
 {
     //Bottom button clicked
-    mchItemPosition = AutoItemAllow-10;
+    mchItemPosition = nAutoItemAllow - nAutoItemsOnScreen;
     LoadTextData();
 }
 
@@ -503,7 +502,7 @@ UwxAutomation::ArrayHighest(
     //Gets the highest position for a valid entry in the array
     unsigned char i = 0;
     mchItemHighest = 0;
-    while (i < AutoItemAllow)
+    while (i < nAutoItemAllow)
     {
         if (mstrAutoItemArray[i] != "" )
         {
@@ -520,7 +519,7 @@ UwxAutomation::ArrayPositionUpdate(
     )
 {
     //Updates the label to show the current array position
-    ui->label_Position->setText(QString('(').append(QString::number(mchItemPosition)).append('/').append(QString::number(AutoItemAllow-10)).append(')'));
+    ui->label_Position->setText(QString('(').append(QString::number(mchItemPosition)).append('/').append(QString::number(nAutoItemAllow - nAutoItemsOnScreen)).append(')'));
 }
 
 //=============================================================================
@@ -576,13 +575,12 @@ UwxAutomation::on_btn_Clear_clicked(
 {
     //Clears the array and all edit boxes and resets back to default
     unsigned char i = 0;
-    while (i < AutoItemAllow)
+    while (i < nAutoItemAllow)
     {
         mstrAutoItemArray[i] = "";
         ++i;
     }
     mchItemPosition = 0;
-    mchItemTotal = 20;
     mchItemHighest = 0;
     ui->edit_Line1->setText("");
     ui->edit_Line2->setText("");
@@ -681,7 +679,7 @@ UwxAutomation::LoadFile(
 
     //Clear out the array
     unsigned char i = 0;
-    while (i < AutoItemAllow)
+    while (i < nAutoItemAllow)
     {
         mstrAutoItemArray[i] = "";
         ++i;
@@ -694,7 +692,7 @@ UwxAutomation::LoadFile(
         QByteArray baThisLine = file.readLine();
         mstrAutoItemArray[i] = baThisLine.replace("\r", "").replace("\n", "");
         ++i;
-        if (i > AutoItemAllow)
+        if (i > nAutoItemAllow)
         {
             //Maximum lines reached, stop processing
             --i;
@@ -711,6 +709,89 @@ UwxAutomation::LoadFile(
     //Update the text boxes
     mchItemPosition = 0;
     LoadTextData();
+}
+
+//=============================================================================
+//=============================================================================
+void
+UwxAutomation::wheelEvent(
+    QWheelEvent *event
+    )
+{
+    if (event->angleDelta().y())
+    {
+        qint16 nLines = (event->angleDelta().y() / nAutoWheelScroll);
+
+        if (ui->edit_Line1->hasFocus())
+        {
+            on_edit_Line1_editingFinished();
+        }
+        else if (ui->edit_Line2->hasFocus())
+        {
+            on_edit_Line2_editingFinished();
+        }
+        else if (ui->edit_Line3->hasFocus())
+        {
+            on_edit_Line3_editingFinished();
+        }
+        else if (ui->edit_Line4->hasFocus())
+        {
+            on_edit_Line4_editingFinished();
+        }
+        else if (ui->edit_Line5->hasFocus())
+        {
+            on_edit_Line5_editingFinished();
+        }
+        else if (ui->edit_Line6->hasFocus())
+        {
+            on_edit_Line6_editingFinished();
+        }
+        else if (ui->edit_Line7->hasFocus())
+        {
+            on_edit_Line7_editingFinished();
+        }
+        else if (ui->edit_Line8->hasFocus())
+        {
+            on_edit_Line8_editingFinished();
+        }
+        else if (ui->edit_Line9->hasFocus())
+        {
+            on_edit_Line9_editingFinished();
+        }
+        else if (ui->edit_Line10->hasFocus())
+        {
+            on_edit_Line10_editingFinished();
+        }
+
+        if (nLines > 0)
+        {
+            //Scroll up
+            if (mchItemPosition > abs(nLines))
+            {
+                mchItemPosition = mchItemPosition - nLines;
+                LoadTextData();
+            }
+            else if (mchItemPosition > 0)
+            {
+                mchItemPosition = 0;
+                LoadTextData();
+            }
+        }
+        else if (nLines < 0)
+        {
+            //Scroll down
+            if (mchItemPosition < nAutoItemAllow - nAutoItemsOnScreen - abs(nLines))
+            {
+                mchItemPosition = mchItemPosition-nLines;
+                LoadTextData();
+            }
+            else
+            {
+                mchItemPosition = nAutoItemAllow - nAutoItemsOnScreen;
+                LoadTextData();
+            }
+        }
+    }
 }
 
 /******************************************************************************/

@@ -488,11 +488,14 @@
        </item>
        <item>
         <widget class="QCheckBox" name="check_OnTop">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="text">
           <string>On Top</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
