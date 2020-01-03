@@ -187,12 +187,14 @@ UwxScripting::on_btn_Load_clicked(
     )
 {
     //Load buffer from file
-    QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"), "", "Text files (*.txt)");
+    QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"), strLastScriptFile, "Text files (*.txt)");
 
-    if (strLoadFile.length() > 1)
+    if (!strLoadFile.isNull() && !strLoadFile.isEmpty())
     {
         //File was selected
         LoadScriptFile(&strLoadFile);
+        emit UpdateScriptLastDirectory(&strLoadFile);
+        strLastScriptFile = strLoadFile;
     }
 }
 
@@ -314,6 +316,7 @@ UwxScripting::on_btn_Run_clicked(
     {
         //Compile successful, check if main form is busy
         mnRepeats = 0;
+        mnScriptLines = ui->edit_Script->blockCount();
         msbStatusBar->showMessage("Script execution request pending...");
         emit ScriptStartRequest();
     }
@@ -441,6 +444,9 @@ UwxScripting::on_btn_Stop_clicked(
         msbStatusBar->showMessage(QString("Script stopped after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds").append(strRepeatText));
         gtmrScriptTimer.invalidate();
         ui->edit_Script->SetExecutionLineStatus(true);
+
+        //Return window title
+        setWindowTitle("Scripting");
 
         //Notify main form that script is no longer executing
         emit ScriptFinished();
@@ -686,7 +692,11 @@ UwxScripting::AdvanceLine(
         strRepeatText.append(QString::number(fElapsed/(double)mnRepeats, 'f', 1)).append(" seconds/loop");
     }
     msbStatusBar->showMessage(QString("Script complete after ~").append(QString::number(((double)gtmrScriptTimer.elapsed()/1000.0), 'f', 1)).append(" seconds").append(strRepeatText));
+    ui->progress_Complete->setValue(ui->progress_Complete->maximum());
     gtmrScriptTimer.invalidate();
+
+    //Return window title
+    setWindowTitle("Scripting");
 
     //Notify main form that script is no longer executing
     emit ScriptFinished();
@@ -833,6 +843,9 @@ UwxScripting::UpdateStatusBar(
     )
 {
     //Updates status bar with current action
+    ui->progress_Complete->setValue((mintCLine-1)*100/mnScriptLines);
+    QString strPercent = QString::number(ui->progress_Complete->value()).append("%");
+    setWindowTitle(QString("Scripting (Running... ").append(strPercent).append(")"));
     if (ucLastAct == ScriptingActionDataIn)
     {
         //Receiving data
@@ -843,11 +856,12 @@ UwxScripting::UpdateStatusBar(
             on_btn_Stop_clicked();
             msbStatusBar->showMessage(QString("Script failed (expected data not found after ").append(ui->spin_MaxRecTime->text()).append(" seconds).").append((mnRepeats > 0 ? QString(" on repeat #").append(QString::number(mnRepeats)) : "")));
             ui->edit_Script->SetExecutionLineStatus(true);
+            setWindowTitle("Scripting");
         }
         else
         {
             //Time left
-            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to receive data (").append(QString::number(mbaRecvData.length())).append(" bytes received in ").append(QString::number(dblRecTimeSec, 'f', 1)).append(" seconds)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
+            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to receive data (").append(QString::number(mbaRecvData.length())).append(" bytes received in ").append(QString::number(dblRecTimeSec, 'f', 1)).append(" seconds)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("... (").append(strPercent).append(")")));
         }
     }
     else if (ucLastAct == ScriptingActionDataOut)
@@ -856,23 +870,23 @@ UwxScripting::UpdateStatusBar(
         if (ui->check_WaitForWrite->isChecked() == true)
         {
             //Sending data and waiting for it to be flushed
-            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to data to be flushed (").append(QString::number(mbBytesWriteRemain)).append(" bytes remaining)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
+            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Waiting to data to be flushed (").append(QString::number(mbBytesWriteRemain)).append(" bytes remaining)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("... (").append(strPercent).append(")")));
         }
         else
         {
             //Sending data
-            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Outputting data..."));
+            msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Outputting data... (").append(strPercent).append(")"));
         }
     }
     else if (ucLastAct == ScriptingActionWaitTime)
     {
         //Wait period
-        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine)).append(": Wait period ").append(QString::number(mtmrPauseTimer.interval())).append("ms (").append(QString::number(mtmrPauseTimer.remainingTime())).append("ms left)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("...")));
+        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine)).append(": Wait period ").append(QString::number(mtmrPauseTimer.interval())).append("ms (").append(QString::number(mtmrPauseTimer.remainingTime())).append("ms left)").append((mnRepeats > 0 ? QString(" with ").append(QString::number(mnRepeats)).append(" repeat").append(mnRepeats == 1 ? "" : "s") : "").append("... (").append(strPercent).append(")")));
     }
     else
     {
         //Comment or blank line
-        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Comment/Unknown line"));
+        msbStatusBar->showMessage(QString("#").append(QString::number(mintCLine+1)).append(": Comment/Unknown line (").append(strPercent).append(")"));
     }
 }
 
@@ -1060,6 +1074,17 @@ UwxScripting::LoadScriptFile(
         mFormAuto->SetMessage(&strMessage);
         mFormAuto->show();
     }
+}
+
+//=============================================================================
+//=============================================================================
+void
+UwxScripting::SetScriptLastDirectory(
+    const QString *strDirectory
+    )
+{
+    //Sets the last opened directory
+    strLastScriptFile = *strDirectory;
 }
 
 /******************************************************************************/

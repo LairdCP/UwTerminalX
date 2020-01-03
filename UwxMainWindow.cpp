@@ -1,5 +1,5 @@
 ﻿/******************************************************************************
-** Copyright (C) 2015-2018 Laird
+** Copyright (C) 2015-2020 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -372,7 +372,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSMenu3->addAction("Clear Filesystem")->setData(MenuActionClearFilesystem);
     gpSMenu3->addAction("Multi Data File +")->setData(MenuActionMultiDataFile); //Downloads more than 1 data file
     gpSMenu1->addAction("Stream File Out")->setData(MenuActionStreamFile);
-    gpMenu->addAction("Font")->setData(MenuActionFont);
+    gpSMenu4 = gpMenu->addMenu("Customisation");
+    gpSMenu4->addAction("Font")->setData(MenuActionFont);
+    gpSMenu4->addAction("Text Colour")->setData(MenuActionTextColour);
+    gpSMenu4->addAction("Background Colour")->setData(MenuActionBackground);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
     gpMenu->addAction("Scripting")->setData(MenuActionScripting);
@@ -495,44 +498,65 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (gpPredefinedDevice->value("DoneSetup").isNull())
     {
         //Create default device configurations... BL65x
-        gpPredefinedDevice->setValue(QString("Port1Name"), "BL65x");
-        gpPredefinedDevice->setValue(QString("Port1Baud"), "115200");
-        gpPredefinedDevice->setValue(QString("Port1Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port1Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port1Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port1Flow"), "1");
+        uint8_t nCurrentDevice = 1;
+        QString strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "BL65x");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
 
-        //RM186/RM191
-        gpPredefinedDevice->setValue(QString("Port2Name"), "RM186/RM191");
-        gpPredefinedDevice->setValue(QString("Port2Baud"), "115200");
-        gpPredefinedDevice->setValue(QString("Port2Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port2Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port2Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port2Flow"), "1");
+        //Pinnacle 100
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Pinnacle 100");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
+
+        //RM1xx
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "RM1xx");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
 
         //BT900
-        gpPredefinedDevice->setValue(QString("Port3Name"), "BT900");
-        gpPredefinedDevice->setValue(QString("Port3Baud"), "115200");
-        gpPredefinedDevice->setValue(QString("Port3Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port3Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port3Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port3Flow"), "1");
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "BT900");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
 
         //BL600/BL620
-        gpPredefinedDevice->setValue(QString("Port4Name"), "BL600/BL620");
-        gpPredefinedDevice->setValue(QString("Port4Baud"), "9600");
-        gpPredefinedDevice->setValue(QString("Port4Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port4Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port4Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port4Flow"), "1");
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "BL600/BL620");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "9600");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
 
         //BL620-US
-        gpPredefinedDevice->setValue(QString("Port5Name"), "BL620-US");
-        gpPredefinedDevice->setValue(QString("Port5Baud"), "9600");
-        gpPredefinedDevice->setValue(QString("Port5Parity"), "0");
-        gpPredefinedDevice->setValue(QString("Port5Stop"), "1");
-        gpPredefinedDevice->setValue(QString("Port5Data"), "8");
-        gpPredefinedDevice->setValue(QString("Port5Flow"), "0");
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "BL620-US");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "9600");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "0");
+        ++nCurrentDevice;
 
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
@@ -613,6 +637,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Load last directory path
     gstrLastFilename[FilenameIndexApplication] = gpTermSettings->value("LastFileDirectory", "").toString();
+    gstrLastFilename[FilenameIndexScripting] = gpTermSettings->value("LastScriptFileDirectory", "").toString();
     gstrLastFilename[FilenameIndexOthers] = gpTermSettings->value("LastOtherFileDirectory", "").toString();
 
     //Refresh list of log files
@@ -885,10 +910,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 //Send the UwTerminalX version string
                 gusScriptingForm->SetUwTerminalXVersion(UwVersion);
 
+                //Set last directory
+                gusScriptingForm->SetScriptLastDirectory(&gstrLastFilename[FilenameIndexScripting]);
+
                 //Connect the message passing signal and slot
                 connect(gusScriptingForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
                 connect(gusScriptingForm, SIGNAL(ScriptStartRequest()), this, SLOT(ScriptStartRequest()));
                 connect(gusScriptingForm, SIGNAL(ScriptFinished()), this, SLOT(ScriptFinished()));
+                connect(gusScriptingForm, SIGNAL(UpdateScriptLastDirectory(const QString*)), this, SLOT(ScriptingFileSelected(const QString*)));
 
                 if (gspSerialPort.isOpen())
                 {
@@ -1045,6 +1074,7 @@ MainWindow::~MainWindow()
         }
         disconnect(this, SLOT(ScriptStartRequest()));
         disconnect(this, SLOT(ScriptFinished()));
+        disconnect(this, SLOT(ScriptingFileSelected(const QString*)));
         delete gusScriptingForm;
     }
 #endif
@@ -1119,6 +1149,7 @@ MainWindow::~MainWindow()
     delete gpSpeedMenu;
 #endif
     delete gpBalloonMenu;
+    delete gpSMenu4;
     delete gpSMenu3;
     delete gpSMenu2;
     delete gpSMenu1;
@@ -2309,6 +2340,36 @@ MainWindow::MenuSelected(
 #endif
         }
     }
+    else if (intItem == MenuActionTextColour)
+    {
+        //Change text colour
+        QPalette palTmp = ui->text_TermEditData->palette();
+        palTmp.setColor(QPalette::Active, QPalette::Text, QColorDialog::getColor(palTmp.text().color(), this, "Select text colour"));
+        if (palTmp.color(QPalette::Active, QPalette::Text).isValid())
+        {
+            //Update text colour
+            palTmp.setColor(QPalette::Inactive, QPalette::Text, palTmp.color(QPalette::Active, QPalette::Text));
+            ui->text_TermEditData->setPalette(palTmp);
+#if SKIPSPEEDTEST != 1
+            ui->text_SpeedEditData->setPalette(palTmp);
+#endif
+        }
+    }
+    else if (intItem == MenuActionBackground)
+    {
+        //Change background colour
+        QPalette palTmp = ui->text_TermEditData->palette();
+        palTmp.setColor(QPalette::Active, QPalette::Base, QColorDialog::getColor(palTmp.base().color(), this, "Select background colour"));
+        if (palTmp.color(QPalette::Active, QPalette::Base).isValid())
+        {
+            //Update background colour
+            palTmp.setColor(QPalette::Inactive, QPalette::Base, palTmp.color(QPalette::Active, QPalette::Base));
+            ui->text_TermEditData->setPalette(palTmp);
+#if SKIPSPEEDTEST != 1
+            ui->text_SpeedEditData->setPalette(palTmp);
+#endif
+        }
+    }
     else if (intItem == MenuActionRun2 && gbTermBusy == false && gbSpeedTestRunning == false)
     {
         //Runs an application
@@ -2406,10 +2467,14 @@ MainWindow::MenuSelected(
             //Send the UwTerminalX version string
             gusScriptingForm->SetUwTerminalXVersion(UwVersion);
 
+            //Set last directory
+            gusScriptingForm->SetScriptLastDirectory(&gstrLastFilename[FilenameIndexScripting]);
+
             //Connect the message passing signal and slot
             connect(gusScriptingForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
             connect(gusScriptingForm, SIGNAL(ScriptStartRequest()), this, SLOT(ScriptStartRequest()));
             connect(gusScriptingForm, SIGNAL(ScriptFinished()), this, SLOT(ScriptFinished()));
+            connect(gusScriptingForm, SIGNAL(UpdateScriptLastDirectory(const QString*)), this, SLOT(ScriptingFileSelected(const QString*)));
 
             if (gspSerialPort.isOpen())
             {
@@ -2583,13 +2648,23 @@ MainWindow::EnterPressed(
         {
             if (gbLoopbackMode == false)
             {
-                QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\n\r", "\n").replace("\r\n", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).replace("\r", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
+//replace("\n\n", "\n").
+                QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\r", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
                 gspSerialPort.write(baTmpBA);
                 gintQueuedTXBytes += baTmpBA.size();
-                DoLineEnd();
 
                 //Add to log
-                gpMainLog->WriteLogData(baTmpBA.append("\n"));
+                gpMainLog->WriteLogData(baTmpBA);
+
+                //Deal with line ending
+                if ((ui->radio_LCR->isChecked() && baTmpBA.right(1) != "\r") || (ui->radio_LLF->isChecked() && baTmpBA.right(1) != "\n") || (ui->radio_LCRLF->isChecked() && baTmpBA.right(2) != "\r\n") || (ui->radio_LLFCR->isChecked() && baTmpBA.right(2) != "\n\r"))
+                {
+                    //Only add line ending if not present
+                    DoLineEnd();
+
+                    //Add to log
+                    gpMainLog->WriteLogData("\n");
+                }
             }
             else if (gbLoopbackMode == true)
             {
@@ -3016,7 +3091,6 @@ MainWindow::process_finished(
         gpmErrorForm->SetMessage(&strMessage);
         gbTermBusy = false;
         ui->btn_Cancel->setEnabled(false);
-
     }
     else
     {
@@ -6037,33 +6111,43 @@ MainWindow::on_btn_WebBrowse_clicked(
     }
     else if (ui->combo_WebSelection->currentIndex() == 2)
     {
+        //Pinnacle 100 OOB Demo Github
+        strURL = "https://github.com/LairdCP/Pinnacle_100_oob_demo";
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 3)
+    {
+        //Bluegrass demo site
+        strURL = "https://demo.lairdconnect.com";
+    }
+    else if (ui->combo_WebSelection->currentIndex() == 4)
+    {
         //RM1xx Github
         strURL = "https://github.com/LairdCP/RM1xx-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 3)
+    else if (ui->combo_WebSelection->currentIndex() == 5)
     {
         //BT900 Github
         strURL = "https://github.com/LairdCP/BT900-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 4)
+    else if (ui->combo_WebSelection->currentIndex() == 6)
     {
         //BL600 Github
         strURL = "https://github.com/LairdCP/BL600-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 5)
+    else if (ui->combo_WebSelection->currentIndex() == 7)
     {
         //BL620 Github
         strURL = "https://github.com/LairdCP/BL620-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 6)
+    else if (ui->combo_WebSelection->currentIndex() == 8)
     {
-        //Laird Bluetooth modules page
-        strURL = "http://www.lairdtech.com/product-categories/embedded-wireless/bluetooth-modules";
+        //Laird Connectivity wireless modules page
+        strURL = "https://www.lairdconnect.com/wireless-modules";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 7)
+    else if (ui->combo_WebSelection->currentIndex() == 9)
     {
-        //Laird EWS support page
-        strURL = "https://laird-ews-support.desk.com";
+        //UwFlashX github
+        strURL = "https://github.com/LairdCP/UwFlashX";
     }
 
     //Open URL
@@ -6244,12 +6328,12 @@ void
 MainWindow::on_btn_EditExternal_clicked(
     )
 {
-    if (ui->combo_EditFile->currentIndex() == 0)
+    if (ui->combo_EditFile->currentIndex() == 1)
     {
         //Opens the UwTerminalX configuration file
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("UwTerminalX.ini").absoluteFilePath()));
     }
-    else if (ui->combo_EditFile->currentIndex() == 1)
+    else if (ui->combo_EditFile->currentIndex() == 2)
     {
         //Opens the predefined devices configuration file
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo("Devices.ini").absoluteFilePath()));
@@ -6474,7 +6558,7 @@ MainWindow::UpdateSettings(
                 {
                     //RM186/RM191
                     QString strTmpStr = QString("Port").append(QString::number(i));
-                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM186/RM191");
+                    gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM1xx");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
                     gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
@@ -6484,10 +6568,66 @@ MainWindow::UpdateSettings(
             }
         }
 
-        if (intMinor <= 9 && gpTermSettings->value("OnlineXCompServer", ServerHost).toString() == OldServerHost)
+        if ((intMinor <= 9 && gpTermSettings->value("OnlineXCompServer", ServerHost).toString() == OldOldServerHost) || (intMinor <= 10 && gpTermSettings->value("OnlineXCompServer", ServerHost).toString() == OldServerHost))
         {
             //Switch to new XCompiler cloud service hostname
             gpTermSettings->setValue("OnlineXCompServer", ServerHost);
+        }
+
+        if (intMinor <= 10)
+        {
+            //Add new Pinnacle 100 devices
+            int i = 1;
+            while (i < 255)
+            {
+                if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+                {
+                    break;
+                }
+                ++i;
+            }
+
+            if (i < 254)
+            {
+                //Sirrus
+                QString strTmpStr = QString("Port").append(QString::number(i));
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "Pinnacle 100");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
+            }
+
+            //Migrate RM186/RM191 to RM1xx
+            i = 1;
+            while (i < 255)
+            {
+                if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+                {
+                    //Not found
+                    i = 255;
+                    break;
+                }
+                else if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).toString() == "RM186/RM191")
+                {
+                    //Found RM186/RM191 entry
+                    break;
+                }
+                ++i;
+            }
+
+            if (i < 254)
+            {
+                //RM1xx conversion
+                QString strTmpStr = QString("Port").append(QString::number(i));
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "RM1xx");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
+            }
         }
 
         if (intMinor <= 9)
@@ -6887,7 +7027,7 @@ MainWindow::DetectBaudTimeout(
             ui->btn_Cancel->setEnabled(false);
 
             //Output failure message
-            QString strMessage = tr("Failed to detect a Laird module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected properly, switches are correctly set, VSP mode is disabled and that there is no autorun application running.");
+            QString strMessage = tr("Failed to detect a Laird Connectivity module on port ").append(ui->combo_COM->currentText()).append(".\r\nPlease check that all cables are connected properly, switches are correctly set, VSP mode is disabled and that there is no autorun application running.");
             gpmErrorForm->show();
             gpmErrorForm->SetMessage(&strMessage);
         }
@@ -8634,7 +8774,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
     if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
     {
         //Valid FTDI device, proceed
-        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird Connectivity claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
         {
             //Windows, MSVC build
             FT_STATUS ftsStatus;
@@ -8884,7 +9024,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
     QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
     if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
     {
-        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+        if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird Connectivity claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
         {
             //Exit autorun mode
             struct ftdi_context *ftContext;
@@ -9211,6 +9351,21 @@ MainWindow::on_check_EnableModuleFirmwareCheck_stateChanged(
 {
     //Latest firmware version check checkbox has been toggled
     gpTermSettings->setValue("FirmwareVersionCheckEnable", ui->check_EnableModuleFirmwareCheck->isChecked());
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::ScriptingFileSelected(
+    const QString *strFilepath
+    )
+{
+    QString strDirectory = SplitFilePath(*strFilepath)[0];
+    if (gpTermSettings->value("LastScriptFileDirectory").toString() != strDirectory)
+    {
+        //Update scripting directory
+        gpTermSettings->setValue("LastScriptFileDirectory", strDirectory);
+    }
 }
 
 /******************************************************************************/

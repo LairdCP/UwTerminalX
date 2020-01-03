@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2018 Laird
+** Copyright (C) 2015-2020 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -40,6 +40,7 @@
 #include <QStringList>
 #include <QMessageBox>
 #include <QFile>
+#include <QColorDialog>
 #include <QKeyEvent>
 #include <QFontDialog>
 #include <QSettings>
@@ -113,8 +114,9 @@
 /******************************************************************************/
 // Constants
 /******************************************************************************/
-const QString OldServerHost                     = "uwterminalx.no-ip.org"; //Old hostname/IP of online xcompile server which is set to be removed
-const QString ServerHost                        = "uwterminalx.lairdtech.com"; //Hostname/IP of online xcompile server
+const QString OldOldServerHost                  = "uwterminalx.no-ip.org"; //Very old hostname/IP of online xcompile server which is set to be removed
+const QString OldServerHost                     = "uwterminalx.lairdtech.com"; //Old hostname/IP of online xcompile server which is set to be removed
+const QString ServerHost                        = "uwterminalx.lairdconnect.com"; //Hostname/IP of online xcompile server
 //Constants for various file download functions
 const qint8 MODE_COMPILE                        = 1;
 const qint8 MODE_COMPILE_LOAD                   = 2;
@@ -130,7 +132,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.11"; //Version string
+const QString UwVersion                         = "1.12"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -177,7 +179,8 @@ const QString URLLinuxNonRootSetup = "https://github.com/LairdCP/UwTerminalX/wik
     const QString WebProtocol                   = "http";
 #endif
 const qint8 FilenameIndexApplication            = 0;
-const qint8 FilenameIndexOthers                 = 1;
+const qint8 FilenameIndexScripting              = 1;
+const qint8 FilenameIndexOthers                 = 2;
 //Constants for right click menu options
 const qint8 MenuActionXCompile                  = 1;
 const qint8 MenuActionXCompileLoad              = 2;
@@ -198,17 +201,19 @@ const qint8 MenuActionClearFilesystem           = 16;
 const qint8 MenuActionMultiDataFile             = 17;
 const qint8 MenuActionStreamFile                = 18;
 const qint8 MenuActionFont                      = 19;
-const qint8 MenuActionRun2                      = 20;
-const qint8 MenuActionAutomation                = 21;
-const qint8 MenuActionScripting                 = 22;
-const qint8 MenuActionBatch                     = 23;
-const qint8 MenuActionClearModule               = 24;
-const qint8 MenuActionClearDisplay              = 25;
-const qint8 MenuActionClearRxTx                 = 26;
-const qint8 MenuActionCopy                      = 27;
-const qint8 MenuActionCopyAll                   = 28;
-const qint8 MenuActionPaste                     = 29;
-const qint8 MenuActionSelectAll                 = 30;
+const qint8 MenuActionTextColour                = 20;
+const qint8 MenuActionBackground                = 21;
+const qint8 MenuActionRun2                      = 22;
+const qint8 MenuActionAutomation                = 23;
+const qint8 MenuActionScripting                 = 24;
+const qint8 MenuActionBatch                     = 25;
+const qint8 MenuActionClearModule               = 26;
+const qint8 MenuActionClearDisplay              = 27;
+const qint8 MenuActionClearRxTx                 = 28;
+const qint8 MenuActionCopy                      = 29;
+const qint8 MenuActionCopyAll                   = 30;
+const qint8 MenuActionPaste                     = 31;
+const qint8 MenuActionSelectAll                 = 32;
 //Constants for balloon (notification area) icon options
 const qint8 BalloonActionShow                   = 1;
 const qint8 BalloonActionExit                   = 2;
@@ -716,6 +721,10 @@ private slots:
     on_check_EnableModuleFirmwareCheck_stateChanged(
         int
         );
+    void
+    ScriptingFileSelected(
+        const QString *strFilepath
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -855,6 +864,7 @@ private:
     QMenu *gpSMenu1; //Submenu 1
     QMenu *gpSMenu2; //Submenu 2
     QMenu *gpSMenu3; //Submenu 3
+    QMenu *gpSMenu4; //Submenu 4
     QMenu *gpBalloonMenu; //Balloon menu
 #if SKIPSPEEDTEST != 1
     QMenu *gpSpeedMenu; //Speed testing menu
@@ -884,7 +894,7 @@ private:
     QNetworkReply *gnmrReply; //Network reply
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
-    QString gstrLastFilename[2]; //Holds the filenames of the last selected files
+    QString gstrLastFilename[(FilenameIndexOthers+1)]; //Holds the filenames of the last selected files
     QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor

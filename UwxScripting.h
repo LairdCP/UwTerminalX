@@ -141,6 +141,10 @@ public:
     LoadScriptFile(
         const QString *strFilename
         );
+    void
+    SetScriptLastDirectory(
+        const QString *strDirectory
+        );
 
 private slots:
     void
@@ -214,6 +218,8 @@ private:
     QMenu *gpSOptionsMenu1; //Options export sub-menu
     QShortcut *qaKeyShortcuts[5]; //Shortcut object handles for various keyboard shortcuts
     OS32_64INT mnRepeats; //Number of script repeats completed (when specific mode is enabled)
+    uint32_t mnScriptLines; //Number of lines in the script
+    QString strLastScriptFile; //The last file/directory which was used in the file open dialogue
 
 signals:
     void ScriptFinished(
@@ -224,6 +230,9 @@ signals:
         QByteArray baDataString,
         bool bEscapeString,
         bool bFromScripting
+        );
+    void UpdateScriptLastDirectory(
+        const QString *strDirectory
         );
 };
 

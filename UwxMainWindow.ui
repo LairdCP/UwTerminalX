@@ -3308,7 +3308,7 @@ As more error codes get added, newer releases of the error code lookup file will
                     </font>
                    </property>
                    <property name="text">
-                    <string>UwTerminalX is an open source application developed by Laird, the source code is available for download/modification from the Github project page linked below.
+                    <string>UwTerminalX is an open source application developed by Laird Connectivity, the source code is available for download/modification from the Github project page linked below.
 
 You can also use the button below to check if there is a newer version of UwTerminalX available.</string>
                    </property>
@@ -3406,7 +3406,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </font>
                    </property>
                    <property name="text">
-                    <string>Laird provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below. Additional information can also be found on the Laird Bluetooth modules website.</string>
+                    <string>Laird Connectivity provides sample applications for its Bluetooth modules, all of which is freely available on Github which can be opened below. Additional information can also be found on the Laird Connectivity modules website.</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignJustify|Qt::AlignVCenter</set>
@@ -3441,6 +3441,16 @@ You can also use the button below to check if there is a newer version of UwTerm
                      </item>
                      <item>
                       <property name="text">
+                       <string>Pinnacle 100 OOB Demo</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Bluegrass demo site</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
                        <string>RM186/RM191</string>
                       </property>
                      </item>
@@ -3461,12 +3471,12 @@ You can also use the button below to check if there is a newer version of UwTerm
                      </item>
                      <item>
                       <property name="text">
-                       <string>Laird Bluetooth Modules</string>
+                       <string>Laird Connectivity Modules</string>
                       </property>
                      </item>
                      <item>
                       <property name="text">
-                       <string>Laird EWS Support</string>
+                       <string>UwFlashX</string>
                       </property>
                      </item>
                     </widget>
@@ -3495,7 +3505,7 @@ You can also use the button below to check if there is a newer version of UwTerm
                     </font>
                    </property>
                    <property name="text">
-                    <string>The current firmware version of Laird modules can be retrieved below.</string>
+                    <string>The current firmware version of Laird Connectivity modules can be retrieved below. UwFlashX is a new cross-platform firmware upgrade utility for Laird Connectivity modules, information can be found by selecting 'UwFlashX' above.</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignJustify|Qt::AlignVCenter</set>
@@ -3524,26 +3534,26 @@ You can also use the button below to check if there is a newer version of UwTerm
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_3">
                     <property name="spacing">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <property name="leftMargin">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <property name="topMargin">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <property name="rightMargin">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <property name="bottomMargin">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <item>
                      <widget class="QScrollArea" name="scrollArea">
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>80</height>
+                        <height>40</height>
                        </size>
                       </property>
                       <property name="maximumSize">
@@ -3566,8 +3576,8 @@ You can also use the button below to check if there is a newer version of UwTerm
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>202</width>
-                         <height>80</height>
+                         <width>204</width>
+                         <height>43</height>
                         </rect>
                        </property>
                        <property name="sizePolicy">
@@ -3766,7 +3776,7 @@ check for the latest firmware</string>
                <bool>true</bool>
               </property>
               <property name="plainText">
-               <string>This application is provided by Laird without warranty. You are welcome to check our website for the latest version. This version is UTF-8 compliant.
+               <string>This application is provided by Laird Connectivity without warranty. You are welcome to check our website for the latest version. This version is UTF-8 compliant.
 
 This message is displayed EITHER because &quot;accept&quot; is not specified in the command line OR at least one command line option has been specified with an invalid parameter.
 
@@ -3841,7 +3851,7 @@ This function is enabled/disabled in the Automation and Speed Test features by c
 For example: \00 can be used to represent a null character and \4C can be used to represent an 'L' ASCII character.
 
 
-Copyright © Laird Technologies 2015-2017
+Copyright © Laird Connectivity 2015-2020
 For updates and source code licensed under GPLv3, check https://github.com/LairdCP/UwTerminalX or the 'Update' tab.
 Plus and Minus images obtained from http://www.clker.com
 
