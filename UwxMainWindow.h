@@ -132,7 +132,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.12"; //Version string
+const QString UwVersion                         = "1.12a"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -214,6 +214,18 @@ const qint8 MenuActionCopy                      = 29;
 const qint8 MenuActionCopyAll                   = 30;
 const qint8 MenuActionPaste                     = 31;
 const qint8 MenuActionSelectAll                 = 32;
+//Constants for web selection combo box
+const qint8 WebSelectionBL654Applications       = 0;
+const qint8 WebSelectionBL653Applications       = 1;
+const qint8 WebSelectionBL652Applications       = 2;
+const qint8 WebSelectionPinnacle100OOBDemo      = 3;
+const qint8 WebSelectionBluegrassDemo           = 4;
+const qint8 WebSelectionRM1xxApplications       = 5;
+const qint8 WebSelectionBT900Applications       = 6;
+const qint8 WebSelectionBL600Applications       = 7;
+const qint8 WebSelectionBL620Applications       = 8;
+const qint8 WebSelectionWirelessModules         = 9;
+const qint8 WebSelectionUwFlashX                = 10;
 //Constants for balloon (notification area) icon options
 const qint8 BalloonActionShow                   = 1;
 const qint8 BalloonActionExit                   = 2;

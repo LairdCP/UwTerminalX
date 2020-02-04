@@ -6099,52 +6099,57 @@ MainWindow::on_btn_WebBrowse_clicked(
 {
     //Browse applications/modules button clicked
     QString strURL = "";
-    if (ui->combo_WebSelection->currentIndex() == 0)
+    if (ui->combo_WebSelection->currentIndex() == WebSelectionBL654Applications)
     {
         //BL654 Github
         strURL = "https://github.com/LairdCP/BL654-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 1)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBL653Applications)
+    {
+        //BL653 Github
+        strURL = "https://github.com/LairdCP/BL653-Applications";
+    }
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBL652Applications)
     {
         //BL652 Github
         strURL = "https://github.com/LairdCP/BL652-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 2)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionPinnacle100OOBDemo)
     {
         //Pinnacle 100 OOB Demo Github
         strURL = "https://github.com/LairdCP/Pinnacle_100_oob_demo";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 3)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBluegrassDemo)
     {
         //Bluegrass demo site
         strURL = "https://demo.lairdconnect.com";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 4)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionRM1xxApplications)
     {
         //RM1xx Github
         strURL = "https://github.com/LairdCP/RM1xx-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 5)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBT900Applications)
     {
         //BT900 Github
         strURL = "https://github.com/LairdCP/BT900-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 6)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBL600Applications)
     {
         //BL600 Github
         strURL = "https://github.com/LairdCP/BL600-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 7)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionBL620Applications)
     {
         //BL620 Github
         strURL = "https://github.com/LairdCP/BL620-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 8)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionWirelessModules)
     {
-        //Laird Connectivity wireless modules page
+        //Wireless modules page
         strURL = "https://www.lairdconnect.com/wireless-modules";
     }
-    else if (ui->combo_WebSelection->currentIndex() == 9)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionUwFlashX)
     {
         //UwFlashX github
         strURL = "https://github.com/LairdCP/UwFlashX";
