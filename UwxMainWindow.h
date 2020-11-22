@@ -730,6 +730,9 @@ private slots:
         );
 #endif
     void
+    on_btn_Cp210xExitAutorun_clicked(
+        );
+    void
     on_check_EnableModuleFirmwareCheck_stateChanged(
         int
         );

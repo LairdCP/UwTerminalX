@@ -9350,6 +9350,59 @@ MainWindow::on_btn_ExitAutorun_clicked(
 //=============================================================================
 //=============================================================================
 void
+MainWindow::on_btn_Cp210xExitAutorun_clicked(
+    )
+{
+    //Exiting autorun on SmartBASIC devices is done by asserting a UART break condition.
+    //UART break is not supported by all USB UART converter chipsets, e.g. Silicon Labs CP210x.
+    //UART break can be "faked" by reducing the baud rate to a minimum and then sending a Null character.
+
+    //Byte array with one Null character to simulate UART break
+    QByteArray tmpArray;
+    tmpArray.append('\0');
+
+    //Check if serial port is open
+    if (gspSerialPort.isOpen())
+    {
+        //Set new baud rate to 1200 baud
+        gspSerialPort.setBaudRate(QSerialPort::Baud1200);
+
+        //Small delay to let the baud range change get effective
+        QTime dieTime = QTime::currentTime().addMSecs( 500 );
+        while( QTime::currentTime() < dieTime )
+        {
+            QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+        }
+
+        //Write buffer to serial port
+        if(gspSerialPort.write(tmpArray) <= 0)
+        {
+            ui->statusBar->showMessage("Cannot write to serial port.");
+        }
+        else
+        {
+            ui->statusBar->showMessage("Exit from autorun with CP210x workaround done.");
+        }
+
+        //Small delay to let the characters shift out
+        dieTime = QTime::currentTime().addMSecs( 500 );
+        while( QTime::currentTime() < dieTime )
+        {
+            QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+        }
+
+        //Restore previous baud rate
+        gspSerialPort.setBaudRate(ui->combo_Baud->currentText().toInt());
+    }
+    else
+    {
+        ui->statusBar->showMessage("Serial port is not open.");
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
 MainWindow::on_check_EnableModuleFirmwareCheck_stateChanged(
     int
     )
