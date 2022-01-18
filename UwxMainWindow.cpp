@@ -657,12 +657,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     QFontMetrics tmTmpFM(fntTmpFnt2);
     ui->text_TermEditData->setFont(fntTmpFnt2);
-    ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
     ui->text_LogData->setFont(fntTmpFnt2);
-    ui->text_LogData->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #if SKIPSPEEDTEST != 1
     ui->text_SpeedEditData->setFont(fntTmpFnt2);
-    ui->text_SpeedEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #endif
 
     //Set resolved hostname to be empty
@@ -1988,7 +1988,7 @@ MainWindow::StreamBatchContinue(
             if (remTempREM.hasMatch() == true)
             {
                 //Got the error code
-                gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1)).append("\n");
+                gbaDisplayBuffer.append("\nError during batch command, error code: ").append(remTempREM.captured(1).toUtf8()).append("\n");
 
                 //Lookup error code
                 bool bTmpBool;
@@ -2335,10 +2335,10 @@ MainWindow::MenuSelected(
             //Set font and re-adjust tab spacing
             QFontMetrics tmTmpFM(fntTmpFnt);
             ui->text_TermEditData->setFont(fntTmpFnt);
-            ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+            ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #if SKIPSPEEDTEST != 1
             ui->text_SpeedEditData->setFont(fntTmpFnt);
-            ui->text_SpeedEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
+            ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #endif
         }
     }
@@ -3826,12 +3826,12 @@ MainWindow::LookupErrorCode(
     if (gbErrorsLoaded == true)
     {
         //Error file has been loaded
-        gbaDisplayBuffer.append(QString("\nError code 0x").append(QString::number(intErrorCode, 16)).append(": ").append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString()).append("\n"));
+        gbaDisplayBuffer.append(QString("\nError code 0x").append(QString::number(intErrorCode, 16)).append(": ").append(gpErrorMessages->value(QString::number(intErrorCode), "Undefined Error Code").toString()).append("\n").toUtf8());
     }
     else
     {
         //Error file has not been loaded
-        gbaDisplayBuffer.append(QString("\nUnable to lookup error code: error file (codes.csv) not loaded. Check the Update tab to download the latest version.\n"));
+        gbaDisplayBuffer.append(QString("\nUnable to lookup error code: error file (codes.csv) not loaded. Check the Update tab to download the latest version.\n").toUtf8());
     }
 
     if (!gtmrTextUpdateTimer.isActive())
@@ -3896,7 +3896,7 @@ MainWindow::SerialBytesWritten(
             else if (gintStreamBytesRead > gintStreamBytesProgress)
             {
                 //Progress output
-                gbaDisplayBuffer.append(QString("Streamed ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(gintStreamBytesRead*100/gintStreamBytesSize)).append("%).\n"));
+                gbaDisplayBuffer.append(QString("Streamed ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(gintStreamBytesRead*100/gintStreamBytesSize)).append("%).\n").toUtf8());
                 if (!gtmrTextUpdateTimer.isActive())
                 {
                     gtmrTextUpdateTimer.start();
@@ -4021,13 +4021,13 @@ MainWindow::FinishStream(
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled stream after ").append(QString::number(gintStreamBytesRead)).append(" bytes (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds) [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n").toUtf8());
         ui->statusBar->showMessage("File streaming cancelled.");
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n"));
+        gbaDisplayBuffer.append(QString("\nFinished streaming file, ").append(QString::number(gintStreamBytesRead)).append(" bytes sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds [~").append(QString::number((gintStreamBytesRead/(1+gtmrStreamTimer.nsecsElapsed()/1000000000LL)))).append(" bytes/second].\n").toUtf8());
         ui->statusBar->showMessage("File streaming complete!");
     }
 
@@ -4058,13 +4058,13 @@ MainWindow::FinishBatch(
     if (bType == true)
     {
         //Stream cancelled
-        gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds)\n"));
+        gbaDisplayBuffer.append(QString("\nCancelled batch (").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds)\n").toUtf8());
         ui->statusBar->showMessage("Batch file sending cancelled.");
     }
     else
     {
         //Stream finished
-        gbaDisplayBuffer.append(QString("\nFinished sending batch file, ").append(QString::number(gintStreamBytesRead)).append(" lines sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds\n"));
+        gbaDisplayBuffer.append(QString("\nFinished sending batch file, ").append(QString::number(gintStreamBytesRead)).append(" lines sent in ").append(QString::number(1+(gtmrStreamTimer.nsecsElapsed()/1000000000LL))).append(" seconds\n").toUtf8());
         ui->statusBar->showMessage("Batch file sending complete!");
     }
 
@@ -4136,7 +4136,7 @@ MainWindow::on_combo_COM_currentIndexChanged(
     if (ui->combo_COM->currentText().length() > 0)
     {
         QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
-        if (spiSerialInfo.isValid())
+        if (!spiSerialInfo.isNull())
         {
             //Port exists
             QString strDisplayText(spiSerialInfo.description());
@@ -4565,8 +4565,8 @@ MainWindow::replyFinished(
                             QFileInfo fiFileInfo(gstrTermFilename);
                             QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1").append((ui->check_EnableModuleFirmwareCheck->isChecked() == true ? "&LatestFW=1" : ""))));
                             QByteArray baPostData;
-                            baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString()).append("\r\n");
-                            baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n"));
+                            baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString().toUtf8()).append("\r\n");
+                            baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n").toUtf8());
 
                             //Clear the file data list if it's not empty
                             if (lstFileData.length() > 0)
@@ -4745,7 +4745,7 @@ MainWindow::replyFinished(
                             lstFileData.at(0)->iEndingLine = tmpData.count("\n")+2;
 
                             //Append the data to the POST request
-                            baPostData.append(tmpData);
+                            baPostData.append(tmpData.toUtf8());
                             baPostData.append("\r\n-----------------------------17192614014659--\r\n");
                             nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
                             nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
@@ -4915,7 +4915,7 @@ MainWindow::replyFinished(
                 if (ui->check_EnableModuleFirmwareCheck->isChecked() && nrReply->hasRawHeader("Firmware-Latest") && gpTermSettings->value(QString("FWCheckLatest").append(strTmpDevID), "0.0.0.0").toString() != nrReply->rawHeader("Firmware-Latest"))
                 {
                     //Checked for latest firmware and there is a newer version available
-		    QMessageBox::information(this, "Module firmware outdated", QString("There is a new firmware available for your ").append(strTmpDevID).append(" module, version ").append(nrReply->rawHeader("Firmware-Latest")).append(". You can download this from the Laird Connectivity website.\r\n\r\nThis message will not be shown again for this module unless a newer firmware is released."), QMessageBox::Ok);
+                    QMessageBox::information(this, "Module firmware outdated", QString("There is a new firmware available for your ").append(strTmpDevID).append(" module, version ").append(nrReply->rawHeader("Firmware-Latest")).append(". You can download this from the Laird Connectivity website.\r\n\r\nThis message will not be shown again for this module unless a newer firmware is released."), QMessageBox::Ok);
                     gpTermSettings->setValue(QString("FWCheckLatest").append(strTmpDevID), nrReply->rawHeader("Firmware-Latest"));
                 }
 
@@ -4939,7 +4939,7 @@ MainWindow::replyFinished(
                 if (ui->check_ShowFileSize->isChecked())
                 {
                     //Display size
-                    gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(gstrTermFilename)).append(") --\n");
+                    gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(gstrTermFilename).toUtf8()).append(") --\n");
                 }
                 else
                 {
@@ -6253,7 +6253,7 @@ MainWindow::on_combo_EditFile_currentIndexChanged(
             }
 
             //Update the string to file information of the current file
-            ui->label_EditInfo->setText(QString("Created: ").append(fiFileInfo.created().toString("hh:mm dd/MM/yyyy")).append(", Modified: ").append(fiFileInfo.lastModified().toString("hh:mm dd/MM/yyyy")).append(", Size: ").append(strFilesize));
+            ui->label_EditInfo->setText(QString("Created: ").append(fiFileInfo.birthTime().toString("hh:mm dd/MM/yyyy")).append(", Modified: ").append(fiFileInfo.lastModified().toString("hh:mm dd/MM/yyyy")).append(", Size: ").append(strFilesize));
 
             //Check if a prefix needs adding
             if (cPrefix > 0)
@@ -6844,7 +6844,7 @@ MainWindow::on_combo_LogFile_currentIndexChanged(
             }
 
             //Update the string to file information of the current log
-            ui->label_LogInfo->setText(QString("Created: ").append(fiFileInfo.created().toString("hh:mm dd/MM/yyyy")).append(", Modified: ").append(fiFileInfo.lastModified().toString("hh:mm dd/MM/yyyy")).append(", Size: ").append(strFilesize));
+            ui->label_LogInfo->setText(QString("Created: ").append(fiFileInfo.birthTime().toString("hh:mm dd/MM/yyyy")).append(", Modified: ").append(fiFileInfo.lastModified().toString("hh:mm dd/MM/yyyy")).append(", Size: ").append(strFilesize));
 
             //Check if a prefix needs adding
             if (cPrefix > 0)
@@ -7939,7 +7939,7 @@ MainWindow::SpeedTestReceive(
                         }
 
                         //Add to display
-                        gbaSpeedDisplayBuffer.append(QString("\r\nError: Data mismatch.\r\n\tExpected: ").append(gbaSpeedMatchData.mid(gintSpeedTestReceiveIndex, SizeToTest)).append("\r\n\tGot     : ").append(gbaSpeedReceivedData.left(SizeToTest)).append("\r\n\tPosition: ").append(QString("-").repeated(iOffset-1).append("^")).append("\r\n\tOccurred: ").append(ui->label_SpeedTime->text()).append(" (").append(QDateTime::currentDateTime().toLocalTime().toString()).append(")\r\n"));
+                        gbaSpeedDisplayBuffer.append(QString("\r\nError: Data mismatch.\r\n\tExpected: ").append(gbaSpeedMatchData.mid(gintSpeedTestReceiveIndex, SizeToTest)).append("\r\n\tGot     : ").append(gbaSpeedReceivedData.left(SizeToTest)).append("\r\n\tPosition: ").append(QString("-").repeated(iOffset-1).append("^")).append("\r\n\tOccurred: ").append(ui->label_SpeedTime->text()).append(" (").append(QDateTime::currentDateTime().toLocalTime().toString()).append(")\r\n").toUtf8());
                         if (!gtmrSpeedUpdateTimer.isActive())
                         {
                             gtmrSpeedUpdateTimer.start();
@@ -9054,7 +9054,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
 #else
     //Linux
     QSerialPortInfo spiSerialInfo(ui->combo_COM->currentText());
-    if (spiSerialInfo.isValid() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
+    if (!spiSerialInfo.isNull() && spiSerialInfo.manufacturer().indexOf("FTDI") != -1)
     {
         if (QMessageBox::question(this, "Exit autorun?", QString("This feature allows BL654 USB dongles (Product Code: 451-00003) with an active autorun application to be placed into interactive mode for firmware/application upgrading. Note this only works with the BL654 USB dongle and using it with the wrong device may cause unforeseen issues with the device which Laird Connectivity claims no responsibility and accepts no liability for.\r\n\r\nAre you sure ").append(ui->combo_COM->currentText()).append(" is the correct port and '").append(ui->label_SerialInfo->text()).append("' the correct description for your device?\r\n\r\nNote that you require libftdi and libusb (version 1.0) for this to work."), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
         {
@@ -9340,7 +9340,7 @@ MainWindow::on_btn_ExitAutorun_clicked(
                             {
                                 //Search for device with same serial number
                                 QSerialPortInfo spiTempSerialInfo(ui->combo_COM->itemText(i));
-                                if (spiTempSerialInfo.isValid() && spiTempSerialInfo.manufacturer().indexOf("FTDI") != -1 && spiTempSerialInfo.serialNumber() == spiSerialInfo.serialNumber())
+                                if (!spiTempSerialInfo.isNull() && spiTempSerialInfo.manufacturer().indexOf("FTDI") != -1 && spiTempSerialInfo.serialNumber() == spiSerialInfo.serialNumber())
                                 {
                                     //Device found
                                     ui->combo_COM->setCurrentIndex(i);

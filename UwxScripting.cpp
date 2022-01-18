@@ -41,7 +41,7 @@ UwxScripting::UwxScripting(QWidget *parent) : QDialog(parent), ui(new Ui::UwxScr
     fntTmpFnt.setPointSize(9);
     QFontMetrics tmTmpFM(fntTmpFnt);
     ui->edit_Script->setFont(fntTmpFnt);
-    ui->edit_Script->setTabStopWidth(tmTmpFM.width(" ")*6);
+    ui->edit_Script->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 
     //Create highlighter object
     mhlHighlighter = new LrdHighlighter(ui->edit_Script->document());
@@ -168,7 +168,7 @@ UwxScripting::ChangeFont(
         //Set font and re-adjust tab spacing
         QFontMetrics tmTmpFM(fntTmpFnt);
         ui->edit_Script->setFont(fntTmpFnt);
-        ui->edit_Script->setTabStopWidth(tmTmpFM.width(" ")*6);
+        ui->edit_Script->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
     }
 }
 
