@@ -39,16 +39,9 @@ UwxErrorCode::UwxErrorCode(QWidget *parent) : QDialog(parent), ui(new Ui::UwxErr
     mcmpErrors = 0;
 
     //Setup fonts
-#ifdef _WIN32
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#elif __APPLE__
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#else
-    //Fix for qt bug
-    QFont fntTmpFnt2 = QFont("monospace");
-#endif
-    ui->list_Search->setFont(fntTmpFnt2);
-    ui->list_Codes->setFont(fntTmpFnt2);
+    QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    ui->list_Search->setFont(fntTmpFnt);
+    ui->list_Codes->setFont(fntTmpFnt);
 
     //Create status bar
     msbStatusBar = new QStatusBar;

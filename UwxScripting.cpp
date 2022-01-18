@@ -36,15 +36,7 @@ UwxScripting::UwxScripting(QWidget *parent) : QDialog(parent), ui(new Ui::UwxScr
     ui->setupUi(this);
 
     //Set the textbox font
-#pragma warning("TODO: Revert manual font selection when QTBUG-54623 is fixed")
-#ifdef _WIN32
     QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#elif __APPLE__
-    QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#else
-    //Fix for qt bug
-    QFont fntTmpFnt = QFont("monospace");
-#endif
     fntTmpFnt.setFixedPitch(true);
     fntTmpFnt.setPointSize(9);
     QFontMetrics tmTmpFM(fntTmpFnt);

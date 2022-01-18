@@ -1,5 +1,5 @@
 ﻿/******************************************************************************
-** Copyright (C) 2015-2020 Laird Connectivity
+** Copyright (C) 2015-2022 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -508,6 +508,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
         ++nCurrentDevice;
 
+        //Lyra
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+	gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Lyra");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "1");
+        ++nCurrentDevice;
+
         //Pinnacle 100
         strPrefix = QString("Port").append(QString::number(nCurrentDevice));
         gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Pinnacle 100");
@@ -628,10 +638,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Set Online XCompilation mode
 #ifdef _WIN32
     //Windows
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found, the source code will be uploaded and compiled remotely on a Laird server. Uploaded file data is not stored by Laird but IP addresses are stored in access logs which are used for security purposes only.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, if a local XCompiler is not found, the source code will be uploaded and compiled remotely on a Laird Connectivity server. Uploaded file data is not stored by Laird Connectivity but IP addresses are stored in access logs which are used for security purposes only.");
 #else
     //Mac or Linux
-    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploadeda and compiled remotely on a Laird server. Uploaded file data is not stored by Laird but IP addresses are stored in access logs which are used for security purposes only.");
+    ui->label_OnlineXCompInfo->setText("By enabling Online XCompilation support, when compiling an application, the source data will be uploaded and compiled remotely on a Laird Connectivity server. Uploaded file data is not stored by Laird Connectivity but IP addresses are stored in access logs which are used for security purposes only.");
 #endif
     ui->check_OnlineXComp->setChecked(gpTermSettings->value("OnlineXComp", DefaultOnlineXComp).toBool());
 
@@ -644,15 +654,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     on_btn_LogRefresh_clicked();
 
     //Change terminal font to a monospaced font
-#pragma warning("TODO: Revert manual font selection when QTBUG-54623 is fixed")
-#ifdef _WIN32
     QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#elif __APPLE__
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-#else
-    //Fix for qt bug
-    QFont fntTmpFnt2 = QFont("monospace");
-#endif
     QFontMetrics tmTmpFM(fntTmpFnt2);
     ui->text_TermEditData->setFont(fntTmpFnt2);
     ui->text_TermEditData->setTabStopWidth(tmTmpFM.width(" ")*6);
@@ -1638,7 +1640,7 @@ MainWindow::SerialRead(
                     if (remTempLicREM.hasMatch() == true && remTempLicREM.captured(1).toUpper() == "0016A4C0FFEE")
                     {
                         //License is not valid, display a warning to the user
-                        QString strMessage = tr("Please note: The module you are downloading to does not have a valid license and therefore some firmware functionality may not work or return unexpected error codes.\r\n\r\nTo fix this issue, please add your module license using: 'at+lic <license code>', or contact Laird Support with the module Bluetooth Address if you do not have a backup of the license code (issue the command 'at i 14' to get your module's Bluetooth address).");
+			QString strMessage = tr("Please note: The module you are downloading to does not have a valid license and therefore some firmware functionality may not work or return unexpected error codes.\r\n\r\nTo fix this issue, please add your module license using: 'at+lic <license code>', or contact Laird Connectvity Support with the module Bluetooth Address if you do not have a backup of the license code (issue the command 'at i 14' to get your module's Bluetooth address).");
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
                     }
@@ -1766,7 +1768,7 @@ MainWindow::SerialRead(
                                 ;
                             }
 
-                            strMessage.append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird's online server.");
+			    strMessage.append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird Connectivity's online server.");
                             gpmErrorForm->show();
                             gpmErrorForm->SetMessage(&strMessage);
                             gbTermBusy = false;
@@ -4913,7 +4915,7 @@ MainWindow::replyFinished(
                 if (ui->check_EnableModuleFirmwareCheck->isChecked() && nrReply->hasRawHeader("Firmware-Latest") && gpTermSettings->value(QString("FWCheckLatest").append(strTmpDevID), "0.0.0.0").toString() != nrReply->rawHeader("Firmware-Latest"))
                 {
                     //Checked for latest firmware and there is a newer version available
-                    QMessageBox::information(this, "Module firmware outdated", QString("There is a new firmware available for your ").append(strTmpDevID).append(" module, version ").append(nrReply->rawHeader("Firmware-Latest")).append(". You can download this from the Laird website.\r\n\r\nThis message will not be shown again for this module unless a newer firmware is released."), QMessageBox::Ok);
+		    QMessageBox::information(this, "Module firmware outdated", QString("There is a new firmware available for your ").append(strTmpDevID).append(" module, version ").append(nrReply->rawHeader("Firmware-Latest")).append(". You can download this from the Laird Connectivity website.\r\n\r\nThis message will not be shown again for this module unless a newer firmware is released."), QMessageBox::Ok);
                     gpTermSettings->setValue(QString("FWCheckLatest").append(strTmpDevID), nrReply->rawHeader("Firmware-Latest"));
                 }
 
@@ -6577,6 +6579,31 @@ MainWindow::UpdateSettings(
         {
             //Switch to new XCompiler cloud service hostname
             gpTermSettings->setValue("OnlineXCompServer", ServerHost);
+        }
+
+        if (intMinor <= 12)
+        {
+            //Add new Lyra device
+            int i = 1;
+            while (i < 255)
+            {
+                if (gpPredefinedDevice->value(QString("Port").append(QString::number(i)).append("Name")).isNull())
+                {
+                    break;
+                }
+                ++i;
+            }
+
+            if (i < 254)
+            {
+                QString strTmpStr = QString("Port").append(QString::number(i));
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Name"), "Lyra");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Baud"), "115200");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Parity"), "0");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Stop"), "1");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Data"), "8");
+                gpPredefinedDevice->setValue(QString(strTmpStr).append("Flow"), "1");
+            }
         }
 
         if (intMinor <= 10)

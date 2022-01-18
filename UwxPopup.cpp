@@ -35,6 +35,11 @@ PopupMessage::PopupMessage(QWidget *parent):QDialog(parent), ui(new Ui::PopupMes
     //Setup window to be a dialog
     this->setWindowFlags((Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint));
     ui->setupUi(this);
+
+    //Change terminal font to a monospaced font
+    QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QFontMetrics tmTmpFM(fntTmpFnt);
+    ui->text_Message->setFont(fntTmpFnt);
 }
 
 //=============================================================================
