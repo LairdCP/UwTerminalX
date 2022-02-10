@@ -654,17 +654,38 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Refresh list of log files
     on_btn_LogRefresh_clicked();
 
-    //Change terminal font to a monospaced font
-    QFont fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-    QFontMetrics tmTmpFM(fntTmpFnt2);
+    QFont fntTmpFnt2;
+
+    if (gpTermSettings->contains("CustomFont") && gpTermSettings->contains("CustomPalette"))
+    {
+        //Load saved settings
+        fntTmpFnt2 = QFont(gpTermSettings->value("CustomFont").value<QFont>());
+        QPalette palTmp = gpTermSettings->value("CustomPalette").value<QPalette>();
+
+        ui->text_TermEditData->setPalette(palTmp);
+        ui->text_LogData->setPalette(palTmp);
+#if SKIPSPEEDTEST != 1
+        ui->text_SpeedEditData->setPalette(palTmp);
+#endif
+    }
+    else
+    {
+        //Use monospaced font for terminal
+        fntTmpFnt2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    }
+
+    //Setup font
     ui->text_TermEditData->setFont(fntTmpFnt2);
-    ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
     ui->text_LogData->setFont(fntTmpFnt2);
-    ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #if SKIPSPEEDTEST != 1
     ui->text_SpeedEditData->setFont(fntTmpFnt2);
-    ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #endif
+
+    //Setup font spacing
+    QFontMetrics tmTmpFM(fntTmpFnt2);
+    ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+    ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+    ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 
     //Set resolved hostname to be empty
     gstrResolvedServer = "";
@@ -2343,6 +2364,9 @@ MainWindow::MenuSelected(
             ui->text_SpeedEditData->setFont(fntTmpFnt);
             ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #endif
+
+            //Update saved customisation settings
+            UpdateCustomisation(false);
         }
     }
     else if (intItem == MenuActionTextColour)
@@ -2355,9 +2379,13 @@ MainWindow::MenuSelected(
             //Update text colour
             palTmp.setColor(QPalette::Inactive, QPalette::Text, palTmp.color(QPalette::Active, QPalette::Text));
             ui->text_TermEditData->setPalette(palTmp);
+            ui->text_LogData->setPalette(palTmp);
 #if SKIPSPEEDTEST != 1
             ui->text_SpeedEditData->setPalette(palTmp);
 #endif
+
+            //Update saved customisation settings
+            UpdateCustomisation(false);
         }
     }
     else if (intItem == MenuActionBackground)
@@ -2370,9 +2398,13 @@ MainWindow::MenuSelected(
             //Update background colour
             palTmp.setColor(QPalette::Inactive, QPalette::Base, palTmp.color(QPalette::Active, QPalette::Base));
             ui->text_TermEditData->setPalette(palTmp);
+            ui->text_LogData->setPalette(palTmp);
 #if SKIPSPEEDTEST != 1
             ui->text_SpeedEditData->setPalette(palTmp);
 #endif
+
+            //Update saved customisation settings
+            UpdateCustomisation(false);
         }
     }
     else if (intItem == MenuActionRestoreDefaults)
@@ -2382,6 +2414,7 @@ MainWindow::MenuSelected(
         palTmp.setColor(QPalette::Active, QPalette::Text, QColorConstants::White);
         palTmp.setColor(QPalette::Active, QPalette::Base, QColorConstants::Black);
         ui->text_TermEditData->setPalette(palTmp);
+        ui->text_LogData->setPalette(palTmp);
 
         //And font
         QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
@@ -2395,6 +2428,9 @@ MainWindow::MenuSelected(
         ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
         ui->text_SpeedEditData->setPalette(palTmp);
 #endif
+
+        //Clear saved customisation settings
+        UpdateCustomisation(true);
     }
     else if (intItem == MenuActionRun2 && gbTermBusy == false && gbSpeedTestRunning == false)
     {
@@ -9421,6 +9457,25 @@ MainWindow::ScriptingFileSelected(
     {
         //Update scripting directory
         gpTermSettings->setValue("LastScriptFileDirectory", strDirectory);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::UpdateCustomisation(
+    bool bDefault
+    )
+{
+    if (bDefault == true)
+    {
+        gpTermSettings->remove("CustomFont");
+        gpTermSettings->remove("CustomPalette");
+    }
+    else
+    {
+        gpTermSettings->setValue("CustomFont", ui->text_TermEditData->font());
+        gpTermSettings->setValue("CustomPalette", ui->text_TermEditData->palette());
     }
 }
 

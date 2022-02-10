@@ -841,6 +841,10 @@ private:
     ErrorCodeUpdateCheck(
         bool bShowError
         );
+    void
+    UpdateCustomisation(
+        bool bDefault
+    );
 
     //Private variables
     bool gbTermBusy; //True when compiling or loading a program or streaming a file (busy)
