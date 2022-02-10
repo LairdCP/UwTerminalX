@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
 ** Copyright (C) 2015-2022 Laird Connectivity
 **
 ** Project: UwTerminalX
@@ -376,6 +376,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSMenu4->addAction("Font")->setData(MenuActionFont);
     gpSMenu4->addAction("Text Colour")->setData(MenuActionTextColour);
     gpSMenu4->addAction("Background Colour")->setData(MenuActionBackground);
+    gpSMenu4->addAction("Restore Defaults")->setData(MenuActionRestoreDefaults);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
     gpMenu->addAction("Scripting")->setData(MenuActionScripting);
@@ -2336,6 +2337,8 @@ MainWindow::MenuSelected(
             QFontMetrics tmTmpFM(fntTmpFnt);
             ui->text_TermEditData->setFont(fntTmpFnt);
             ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+            ui->text_LogData->setFont(fntTmpFnt);
+            ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 #if SKIPSPEEDTEST != 1
             ui->text_SpeedEditData->setFont(fntTmpFnt);
             ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
@@ -2371,6 +2374,27 @@ MainWindow::MenuSelected(
             ui->text_SpeedEditData->setPalette(palTmp);
 #endif
         }
+    }
+    else if (intItem == MenuActionRestoreDefaults)
+    {
+        //Restore customisations to default: colour
+        QPalette palTmp = ui->text_TermEditData->palette();
+        palTmp.setColor(QPalette::Active, QPalette::Text, QColorConstants::White);
+        palTmp.setColor(QPalette::Active, QPalette::Base, QColorConstants::Black);
+        ui->text_TermEditData->setPalette(palTmp);
+
+        //And font
+        QFont fntTmpFnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        QFontMetrics tmTmpFM(fntTmpFnt);
+        ui->text_TermEditData->setFont(fntTmpFnt);
+        ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+        ui->text_LogData->setFont(fntTmpFnt);
+        ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+#if SKIPSPEEDTEST != 1
+        ui->text_SpeedEditData->setFont(fntTmpFnt);
+        ui->text_SpeedEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
+        ui->text_SpeedEditData->setPalette(palTmp);
+#endif
     }
     else if (intItem == MenuActionRun2 && gbTermBusy == false && gbSpeedTestRunning == false)
     {
