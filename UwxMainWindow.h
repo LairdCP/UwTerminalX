@@ -747,6 +747,10 @@ private slots:
     resizeEvent(
         QResizeEvent *
         );
+    void
+    on_edit_Title_textEdited(
+        const QString &
+        );
 
 private:
     Ui::MainWindow *ui;

@@ -1827,6 +1827,51 @@
                 </widget>
                </item>
                <item>
+                <layout class="QGridLayout" name="gridLayout_17">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="edit_Title">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>20</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="inputMethodHints">
+                    <set>Qt::ImhDigitsOnly</set>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="maxLength">
+                    <number>32</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_45">
+                   <property name="text">
+                    <string>Title:</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
                 <spacer name="verticalSpacer_4">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -3922,6 +3967,9 @@ SCRIPTFILE=filename
 SCRIPTACTION=n
     [1=Run script after serial port has been opened] (SCRIPTING and SCRIPTFILE must be provided before this argument)
 
+TITLE=title
+    Will append to the window title (and system tray icon tooltip) the provided text
+
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Character escape codes: These are supported in the Automation, Scripting and Speed Test features and allow non-printable ASCII characters to be used. The format of character escape codes is \HH whereby H represents a hex character (0-9 and A-F), additionally \r, \n and \t can be used to represent a carriage return, new line and tab character individually.
@@ -3929,7 +3977,7 @@ This function is enabled/disabled in the Automation and Speed Test features by c
 For example: \00 can be used to represent a null character and \4C can be used to represent an 'L' ASCII character.
 
 
-Copyright © Laird Connectivity 2015-2020
+Copyright © Laird Connectivity 2015-2022
 For updates and source code licensed under GPLv3, check https://github.com/LairdCP/UwTerminalX or the 'Update' tab.
 Plus and Minus images obtained from http://www.clker.com
 

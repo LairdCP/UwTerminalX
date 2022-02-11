@@ -982,6 +982,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
                 bStartScript = true;
             }
         }
+        else if (slArgs[chi].left(6).toUpper() == "TITLE=")
+        {
+            //Set window title
+            QString strWindowTitle = slArgs[chi].right(slArgs[chi].size()-6);
+            if (strWindowTitle.length() > ui->edit_Title->maxLength())
+            {
+                strWindowTitle.remove(ui->edit_Title->maxLength(), (strWindowTitle.length() - ui->edit_Title->maxLength()));
+            }
+
+            ui->edit_Title->setText(strWindowTitle);
+            on_edit_Title_textEdited(NULL);
+        }
 #endif
         ++chi;
     }
@@ -9534,6 +9546,43 @@ MainWindow::resizeEvent(
     {
         gpTermSettings->setValue("WindowWidth", this->width());
         gpTermSettings->setValue("WindowHeight", this->height());
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_edit_Title_textEdited(
+    const QString &
+    )
+{
+    QString strWindowTitle = QString("UwTerminalX (v").append(UwVersion).append(")");
+    if (ui->edit_Title->text().length() > 0)
+    {
+        //Append custom text to window title
+        strWindowTitle.append(" ").append(ui->edit_Title->text());
+    }
+    setWindowTitle(strWindowTitle);
+
+    if (gpTermSettings->value("SysTrayIcon", DefaultSysTrayIcon).toBool() == true && QSystemTrayIcon::isSystemTrayAvailable())
+    {
+        //Also update system tray icon text
+        if (gspSerialPort.isOpen())
+        {
+            strWindowTitle = QString("UwTerminalX v").append(UwVersion).append(" (").append(ui->combo_COM->currentText()).append(")");
+        }
+        else
+        {
+            strWindowTitle = QString("UwTerminalX v").append(UwVersion);
+        }
+
+        if (ui->edit_Title->text().length() > 0)
+        {
+            //Append custom text to window title
+            strWindowTitle.append(": ").append(ui->edit_Title->text());
+        }
+
+        gpSysTray->setToolTip(strWindowTitle);
     }
 }
 
