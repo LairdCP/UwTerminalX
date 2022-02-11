@@ -2411,8 +2411,16 @@ MainWindow::MenuSelected(
     {
         //Restore customisations to default: colour
         QPalette palTmp = ui->text_TermEditData->palette();
+
+#ifdef _MSC_BUILD
+        //MSVC isn't a good compiler
+        palTmp.setColor(QPalette::Active, QPalette::Text, QColor("White"));
+        palTmp.setColor(QPalette::Active, QPalette::Base, QColor("Black"));
+#else
         palTmp.setColor(QPalette::Active, QPalette::Text, QColorConstants::White);
         palTmp.setColor(QPalette::Active, QPalette::Base, QColorConstants::Black);
+#endif
+
         ui->text_TermEditData->setPalette(palTmp);
         ui->text_LogData->setPalette(palTmp);
 
