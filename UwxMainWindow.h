@@ -171,6 +171,7 @@ const bool DefaultAutoDTrimBuffer               = false; //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferThreshold   = 0;     //(Unlisted option)
 const quint32 DefaultAutoTrimDBufferSize        = 0;     //(Unlisted option)
 const quint16 DefaultScrollbackBufferSize       = 32;    //(Unlisted option)
+const bool DefaultSaveSize                      = false;
 //Constants for URLs
 const QString URLLinuxNonRootSetup = "https://github.com/LairdCP/UwTerminalX/wiki/Granting-non-root-USB-device-access-(Linux)";
 //Constants for the protocol
@@ -738,6 +739,14 @@ private slots:
     ScriptingFileSelected(
         const QString *strFilepath
         );
+    void
+    on_check_EnableTerminalSizeSaving_stateChanged(
+        int
+        );
+    void
+    resizeEvent(
+        QResizeEvent *
+        );
 
 private:
     Ui::MainWindow *ui;
@@ -968,6 +977,7 @@ private:
     bool gbAutoTrimDBuffer; //(Unlisted option) Set to true to automatically trim the display buffer when it reaches a threashold
     quint32 gintAutoTrimBufferDThreshold; //(Unlisted option) Number of bytes at which to trim the display buffer
     quint32 gintAutoTrimBufferDSize; //(Unlisted option) Number of bytes to trim the recieve buffer
+    bool gbAppStarted; //True if application startup is complete
 
 protected:
     void dragEnterEvent(

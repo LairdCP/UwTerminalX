@@ -242,6 +242,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gbScriptingRunning = false;
     gusScriptingForm = 0;
 #endif
+    gbAppStarted = false;
 
     //Clear display buffer byte array and reserve 128KB of RAM to reduce mallocs (should allow faster speed testing at 1M baud)
     gbaDisplayBuffer.clear();
@@ -495,6 +496,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Set clearing confirmation option
     ui->check_ConfirmClear->setChecked(gpTermSettings->value("ConfirmClear", DefaultConfirmClear).toBool());
 
+    //Set window size saving
+    ui->check_EnableTerminalSizeSaving->setChecked(gpTermSettings->value("SaveSize", DefaultSaveSize).toBool());
+
+    if (ui->check_EnableTerminalSizeSaving->isChecked() && gpTermSettings->contains("WindowWidth") && gpTermSettings->contains("WindowHeight"))
+    {
+        //Restore window size
+        this->resize(gpTermSettings->value("WindowWidth", this->width()).toUInt(), gpTermSettings->value("WindowHeight", this->height()).toUInt());
+    }
+
     //Check if default devices were created
     if (gpPredefinedDevice->value("DoneSetup").isNull())
     {
@@ -511,7 +521,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
         //Lyra
         strPrefix = QString("Port").append(QString::number(nCurrentDevice));
-	gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Lyra");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Lyra");
         gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
         gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
         gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
@@ -1009,6 +1019,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpmErrorForm->SetMessage(&strMessage);
     }
 #endif
+
+    gbAppStarted = true;
 }
 
 //=============================================================================
@@ -9484,6 +9496,44 @@ MainWindow::UpdateCustomisation(
     {
         gpTermSettings->setValue("CustomFont", ui->text_TermEditData->font());
         gpTermSettings->setValue("CustomPalette", ui->text_TermEditData->palette());
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::on_check_EnableTerminalSizeSaving_stateChanged(
+    int
+    )
+{
+    if (gbAppStarted == true)
+    {
+        gpTermSettings->setValue("SaveSize", ui->check_EnableTerminalSizeSaving->isChecked());
+
+        if (ui->check_EnableTerminalSizeSaving->isChecked() == true)
+        {
+            gpTermSettings->setValue("WindowWidth", this->width());
+            gpTermSettings->setValue("WindowHeight", this->height());
+        }
+        else
+        {
+            gpTermSettings->remove("WindowWidth");
+            gpTermSettings->remove("WindowHeight");
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void
+MainWindow::resizeEvent(
+    QResizeEvent *
+    )
+{
+    if (ui->check_EnableTerminalSizeSaving->isChecked() == true && gbAppStarted == true)
+    {
+        gpTermSettings->setValue("WindowWidth", this->width());
+        gpTermSettings->setValue("WindowHeight", this->height());
     }
 }
 
