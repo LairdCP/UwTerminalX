@@ -6190,10 +6190,10 @@ MainWindow::on_btn_WebBrowse_clicked(
         //BL652 Github
         strURL = "https://github.com/LairdCP/BL652-Applications";
     }
-    else if (ui->combo_WebSelection->currentIndex() == WebSelectionPinnacle100OOBDemo)
+    else if (ui->combo_WebSelection->currentIndex() == WebSelectionPinnacle100Firmware)
     {
-        //Pinnacle 100 OOB Demo Github
-        strURL = "https://github.com/LairdCP/Pinnacle_100_oob_demo";
+        //Pinnacle 100 Firmware Github
+        strURL = "https://github.com/LairdCP/Pinnacle-100-Firmware";
     }
     else if (ui->combo_WebSelection->currentIndex() == WebSelectionBluegrassDemo)
     {
