@@ -58,9 +58,6 @@ UwxScripting::UwxScripting(QWidget *parent) : QDialog(parent), ui(new Ui::UwxScr
     mbIsRunning = false;
     mbWaitingForReceive = false;
 
-    //Set pattern matching for character escaping
-//    reESeq.setPattern("[\\\\]([0-9A-Fa-f]{2})");
-
     //Set the icons and tooltip of the buttons
     ui->btn_Load->setText("");
     ui->btn_Load->setIcon(this->style()->standardIcon(QStyle::SP_DialogOpenButton));

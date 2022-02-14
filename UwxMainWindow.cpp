@@ -1429,9 +1429,6 @@ MainWindow::on_btn_TermClose_clicked(
         ui->check_SpeedRTS->setEnabled(false);
 #endif
 
-        //Disable text entry
-//        ui->text_TermEditData->setReadOnly(true);
-
         //Change status message
         ui->statusBar->showMessage("");
 
@@ -1686,7 +1683,7 @@ MainWindow::SerialRead(
                     if (remTempLicREM.hasMatch() == true && remTempLicREM.captured(1).toUpper() == "0016A4C0FFEE")
                     {
                         //License is not valid, display a warning to the user
-			QString strMessage = tr("Please note: The module you are downloading to does not have a valid license and therefore some firmware functionality may not work or return unexpected error codes.\r\n\r\nTo fix this issue, please add your module license using: 'at+lic <license code>', or contact Laird Connectvity Support with the module Bluetooth Address if you do not have a backup of the license code (issue the command 'at i 14' to get your module's Bluetooth address).");
+                        QString strMessage = tr("Please note: The module you are downloading to does not have a valid license and therefore some firmware functionality may not work or return unexpected error codes.\r\n\r\nTo fix this issue, please add your module license using: 'at+lic <license code>', or contact Laird Connectvity Support with the module Bluetooth Address if you do not have a backup of the license code (issue the command 'at i 14' to get your module's Bluetooth address).");
                         gpmErrorForm->show();
                         gpmErrorForm->SetMessage(&strMessage);
                     }
@@ -1814,7 +1811,7 @@ MainWindow::SerialRead(
                                 ;
                             }
 
-			    strMessage.append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird Connectivity's online server.");
+                            strMessage.append("\" was not found.\r\n\r\nPlease ensure you put XCompile binaries in the correct directory (").append(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? strDevName : "")).append(").\n\nYou can also enable Online XCompilation from the 'Config' tab to XCompile applications using Laird Connectivity's online server.");
                             gpmErrorForm->show();
                             gpmErrorForm->SetMessage(&strMessage);
                             gbTermBusy = false;
@@ -2013,7 +2010,6 @@ MainWindow::StreamBatchContinue(
                 gintQueuedTXBytes += baFileData.length();
                 DoLineEnd();
                 gpMainLog->WriteLogData(QString(baFileData).append("\n"));
-//        gintStreamBytesRead += FileData.length();
                 gtmrBatchTimeoutTimer.start(BatchTimeout);
                 ++gintStreamBytesRead;
 
@@ -2742,7 +2738,6 @@ MainWindow::EnterPressed(
         {
             if (gbLoopbackMode == false)
             {
-//replace("\n\n", "\n").
                 QByteArray baTmpBA = ui->text_TermEditData->GetDatOut()->replace("\r", "\n").replace("\n", (ui->radio_LCR->isChecked() ? "\r" : ui->radio_LLF->isChecked() ? "\n" : ui->radio_LCRLF->isChecked() ? "\r\n" : ui->radio_LLFCR->isChecked() ? "\n\r" : "")).toUtf8();
                 gspSerialPort.write(baTmpBA);
                 gintQueuedTXBytes += baTmpBA.size();
@@ -2962,19 +2957,7 @@ MainWindow::KeyPressed(
                 {
                     gbaDisplayBuffer.append("\n");
                 }
-                else
-                {
-                    /*if (ui->check_ShowCLRF->isChecked() == true)
-                    {
-                        //Escape \t, \r and \n in addition to normal escaping
-                        gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n").replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                    }
-                    else
-                    {
-                        //Normal escaping
-                        gbaDisplayBuffer.append(QString(QChar(chrKeyValue)).toUtf8().replace('\0', "\\00").replace("\x01", "\\01").replace("\x02", "\\02").replace("\x03", "\\03").replace("\x04", "\\04").replace("\x05", "\\05").replace("\x06", "\\06").replace("\x07", "\\07").replace("\x08", "\\08").replace("\x0b", "\\0B").replace("\x0c", "\\0C").replace("\x0e", "\\0E").replace("\x0f", "\\0F").replace("\x10", "\\10").replace("\x11", "\\11").replace("\x12", "\\12").replace("\x13", "\\13").replace("\x14", "\\14").replace("\x15", "\\15").replace("\x16", "\\16").replace("\x17", "\\17").replace("\x18", "\\18").replace("\x19", "\\19").replace("\x1a", "\\1a").replace("\x1b", "\\1b").replace("\x1c", "\\1c").replace("\x1d", "\\1d").replace("\x1e", "\\1e").replace("\x1f", "\\1f"));
-                    }*/
-                }
+
                 if (!gtmrTextUpdateTimer.isActive())
                 {
                     gtmrTextUpdateTimer.start();
@@ -3964,7 +3947,6 @@ MainWindow::SerialBytesWritten(
         //Not running speed test
         gintTXBytes += intByteCount;
         ui->label_TermTx->setText(QString::number(gintTXBytes));
-//    ui->label_TermQueue->setText(QString::number(gintQueuedTXBytes));
 
 #ifndef SKIPSCRIPTINGFORM
         if (gusScriptingForm != 0 && gbScriptingRunning == true)
