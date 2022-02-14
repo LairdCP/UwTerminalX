@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2018 Laird
+** Copyright (C) 2015-2022 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -45,6 +45,7 @@ LrdScrollEdit::LrdScrollEdit(QWidget *parent) : QPlainTextEdit(parent)
     mbContextMenuOpen = false; //Context menu not currently open
     mstrItemArray = NULL;
     nItemArraySize = 0;
+    mbSliderShown = false;
 }
 
 //=============================================================================
@@ -84,6 +85,21 @@ LrdScrollEdit::eventFilter(
         {
             //Button was released, update display buffer
             this->UpdateDisplay();
+        }
+        else if (event->type() == QEvent::UpdateLater && mbSliderShown == false)
+        {
+            //Slider has been shown, scroll down to the bottom of the text edit if cursor position is at the end
+            if (this->textCursor().atEnd() == true)
+            {
+                this->verticalScrollBar()->setValue(this->verticalScrollBar()->maximum());
+            }
+
+            mbSliderShown = true;
+        }
+        else if (event->type() == QEvent::Hide)
+        {
+            //Slider has been hidden, clear flag
+            mbSliderShown = false;
         }
     }
     else if (event->type() == QEvent::KeyPress)
@@ -503,6 +519,7 @@ LrdScrollEdit::UpdateDisplay(
         bool bShiftStart = false;
         bool bShiftEnd = false;
         unsigned int uiCurrentSize = 0;
+
         if (this->textCursor().anchor() != this->textCursor().position())
         {
             //Text is selected
@@ -525,6 +542,7 @@ LrdScrollEdit::UpdateDisplay(
 
         //Slider not held down, update
         unsigned int Pos;
+
         if (this->verticalScrollBar()->sliderPosition() == this->verticalScrollBar()->maximum())
         {
             //Scroll to bottom
@@ -535,6 +553,7 @@ LrdScrollEdit::UpdateDisplay(
             //Stay here
             Pos = this->verticalScrollBar()->sliderPosition();
         }
+
         this->setUpdatesEnabled(false);
         this->setPlainText(QString(mstrDatIn).append((mbLocalEcho == true && mbLineMode == true ? mstrDatOut : "")));
         this->setUpdatesEnabled(true);

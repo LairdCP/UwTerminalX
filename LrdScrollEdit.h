@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2018 Laird
+** Copyright (C) 2015-2022 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -124,6 +124,7 @@ private:
     QString mstrDatOut; //Outgoing data (user typed keyboard data)
     int mintCurPos; //Current text cursor position
     unsigned int mintPrevTextSize; //Holds a count of the previous text size
+    bool mbSliderShown; //True if the slider moving to the bottom position upon appearing has been ran
 
 public:
     bool mbLocalEcho; //True if local echo is enabled
