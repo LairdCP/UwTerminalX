@@ -311,7 +311,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Connect key-press signals
     connect(ui->text_TermEditData, SIGNAL(EnterPressed()), this, SLOT(EnterPressed()));
-    connect(ui->text_TermEditData, SIGNAL(KeyPressed(QChar)), this, SLOT(KeyPressed(QChar)));
+    connect(ui->text_TermEditData, SIGNAL(KeyPressed(int,QChar)), this, SLOT(KeyPressed(int,QChar)));
 
     //Connect file drag/drop signal
     connect(ui->text_TermEditData, SIGNAL(FileDropped(QString)), this, SLOT(DroppedFile(QString)));
@@ -442,7 +442,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     //Connect serial signals
     connect(&gspSerialPort, SIGNAL(readyRead()), this, SLOT(SerialRead()));
-    connect(&gspSerialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(SerialError(QSerialPort::SerialPortError)));
+    connect(&gspSerialPort, SIGNAL(errorOccurred(QSerialPort::SerialPortError)), this, SLOT(SerialError(QSerialPort::SerialPortError)));
     connect(&gspSerialPort, SIGNAL(bytesWritten(qint64)), this, SLOT(SerialBytesWritten(qint64)));
     connect(&gspSerialPort, SIGNAL(aboutToClose()), this, SLOT(SerialPortClosing()));
 
@@ -706,8 +706,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (certFile.open(QIODevice::ReadOnly))
     {
         //Load certificate data
+        QSslConfiguration sslcConfig;
         sslcLairdSSLNew = new QSslCertificate(certFile.readAll());
-        QSslSocket::addDefaultCaCertificate(*sslcLairdSSLNew);
+        sslcConfig.addCaCertificate(*sslcLairdSSLNew);
         certFile.close();
     }
 #endif
@@ -1046,7 +1047,7 @@ MainWindow::~MainWindow()
 #endif
     disconnect(this, SLOT(close()));
     disconnect(this, SLOT(EnterPressed()));
-    disconnect(this, SLOT(KeyPressed(QChar)));
+    disconnect(this, SLOT(KeyPressed(int,QChar)));
     disconnect(this, SLOT(DroppedFile(QString)));
     disconnect(this, SLOT(MenuSelected(QAction*)));
     disconnect(this, SLOT(balloontriggered(QAction*)));
@@ -2942,6 +2943,7 @@ MainWindow::UpdateImages(
 //=============================================================================
 void
 MainWindow::KeyPressed(
+    int nKey,
     QChar chrKeyValue
     )
 {
@@ -2953,7 +2955,7 @@ MainWindow::KeyPressed(
             if (ui->check_Echo->isChecked() == true)
             {
                 //Echo mode on
-                if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return)
+                if (nKey == Qt::Key_Enter || nKey == Qt::Key_Return)
                 {
                     gbaDisplayBuffer.append("\n");
                 }
@@ -2965,10 +2967,10 @@ MainWindow::KeyPressed(
             }
 
             //Convert character to a byte array (in case it's UTF-8 and more than 1 byte)
-            QByteArray baTmpBA = QString(chrKeyValue).toUtf8();
+            QByteArray baTmpBA = QString((QChar)chrKeyValue).toUtf8();
 
             //Character mode, send right on
-            if (chrKeyValue == Qt::Key_Enter || chrKeyValue == Qt::Key_Return || chrKeyValue == '\r' || chrKeyValue == '\n')
+            if (nKey == Qt::Key_Enter || nKey == Qt::Key_Return || chrKeyValue == '\r' || chrKeyValue == '\n')
             {
                 //Return key or newline
                 gpMainLog->WriteLogData("\n");
@@ -4783,10 +4785,10 @@ MainWindow::replyFinished(
                                     }
 
                                     //Use a string ref to count the number of lines
-                                    QStringRef strrefLines(&tmpData, 0, tmpData.indexOf(ThisMatch.captured(0)));
+                                    QStringView strviewLines = QStringView{tmpData}.left(tmpData.indexOf(ThisMatch.captured(0)));
                                     tempFileS = new FileSStruct();
                                     tempFileS->strFilename = strIncludeName;
-                                    tempFileS->iStartingLine = strrefLines.count("\n")+2;
+                                    tempFileS->iStartingLine = strviewLines.count('\n')+2;
                                     tempFileS->iLineSpaces = ThisMatch.captured(0).count("\n");
 
                                     //Set state to changed to check for next include
@@ -4822,7 +4824,7 @@ MainWindow::replyFinished(
                             baPostData.append(tmpData.toUtf8());
                             baPostData.append("\r\n-----------------------------17192614014659--\r\n");
                             nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
-                            nrThisReq.setRawHeader("Content-Length", QString(baPostData.length()).toUtf8());
+                            nrThisReq.setRawHeader("Content-Length", QString::number(baPostData.length()).toUtf8());
                             gnmrReply = gnmManager->post(nrThisReq, baPostData);
                             ui->statusBar->showMessage("Sending smartBASIC application for online compilation...", 500);
                         }
@@ -4876,7 +4878,7 @@ MainWindow::replyFinished(
                     gbTermBusy = false;
                     ui->btn_Cancel->setEnabled(false);
 
-                    QString strMessage = QString("Server responded with unknown response, code: ").append(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+                    QString strMessage = QString("Server responded with unknown response, code: ").append(QString::number(nrReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
@@ -4974,7 +4976,7 @@ MainWindow::replyFinished(
                 else
                 {
                     //Error whilst decoding JSON
-                    QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                    QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toJson());
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
@@ -5182,7 +5184,7 @@ MainWindow::replyFinished(
             else
             {
                 //Error whilst decoding JSON
-                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toJson());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -5266,7 +5268,7 @@ MainWindow::replyFinished(
             else
             {
                 //Error whilst decoding JSON
-                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toJson());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -5419,7 +5421,7 @@ MainWindow::replyFinished(
             else
             {
                 //Error whilst decoding JSON
-                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toBinaryData());
+                QString strMessage = QString("Unable to decode JSON data from server, debug data: ").append(jdJsonData.toJson());
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
@@ -6470,7 +6472,7 @@ MainWindow::LoadSettings(
             if (remTempREM.hasMatch() == true)
             {
                 //Update configuration
-                UpdateSettings(remTempREM.captured(1).toInt(), remTempREM.captured(2).toInt(), remTempREM.captured(3).isEmpty() || remTempREM.captured(3).isNull() ? 0 :  remTempREM.captured(3).at(0));
+                UpdateSettings(remTempREM.captured(1).toInt(), remTempREM.captured(2).toInt(), (remTempREM.captured(3).isEmpty() || remTempREM.captured(3).isNull() ? '0' : remTempREM.captured(3).at(0)));
             }
         }
 
@@ -7428,7 +7430,7 @@ MainWindow::SpeedMenuSelected(
     )
 {
     //Speed test menu item selected
-    QChar chItem = qaAction->data().toChar();
+    qint8 chItem = qaAction->data().toInt();
 
     if (gspSerialPort.isOpen() == true && gbLoopbackMode == false && gbTermBusy == false)
     {

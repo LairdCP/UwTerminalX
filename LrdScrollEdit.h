@@ -106,7 +106,8 @@ signals:
         );
     void
     KeyPressed(
-        QChar KeyValue
+        int nKey,
+        QChar chrKeyValue
         );
     void
     FileDropped(

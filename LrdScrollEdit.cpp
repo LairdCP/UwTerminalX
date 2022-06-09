@@ -337,7 +337,7 @@ LrdScrollEdit::eventFilter(
                     if (keyEvent->key() != Qt::Key_Escape && keyEvent->key() != Qt::Key_Tab && keyEvent->key() != Qt::Key_Backtab && /*keyEvent->key() != Qt::Key_Backspace &&*/ keyEvent->key() != Qt::Key_Insert && keyEvent->key() != Qt::Key_Delete && keyEvent->key() != Qt::Key_Pause && keyEvent->key() != Qt::Key_Print && keyEvent->key() != Qt::Key_SysReq && keyEvent->key() != Qt::Key_Clear && keyEvent->key() != Qt::Key_Home && keyEvent->key() != Qt::Key_End && keyEvent->key() != Qt::Key_Shift && keyEvent->key() != Qt::Key_Control && keyEvent->key() != Qt::Key_Meta && keyEvent->key() != Qt::Key_Alt && keyEvent->key() != Qt::Key_AltGr && keyEvent->key() != Qt::Key_CapsLock && keyEvent->key() != Qt::Key_NumLock && keyEvent->key() != Qt::Key_ScrollLock)
                     {
                         //Not a special character
-                        emit KeyPressed(*keyEvent->text().unicode());
+                        emit KeyPressed(keyEvent->key(), *keyEvent->text().unicode());
                         this->UpdateDisplay();
                     }
                     return true;
@@ -410,7 +410,7 @@ LrdScrollEdit::AddDatOutText(
         QChar qcTmpQC;
         foreach (qcTmpQC, strDat)
         {
-            emit KeyPressed(qcTmpQC);
+            emit KeyPressed(0, qcTmpQC);
         }
     }
 }
@@ -497,7 +497,7 @@ LrdScrollEdit::insertFromMimeData(
             QChar qcTmpQC;
             foreach (qcTmpQC, strTmpStr)
             {
-                emit KeyPressed(qcTmpQC);
+                emit KeyPressed(0, qcTmpQC);
             }
         }
     }

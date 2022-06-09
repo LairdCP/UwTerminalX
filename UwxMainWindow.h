@@ -58,7 +58,7 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QHostInfo>
-#include <QStringRef>
+#include <QStringView>
 //Need cmath for std::ceil function
 #include <cmath>
 #if TARGET_OS_MAC
@@ -132,7 +132,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.14"; //Version string
+const QString UwVersion                         = "1.15"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -380,6 +380,7 @@ public slots:
         );
     void
     KeyPressed(
+        int nKey,
         QChar chrKeyValue
         );
     void

@@ -1059,7 +1059,7 @@ UwxScripting::LoadScriptFile(
     else
     {
         //Failed to open file
-        QString strMessage = tr("Error during scripting file load: Access to selected file is denied: ").append(strFilename);
+        QString strMessage = QString("Error during scripting file load: Access to selected file is denied: ").append(*strFilename);
         mFormAuto->SetMessage(&strMessage);
         mFormAuto->show();
     }
