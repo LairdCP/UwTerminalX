@@ -164,11 +164,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #endif
 
 #ifndef _WIN32
-#ifndef __APPLE__
-    //Increase Linux window size to cope with possible large Linux fonts
-    resize(this->width()+50, this->height()+20);
-#endif
-
     //Disable local XCompiler information button
     ui->btn_Local_XCompilers->setEnabled(false);
     ui->btn_Local_XCompilers->deleteLater();
