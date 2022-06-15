@@ -1731,7 +1731,7 @@ MainWindow::SerialRead(
                                 //Run Pre-XComp program
                                 RunPrePostExecutable(gstrTermFilename);
                             }
-                            gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName).append("/") : "")).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                            gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName).append("/") : "")).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename), QIODevice::ReadWrite);
                         }
                         else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                         {
@@ -1741,7 +1741,7 @@ MainWindow::SerialRead(
                                 //Run Pre-XComp program
                                 RunPrePostExecutable(gstrTermFilename);
                             }
-                            gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                            gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename), QIODevice::ReadWrite);
                         }
                         else if (QFile::exists(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("/") : "")).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                         {
@@ -1751,7 +1751,7 @@ MainWindow::SerialRead(
                                 //Run Pre-XComp program
                                 RunPrePostExecutable(gstrTermFilename);
                             }
-                            gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("/") : "")).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                            gprocCompileProcess.start(QString(gpTermSettings->value("CompilerDir", DefaultCompilerDir).toString()).append((gpTermSettings->value("CompilerSubDirs", DefaultCompilerSubDirs).toBool() == true ? QString(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("/") : "")).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename), QIODevice::ReadWrite);
                         }
                         else if (QFile::exists(QString(lstFI[0]).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe")) == true)
                         {
@@ -1761,7 +1761,7 @@ MainWindow::SerialRead(
                                 //Run Pre-XComp program
                                 RunPrePostExecutable(gstrTermFilename);
                             }
-                            gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename));
+                            gprocCompileProcess.start(QString(lstFI[0]).append("XComp_").append(strDevName.left(strDevName.length() < MaxOldDevNameSize ? strDevName.length() : MaxOldDevNameSize)).append("_").append(remTempREM.captured(2)).append("_").append(remTempREM.captured(3)).append(".exe"), QStringList(gstrTermFilename), QIODevice::ReadWrite);
                         }
                         else
 #endif
@@ -4376,12 +4376,12 @@ MainWindow::RunPrePostExecutable(
                     //Batch file - run through cmd
                     lArguments.insert(0, ui->edit_PreXCompFilename->text().mid(1, i-1));
                     lArguments.insert(0, "/C");
-                    pXProcess.start("cmd", lArguments);
+                    pXProcess.start("cmd", lArguments, QIODevice::ReadWrite);
                 }
                 else
                 {
                     //Normal executable
-                    pXProcess.start(ui->edit_PreXCompFilename->text().mid(1, i-1), lArguments);
+                    pXProcess.start(ui->edit_PreXCompFilename->text().mid(1, i-1), lArguments, QIODevice::ReadWrite);
                 }
                 pXProcess.waitForFinished(PrePostXCompTimeout);
                 return true;
@@ -4408,12 +4408,12 @@ MainWindow::RunPrePostExecutable(
             if (ui->edit_PreXCompFilename->text().right(4).toLower() == ".bat")
             {
                 //Batch file - run through cmd
-                pXProcess.start("cmd", QList<QString>() << "/C" << ui->edit_PreXCompFilename->text().replace("/", "\\"));
+                pXProcess.start("cmd", QList<QString>() << "/C" << ui->edit_PreXCompFilename->text().replace("/", "\\"), QIODevice::ReadWrite);
             }
             else
             {
                 //Normal executable
-                pXProcess.start(ui->edit_PreXCompFilename->text());
+                pXProcess.start(ui->edit_PreXCompFilename->text(), QList<QString>(), QIODevice::ReadWrite);
             }
             pXProcess.waitForFinished(PrePostXCompTimeout);
         }
@@ -4442,12 +4442,12 @@ MainWindow::RunPrePostExecutable(
                 //Batch file - run through cmd
                 lArguments.insert(0, ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")));
                 lArguments.insert(0, "/C");
-                pXProcess.start("cmd", lArguments);
+                pXProcess.start("cmd", lArguments, QIODevice::ReadWrite);
             }
             else
             {
                 //Normal executable
-                pXProcess.start(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")), lArguments);
+                pXProcess.start(ui->edit_PreXCompFilename->text().left(ui->edit_PreXCompFilename->text().indexOf(" ")), lArguments, QIODevice::ReadWrite);
             }
             pXProcess.waitForFinished(PrePostXCompTimeout);
         }
@@ -8674,7 +8674,7 @@ MainWindow::on_btn_Local_XCompilers_clicked(
             while (a < Files.length())
             {
                 //Prase through each XCompiler for this module
-                procXCompileVersion.start(Files[a].filePath(), QStringList("/I"));
+                procXCompileVersion.start(Files[a].filePath(), QStringList("/I"), QIODevice::ReadWrite);
                 procXCompileVersion.waitForFinished(XCompATIRespTimeout);
                 QString strOutput = procXCompileVersion.readAll();
 
@@ -8731,7 +8731,7 @@ MainWindow::on_btn_Local_XCompilers_clicked(
         while (i < Files.length())
         {
             //Run the process with the info command line argument
-            procXCompileVersion.start(QString(dirXCompDir.path()).append(Files[i].fileName()), QStringList("/I"));
+            procXCompileVersion.start(QString(dirXCompDir.path()).append(Files[i].fileName()), QStringList("/I"), QIODevice::ReadWrite);
             procXCompileVersion.waitForFinished(XCompATIRespTimeout);
             QString strOutput = procXCompileVersion.readAll();
 
