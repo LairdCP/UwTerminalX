@@ -111,6 +111,10 @@
     #define OS32_64UINT quint32
 #endif
 
+#define WINDOWS_NEWLINE_SIZE                      2
+#define NEWLINE_SIZE                              1
+#define NEWLINE_LINES                             1
+
 /******************************************************************************/
 // Constants
 /******************************************************************************/
@@ -132,7 +136,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.15a"; //Version string
+const QString UwVersion                         = "1.15b"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -278,6 +282,8 @@ const int FTDI_BL654_USB_NRESET_DIO             = 64;
 const int FTDI_BL654_USB_AUTORUN_DIO            = 128;
 const int FTDI_BL654_USB_RESET_DELAY            = 400;
 #endif
+const QString WINDOWS_NEWLINE                   = "\r\n";
+const QChar NEWLINE                             = '\n';
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -293,7 +299,8 @@ typedef struct
     QString strFilename; //Filename
     qint16 iStartingLine; //Starting line that file was put on
     qint16 iEndingLine; //Ending line that file's last data was put on
-    qint8 iLineSpaces;
+    qint16 iOrigLines; //Number of lines in the source file
+    qint8 iParent; //Parent include file index
 } FileSStruct;
 
 //Structures used for holding information when listing available XCompilers on the local PC

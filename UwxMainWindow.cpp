@@ -4650,13 +4650,13 @@ MainWindow::replyFinished(
                             tempFileS->strFilename = fiFileInfo.fileName();
                             tempFileS->iStartingLine = 1;
                             tempFileS->iEndingLine = 0;
-                            tempFileS->iLineSpaces = 0;
+                            tempFileS->iParent = 0;
                             lstFileData.append(tempFileS);
 
                             //Add file data
                             QFile file(gstrTermFilename);
-                            QString tmpData;
-                            if (!file.open(QIODevice::ReadOnly | QFile::Text))
+                            QByteArray tmpData;
+                            if (!file.open(QIODevice::ReadOnly))
                             {
                                 //Failed to open file selected for download
                                 nrReply->deleteLater();
@@ -4686,18 +4686,18 @@ MainWindow::replyFinished(
                             file.close();
 
                             //Include other files
-                            QRegularExpression reTempRE("(^|:)(\\s{0,})#(\\s{0,})include(\\s{1,})(.*?)$");
+                            QRegularExpression reTempRE("(^|:)( |\\t*)#(\\s*)include(\\s+)(.+?)($)");
                             reTempRE.setPatternOptions(QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
                             bool bChangedState = true;
                             while (bChangedState == true)
                             {
                                 bChangedState = false;
                                 QRegularExpressionMatchIterator rx1match = reTempRE.globalMatch(tmpData);
-                                while (rx1match.hasNext())
+                                if (rx1match.hasNext())
                                 {
                                     //Found an include, add the file data
                                     QRegularExpressionMatch ThisMatch = rx1match.next();
-                                    QString strIncludeName = QString(ThisMatch.captured(5)).replace("\r", "").replace("\n", "");
+                                    QString strIncludeName = QString(ThisMatch.captured(5));
 
                                     if (strIncludeName.indexOf("\"") == -1)
                                     {
@@ -4743,6 +4743,8 @@ MainWindow::replyFinished(
                                             gchTermMode2 = 0;
                                             gbTermBusy = false;
                                             ui->btn_Cancel->setEnabled(false);
+                                            ClearFileDataList();
+
                                             QString strMessage = QString("Failed to find variable ").append(strIncludeName).append(" for include file in: ").append(fiFileInfo.path()).append("/").append(lstFileData.last()->strFilename);
                                             gpmErrorForm->show();
                                             gpmErrorForm->SetMessage(&strMessage);
@@ -4758,7 +4760,7 @@ MainWindow::replyFinished(
 
                                     //Open the file
                                     file.setFileName(QString(fiFileInfo.path()).append("/").append(strIncludeName.replace("\\", "/")));
-                                    if (!file.open(QIODevice::ReadOnly | QFile::Text))
+                                    if (!file.open(QIODevice::ReadOnly))
                                     {
                                         //Failed to open include file
                                         nrReply->deleteLater();
@@ -4772,6 +4774,7 @@ MainWindow::replyFinished(
                                         gchTermMode2 = 0;
                                         gbTermBusy = false;
                                         ui->btn_Cancel->setEnabled(false);
+                                        ClearFileDataList();
 
                                         QString strMessage = QString("Failed to open file for reading: ").append(fiFileInfo.path()).append("/").append(strIncludeName.replace("\\", "/"));
                                         gpmErrorForm->show();
@@ -4779,18 +4782,31 @@ MainWindow::replyFinished(
                                         return;
                                     }
 
-                                    //Use a string ref to count the number of lines
-                                    QStringView strviewLines = QStringView{tmpData}.left(tmpData.indexOf(ThisMatch.captured(0)));
+                                    //Create new source file structure
                                     tempFileS = new FileSStruct();
                                     tempFileS->strFilename = strIncludeName;
-                                    tempFileS->iStartingLine = strviewLines.count('\n')+2;
-                                    tempFileS->iLineSpaces = ThisMatch.captured(0).count("\n");
+                                    tempFileS->iStartingLine = tmpData.left(ThisMatch.capturedStart()).count('\n') + NEWLINE_LINES;
+                                    tempFileS->iParent = 0;
+
+                                    //Check if this has a parent, starting from the end of the array
+                                    uint8_t iParentSearch = lstFileData.count();
+                                    while (iParentSearch > 0)
+                                    {
+                                        --iParentSearch;
+
+                                        if (tempFileS->iStartingLine > lstFileData[iParentSearch]->iStartingLine && tempFileS->iStartingLine < lstFileData[iParentSearch]->iEndingLine)
+                                        {
+                                            //Assign parent ID to this file
+                                            tempFileS->iParent = iParentSearch;
+                                            break;
+                                        }
+                                    }
 
                                     //Set state to changed to check for next include
                                     bChangedState = true;
 
                                     //Read all the included file's data
-                                    QString tmpData2;
+                                    QByteArray tmpData2;
                                     while (!file.atEnd())
                                     {
                                         tmpData2.append(file.readAll());
@@ -4798,14 +4814,30 @@ MainWindow::replyFinished(
                                     file.close();
 
                                     //Add the data into the buffer replacing the include statement
-                                    unsigned int i = tmpData.indexOf(ThisMatch.captured(0));
-                                    tmpData.remove(i, ThisMatch.captured(0).length());
-                                    tmpData.insert(i, "\n");
-                                    tmpData.insert(i+1, tmpData2);
+                                    if (tmpData.mid(ThisMatch.capturedEnd(0), WINDOWS_NEWLINE_SIZE) == WINDOWS_NEWLINE)
+                                    {
+                                        tmpData.remove(ThisMatch.capturedEnd(0), WINDOWS_NEWLINE_SIZE);
+                                    }
+                                    else if (tmpData.at(ThisMatch.capturedEnd(0)) == NEWLINE)
+                                    {
+                                        tmpData.remove(ThisMatch.capturedEnd(0), NEWLINE_SIZE);
+                                    }
+                                    tmpData.remove(ThisMatch.capturedStart(0), ThisMatch.captured(0).length());
+                                    tmpData.insert(ThisMatch.capturedStart(0), tmpData2);
 
                                     //Set the ending line of the include file and add it to the list
-                                    tempFileS->iEndingLine = tempFileS->iStartingLine + tmpData2.count("\n");
+                                    tempFileS->iEndingLine = tempFileS->iStartingLine + tmpData2.count("\n") - NEWLINE_LINES;
+                                    tempFileS->iOrigLines = tempFileS->iEndingLine;
                                     lstFileData.append(tempFileS);
+
+                                    //Find parents and add the additional number of lines that this file contains to them
+                                    qint8 iParent = tempFileS->iParent;
+                                    qint16 iFileLines = tempFileS->iEndingLine - tempFileS->iStartingLine;
+                                    while (iParent != 0)
+                                    {
+                                        lstFileData.at(iParent)->iEndingLine += iFileLines;
+                                        iParent = lstFileData.at(iParent)->iParent;
+                                    }
                                 }
                             }
 
@@ -4813,10 +4845,11 @@ MainWindow::replyFinished(
                             tmpData.replace("#include", "");
 
                             //Set the total number of lines for the original file
-                            lstFileData.at(0)->iEndingLine = tmpData.count("\n")+2;
+                            lstFileData.at(0)->iEndingLine = tmpData.count("\n");
+                            lstFileData.at(0)->iOrigLines = lstFileData.at(0)->iEndingLine;
 
                             //Append the data to the POST request
-                            baPostData.append(tmpData.toUtf8());
+                            baPostData.append(tmpData);
                             baPostData.append("\r\n-----------------------------17192614014659--\r\n");
                             nrThisReq.setRawHeader("Content-Type", "multipart/form-data; boundary=---------------------------17192614014659");
                             nrThisReq.setRawHeader("Content-Length", QString::number(baPostData.length()).toUtf8());
@@ -4934,26 +4967,51 @@ MainWindow::replyFinished(
                             if (iLineNumber >= 1 && iLineNumber < 200000L)
                             {
                                 //Line number seems valid, search for the file
-                                qint16 iCFile = lstFileData.length()-1;
+                                qint16 iCFile = lstFileData.count();
                                 qint16 iCLine = 0;
-                                while (iCFile >= 0)
+                                while (iCFile > 0)
                                 {
                                     //Search for the file with the error
+                                    --iCFile;
                                     FileSStruct *tempFileS = lstFileData.at(iCFile);
                                     if (tempFileS->iStartingLine <= iLineNumber && tempFileS->iEndingLine >= iLineNumber)
                                     {
-                                        //Found the file
+                                        //Found the file, need to see if this file has children that influence the line number
+                                        qint16 iLineDifference = 0;
+                                        if (lstFileData.count() > 1)
+                                        {
+                                            QList<qint8> lstAffectedFiles;
+                                            lstAffectedFiles.append(iCFile);
+                                            while (lstAffectedFiles.count() > 0)
+                                            {
+                                                qint16 iCFileInnerParent = lstAffectedFiles[0];
+                                                qint8 iCFileInner = lstAffectedFiles[0];
+
+                                                //Search through all parents to find total number of lines to remove
+                                                while (iCFileInner < lstFileData.length())
+                                                {
+                                                    FileSStruct *tempFileSInner = lstFileData.at(iCFileInner);
+                                                    if (tempFileSInner->iParent == iCFileInnerParent && tempFileSInner->iStartingLine < iLineNumber)
+                                                    {
+                                                        lstAffectedFiles.append(iCFileInner);
+                                                        iLineDifference += (tempFileSInner->iOrigLines - tempFileSInner->iStartingLine);
+                                                    }
+                                                    ++iCFileInner;
+                                                }
+                                                lstAffectedFiles.pop_front();
+                                            }
+                                        }
+
                                         qint16 iFPos = strMessage.indexOf("File   : ");
                                         strMessage.remove(strMessage.indexOf("File   : ")-1, strMessage.indexOf("\n", strMessage.indexOf("Line   : "))-strMessage.indexOf("File   : ")+2);
-                                        strMessage.insert(iFPos-1, QString("File   : ").append(tempFileS->strFilename).append("\n").append("Line   : ").append(QString::number(iLineNumber - tempFileS->iStartingLine + 1 - (iCLine > 0 && iCFile == 0 ? iCLine+1 : 0))).append("\n"));
+                                        strMessage.insert(iFPos-1, QString("File   : ").append(tempFileS->strFilename).append("\n").append("Line   : ").append(QString::number(iLineNumber - tempFileS->iStartingLine - iLineDifference + NEWLINE_LINES - (iCLine > 0 && iCFile == 0 ? (iCLine + NEWLINE_LINES) : 0))).append("\n"));
                                         break;
                                     }
                                     else if (tempFileS->iStartingLine <= iLineNumber)
                                     {
                                         //Not this file
-                                        iCLine += tempFileS->iEndingLine-tempFileS->iStartingLine - tempFileS->iLineSpaces;
+                                        iCLine += tempFileS->iEndingLine-tempFileS->iStartingLine;
                                     }
-                                    --iCFile;
                                 }
                             }
                         }
