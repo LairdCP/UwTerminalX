@@ -136,7 +136,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.15b"; //Version string
+const QString UwVersion                         = "1.16"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates
@@ -933,7 +933,9 @@ private:
     QString gstrDeviceID; //What the server compiler ID is
     bool gbFileOpened; //True when a file on the module has been opened
     QString gstrLastFilename[(FilenameIndexOthers+1)]; //Holds the filenames of the last selected files
+#ifdef RESOLVEIPSEPARATELY
     QString gstrResolvedServer; //Holds the resolved hostname of the XCompile server
+#endif
     bool gbEditFileModified; //True if the file in the editor pane has been modified, otherwise false
     int giEditFileType; //Type of file currently open in the editor
     bool gbErrorsLoaded; //True if error csv file has been loaded

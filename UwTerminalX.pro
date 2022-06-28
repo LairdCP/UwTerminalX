@@ -11,6 +11,8 @@
 #DEFINES += "SKIPSPEEDTEST=1"
 #Uncomment to exclude BL654 USB autorun escape functionality
 #DEFINES += "SKIPUSBRECOVERY=1"
+#Uncomment to resolve IP address from hostname prior to making web request
+#DEFINES == "RESOLVEIPSEPARATELY=1"
 
 
 QT       += core gui widgets serialport network

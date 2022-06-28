@@ -28,6 +28,15 @@
 #include "ui_UwxMainWindow.h"
 
 /******************************************************************************/
+// Defines
+/******************************************************************************/
+#ifdef RESOLVEIPSEPARATELY
+    #define WEB_HOST_NAME gstrResolvedServer
+#else
+    #define WEB_HOST_NAME gpTermSettings->value("OnlineXCompServer", ServerHost).toString()
+#endif
+
+/******************************************************************************/
 // Conditional Compile Defines
 /******************************************************************************/
 #ifdef QT_DEBUG
@@ -692,8 +701,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->text_TermEditData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
     ui->text_LogData->setTabStopDistance(tmTmpFM.horizontalAdvance(" ")*6);
 
+#ifdef RESOLVEIPSEPARATELY
     //Set resolved hostname to be empty
     gstrResolvedServer = "";
+#endif
 
 #ifdef UseSSL
     //Load SSL certificate
@@ -1698,7 +1709,7 @@ MainWindow::SerialRead(
                             //Check if online XCompiler supports this device
                             if (LookupDNSName(true) == true)
                             {
-                                gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                                gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                             }
                         }
                         else
@@ -1765,7 +1776,7 @@ MainWindow::SerialRead(
                             //XCompiler not found, try Online XCompiler
                             if (LookupDNSName(true) == true)
                             {
-                                gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
+                                gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/supported.php?JSON=1&Dev=").append(strDevName).append("&HashA=").append(remTempREM.captured(2)).append("&HashB=").append(remTempREM.captured(3)))));
                                 ui->statusBar->showMessage("Device support request sent...", 2000);
 
                                 if (gchTermMode == MODE_COMPILE)
@@ -4634,7 +4645,7 @@ MainWindow::replyFinished(
                         {
                             //Setup the request and add the original application filename
                             QFileInfo fiFileInfo(gstrTermFilename);
-                            QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/xcompile.php?JSON=1").append((ui->check_EnableModuleFirmwareCheck->isChecked() == true ? "&LatestFW=1" : ""))));
+                            QNetworkRequest nrThisReq(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/xcompile.php?JSON=1").append((ui->check_EnableModuleFirmwareCheck->isChecked() == true ? "&LatestFW=1" : ""))));
                             QByteArray baPostData;
                             baPostData.append("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_XComp\"\r\n\r\n").append(joJsonObject["ID"].toString().toUtf8()).append("\r\n");
                             baPostData.append(QString("-----------------------------17192614014659\r\nContent-Disposition: form-data; name=\"file_sB\"; filename=\"").append(fiFileInfo.fileName().replace("\"", "")).append("\"\r\nContent-Type: application/octet-stream\r\n\r\n").toUtf8());
@@ -5634,7 +5645,7 @@ MainWindow::on_btn_ErrorCodeDownload_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/codes.csv"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/codes.csv"))));
             ui->statusBar->showMessage("Downloading Error Code file...");
         }
     }
@@ -5863,7 +5874,7 @@ MainWindow::on_btn_ModuleFirmware_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/firmwares.php"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/firmwares.php"))));
             ui->statusBar->showMessage("Checking for latest firmware versions...");
         }
     }
@@ -6111,7 +6122,7 @@ MainWindow::on_btn_OnlineXComp_Supported_clicked(
             ui->btn_UwTerminalXUpdate->setEnabled(false);
             ui->btn_ModuleFirmware->setEnabled(false);
             ui->btn_OnlineXComp_Supported->setEnabled(false);
-            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/compiler_list.php"))));
+            gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/compiler_list.php"))));
             ui->statusBar->showMessage("Checking for supported XCompilers...");
         }
     }
@@ -6135,6 +6146,7 @@ MainWindow::LookupDNSName(
     bool bShowError
     )
 {
+#ifdef RESOLVEIPSEPARATELY
     //Function to lookup hostname of the cloud XCompile server (a workaround for a bug causing a segmentation fault on Linux)
     if (gstrResolvedServer == "")
     {
@@ -6153,6 +6165,7 @@ MainWindow::LookupDNSName(
                     gpmErrorForm->show();
                     gpmErrorForm->SetMessage(&strMessage);
                 }
+
                 return false;
             }
             else
@@ -6166,7 +6179,6 @@ MainWindow::LookupDNSName(
 #ifdef UseSSL
                 connect(gnmManager, SIGNAL(sslErrors(QNetworkReply*, QList<QSslError>)), this, SLOT(sslErrors(QNetworkReply*, QList<QSslError>)));
 #endif
-                return true;
             }
         }
         else
@@ -6186,9 +6198,22 @@ MainWindow::LookupDNSName(
                 gpmErrorForm->show();
                 gpmErrorForm->SetMessage(&strMessage);
             }
+
             return false;
         }
     }
+#else
+    //Function will create the network manager object and set it up prior to performing a web request
+    if (gnmManager == NULL)
+    {
+        //Setup QNetwork object
+        gnmManager = new QNetworkAccessManager();
+        connect(gnmManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+#ifdef UseSSL
+        connect(gnmManager, SIGNAL(sslErrors(QNetworkReply*, QList<QSslError>)), this, SLOT(sslErrors(QNetworkReply*, QList<QSslError>)));
+#endif
+    }
+#endif
     return true;
 }
 
@@ -8488,7 +8513,7 @@ MainWindow::UwTerminalXUpdateCheck(
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_uwterminalx.php?Ver=").append(UwVersion).append("&OS=").append(
+        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/update_uwterminalx.php?Ver=").append(UwVersion).append("&OS=").append(
 #ifdef _WIN32
     //Windows
     #ifdef _WIN64
@@ -8545,7 +8570,7 @@ MainWindow::ErrorCodeUpdateCheck(
         ui->btn_UwTerminalXUpdate->setEnabled(false);
         ui->btn_ModuleFirmware->setEnabled(false);
         ui->btn_OnlineXComp_Supported->setEnabled(false);
-        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(gstrResolvedServer).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
+        gnmrReply = gnmManager->get(QNetworkRequest(QUrl(QString(WebProtocol).append("://").append(WEB_HOST_NAME).append("/update_errorcodes.php?Ver=").append(gpErrorMessages->value("Version", "0.00").toString()))));
         ui->statusBar->showMessage("Checking for Error Code file updates...");
     }
 }
