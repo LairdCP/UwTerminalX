@@ -3971,7 +3971,7 @@ This function is enabled/disabled in the Automation and Speed Test features by c
 For example: \00 can be used to represent a null character and \4C can be used to represent an 'L' ASCII character.
 
 
-Copyright © Laird Connectivity 2015-2022
+Copyright © Laird Connectivity 2015-2023
 For updates and source code licensed under GPLv3, check https://github.com/LairdCP/UwTerminalX or the 'Update' tab.
 Plus and Minus images obtained from http://www.clker.com
 

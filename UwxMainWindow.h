@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2022 Laird Connectivity
+** Copyright (C) 2015-2023 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -18,6 +18,8 @@
 **
 **          You should have received a copy of the GNU General Public License
 **          along with this program.  If not, see http://www.gnu.org/licenses/
+**
+** SPDX-License-Identifier: GPL-3.0
 **
 *******************************************************************************/
 #ifndef UWXMAINWINDOW_H
@@ -136,7 +138,7 @@ const qint8 MODE_UPDATE_ERROR_CODE              = 16;
 const qint8 MODE_CHECK_FIRMWARE_VERSIONS        = 17;
 const qint8 MODE_CHECK_FIRMWARE_SUPPORT         = 18;
 //Constants for version and functions
-const QString UwVersion                         = "1.16"; //Version string
+const QString UwVersion                         = "1.17"; //Version string
 //Constants for timeouts and streaming
 const qint16 FileReadBlock                      = 512;     //Number of bytes to read per block when streaming files
 const qint16 StreamProgress                     = 10000;   //Number of bytes between streaming progress updates

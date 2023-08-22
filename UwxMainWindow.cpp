@@ -1,5 +1,5 @@
 /******************************************************************************
-** Copyright (C) 2015-2022 Laird Connectivity
+** Copyright (C) 2015-2023 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
@@ -18,6 +18,8 @@
 **
 **          You should have received a copy of the GNU General Public License
 **          along with this program.  If not, see http://www.gnu.org/licenses/
+**
+** SPDX-License-Identifier: GPL-3.0
 **
 *******************************************************************************/
 
@@ -3107,7 +3109,7 @@ MainWindow::process_finished(
             {
                 //Display size
                 QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc"))).append(") --\n");
+                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc")).toUtf8()).append(") --\n");
             }
             else
             {
@@ -3133,7 +3135,7 @@ MainWindow::process_finished(
             {
                 //Display size of application
                 QList<QString> lstFI = SplitFilePath(gstrTermFilename);
-                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc"))).append(") Downloading --\n");
+                gbaDisplayBuffer.append("\n-- XCompile complete (").append(CleanFilesize(QString(lstFI[0]).append(lstFI[1]).append(".uwc")).toUtf8()).append(") Downloading --\n");
                 if (!gtmrTextUpdateTimer.isActive())
                 {
                     gtmrTextUpdateTimer.start();
