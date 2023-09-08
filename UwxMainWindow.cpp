@@ -239,6 +239,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 #ifndef SKIPAUTOMATIONFORM
     guaAutomationForm = 0;
 #endif
+    gupcPredefinedCommandsForm = 0;
 #ifndef SKIPERRORCODEFORM
     gecErrorCodeForm = 0;
 #else
@@ -385,6 +386,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     gpSMenu4->addAction("Background Colour")->setData(MenuActionBackground);
     gpSMenu4->addAction("Restore Defaults")->setData(MenuActionRestoreDefaults);
     gpMenu->addAction("Run")->setData(MenuActionRun2);
+    gpMenu->addAction("Predefined Commands")->setData(MenuActionPredefinedCommands);
     gpMenu->addAction("Automation")->setData(MenuActionAutomation);
     gpMenu->addAction("Scripting")->setData(MenuActionScripting);
     gpMenu->addAction("Batch")->setData(MenuActionBatch);
@@ -938,6 +940,48 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
             guaAutomationForm->LoadFile(slArgs[chi].right(slArgs[chi].size()-15));
         }
 #endif
+        else if (slArgs[chi].toUpper() == "PREDEFINED COMMANDS" && bArgAccept == true)
+        {
+            //Show predefined commands window
+            if (gupcPredefinedCommandsForm == 0)
+            {
+                //Initialise predefined commands popup
+                gupcPredefinedCommandsForm = new UwxPredefinedCommands(this);
+
+                //Populate window handles for predefined commands object
+                gupcPredefinedCommandsForm->SetPopupHandle(gpmErrorForm);
+
+                //Update predefined commands form with connection status
+                gupcPredefinedCommandsForm->ConnectionChange(gspSerialPort.isOpen());
+
+                //Connect signals
+                connect(gupcPredefinedCommandsForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
+
+                //Show form
+                gupcPredefinedCommandsForm->show();
+            }
+        }
+        else if (slArgs[chi].left(15).toUpper() == "PREDEFINED COMM")
+        {
+            //Load predefined commands file
+            if (gupcPredefinedCommandsForm == 0)
+            {
+                //Initialise predefined commands popup
+                gupcPredefinedCommandsForm = new UwxPredefinedCommands(this);
+
+                //Populate window handles for predefined commands object
+                gupcPredefinedCommandsForm->SetPopupHandle(gpmErrorForm);
+
+                //Update predefined commands form with connection status
+                gupcPredefinedCommandsForm->ConnectionChange(gspSerialPort.isOpen());
+
+                //Connect signals
+                connect(gupcPredefinedCommandsForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
+            }
+
+            //Load file
+            gupcPredefinedCommandsForm->LoadFile(slArgs[chi].right(slArgs[chi].size()-15));
+        }
 #ifndef SKIPSCRIPTINGFORM
         else if (slArgs[chi].toUpper() == "SCRIPTING" && bArgAccept == true)
         {
@@ -1121,6 +1165,15 @@ MainWindow::~MainWindow()
         delete guaAutomationForm;
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        if (gupcPredefinedCommandsForm->isVisible())
+        {
+            //Close predefined commands form
+            gupcPredefinedCommandsForm->close();
+        }
+        delete gupcPredefinedCommandsForm;
+    }
 #ifndef SKIPSCRIPTINGFORM
     if (gusScriptingForm != 0)
     {
@@ -1240,6 +1293,11 @@ MainWindow::closeEvent(
         guaAutomationForm->close();
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0 && gupcPredefinedCommandsForm->isVisible())
+    {
+        //Close predefined commands form
+        gupcPredefinedCommandsForm->close();
+    }
 #ifndef SKIPSCRIPTINGFORM
     if (gusScriptingForm != 0 && gusScriptingForm->isVisible())
     {
@@ -1454,6 +1512,11 @@ MainWindow::on_btn_TermClose_clicked(
             guaAutomationForm->ConnectionChange(false);
         }
 #endif
+        //Notify predefined commands form
+        if (gupcPredefinedCommandsForm != 0)
+        {
+            gupcPredefinedCommandsForm->ConnectionChange(false);
+        }
 
         //Disallow file drops
         setAcceptDrops(false);
@@ -2172,6 +2235,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(0);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+            }
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 #ifndef SKIPAUTOMATIONFORM
             if (guaAutomationForm != 0)
@@ -2179,6 +2246,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(1);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+            }
 
             if (strFilename.length() > 1)
             {
@@ -2245,6 +2316,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(0);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+            }
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 #ifndef SKIPAUTOMATIONFORM
             if (guaAutomationForm != 0)
@@ -2252,6 +2327,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(1);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+            }
 
             if (strFilename.length() > 1)
             {
@@ -2322,6 +2401,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(0);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+            }
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open File To Stream"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
 #ifndef SKIPAUTOMATIONFORM
             if (guaAutomationForm != 0)
@@ -2329,6 +2412,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(1);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+            }
 
             if (strFilename.length() > 1)
             {
@@ -2481,6 +2568,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(0);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+            }
             QString strFilename = QFileDialog::getOpenFileName(this, "Open File", gstrLastFilename[FilenameIndexApplication], "SmartBasic Applications (*.uwc);;All Files (*.*)");
 #ifndef SKIPAUTOMATIONFORM
             if (guaAutomationForm != 0)
@@ -2488,6 +2579,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(1);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+            }
 
             if (strFilename.length() > 1)
             {
@@ -2551,6 +2646,25 @@ MainWindow::MenuSelected(
         guaAutomationForm->show();
     }
 #endif
+    else if (intItem == MenuActionPredefinedCommands)
+    {
+        //Show predefined commands window
+        if (gupcPredefinedCommandsForm == 0)
+        {
+            //Initialise predefined commands popup
+            gupcPredefinedCommandsForm = new UwxPredefinedCommands(this);
+
+            //Populate window handles for predefined commands object
+            gupcPredefinedCommandsForm->SetPopupHandle(gpmErrorForm);
+
+            //Update predefined commands form with connection status
+            gupcPredefinedCommandsForm->ConnectionChange(gspSerialPort.isOpen());
+
+            //Connect signals
+            connect(gupcPredefinedCommandsForm, SIGNAL(SendData(QByteArray,bool,bool)), this, SLOT(MessagePass(QByteArray,bool,bool)));
+        }
+        gupcPredefinedCommandsForm->show();
+    }
 #ifndef SKIPSCRIPTINGFORM
     else if (intItem == MenuActionScripting)
     {
@@ -2597,6 +2711,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(0);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+            }
             QString strFilename = QFileDialog::getOpenFileName(this, tr("Open Batch File"), gstrLastFilename[FilenameIndexOthers], tr("Text Files (*.txt);;All Files (*.*)"));
 #ifndef SKIPAUTOMATIONFORM
             if (guaAutomationForm != 0)
@@ -2604,6 +2722,10 @@ MainWindow::MenuSelected(
                 guaAutomationForm->TempAlwaysOnTop(1);
             }
 #endif
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+            }
 
             if (strFilename.length() > 1)
             {
@@ -2801,6 +2923,10 @@ MainWindow::CompileApp(
         guaAutomationForm->TempAlwaysOnTop(0);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+    }
     QString strFilename = QFileDialog::getOpenFileName(this, (chMode == 6 || chMode == 7 ? tr("Open File") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("Open SmartBasic Application") : tr("Open SmartBasic Source"))), gstrLastFilename[FilenameIndexApplication], (chMode == 6 || chMode == 7 ? tr("All Files (*.*)") : (chMode == MODE_LOAD || chMode == MODE_LOAD_RUN ? tr("SmartBasic Applications (*.uwc);;All Files (*.*)") : tr("Text/SmartBasic Files (*.txt *.sb);;All Files (*.*)"))));
 #ifndef SKIPAUTOMATIONFORM
     if (guaAutomationForm != 0)
@@ -2808,6 +2934,10 @@ MainWindow::CompileApp(
         guaAutomationForm->TempAlwaysOnTop(1);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+    }
 
     if (strFilename != "")
     {
@@ -3308,6 +3438,11 @@ MainWindow::OpenDevice(
             guaAutomationForm->ConnectionChange(false);
         }
 #endif
+        //Notify predefined commands form
+        if (gupcPredefinedCommandsForm != 0)
+        {
+            gupcPredefinedCommandsForm->ConnectionChange(false);
+        }
 
         //Update images
         UpdateImages();
@@ -3410,6 +3545,11 @@ MainWindow::OpenDevice(
                 guaAutomationForm->ConnectionChange(true);
             }
 #endif
+            //Notify predefined commands form
+            if (gupcPredefinedCommandsForm != 0)
+            {
+                gupcPredefinedCommandsForm->ConnectionChange(true);
+            }
 
             //Notify scroll edit
             ui->text_TermEditData->SetSerialOpen(true);
@@ -3813,12 +3953,18 @@ MainWindow::SerialError(
             guaAutomationForm->ConnectionChange(false);
         }
 #endif
+        //Notify predefined commands form
+        if (gupcPredefinedCommandsForm != 0)
+        {
+            gupcPredefinedCommandsForm->ConnectionChange(false);
+        }
 
         //Show disconnection balloon
         if (gbSysTrayEnabled == true && !this->isActiveWindow() && !gpmErrorForm->isActiveWindow()
 #ifndef SKIPAUTOMATIONFORM
            && (guaAutomationForm == 0 || (guaAutomationForm != 0 && !guaAutomationForm->isActiveWindow()))
 #endif
+           && (gupcPredefinedCommandsForm == 0 || (gupcPredefinedCommandsForm != 0 && !gupcPredefinedCommandsForm->isActiveWindow()))
            )
         {
             gpSysTray->showMessage(ui->combo_COM->currentText().append(" Removed"), QString("Connection to device ").append(ui->combo_COM->currentText()).append(" has been lost due to disconnection."), QSystemTrayIcon::Critical);
@@ -3849,7 +3995,7 @@ MainWindow::MessagePass(
     bool bFromScripting
     )
 {
-    //Receive a command from the automation window
+    //Receive a command from the automation or predefined commands window
     if (gspSerialPort.isOpen() == true && (gbTermBusy == false || bFromScripting == true) && gbLoopbackMode == false)
     {
         if (bEscapeString == true)
@@ -4478,6 +4624,10 @@ MainWindow::on_btn_PreXCompSelect_clicked(
         guaAutomationForm->TempAlwaysOnTop(0);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+    }
     QString strFilename = QFileDialog::getOpenFileName(this, "Open Executable/batch", gstrLastFilename[FilenameIndexOthers], "Executables/Batch/Bash files (*.exe *.bat *.sh);;All Files (*.*)");
 #ifndef SKIPAUTOMATIONFORM
     if (guaAutomationForm != 0)
@@ -4485,6 +4635,10 @@ MainWindow::on_btn_PreXCompSelect_clicked(
         guaAutomationForm->TempAlwaysOnTop(1);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+    }
 
     if (strFilename.length() > 1)
     {
@@ -5953,6 +6107,10 @@ MainWindow::on_btn_LogFileSelect_clicked(
         guaAutomationForm->TempAlwaysOnTop(0);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(0);
+    }
     QString strLogFilename = QFileDialog::getSaveFileName(this, "Select Log File", ui->edit_LogFile->text(), "Log Files (*.log);;All Files (*.*)");
 #ifndef SKIPAUTOMATIONFORM
     if (guaAutomationForm != 0)
@@ -5960,6 +6118,10 @@ MainWindow::on_btn_LogFileSelect_clicked(
         guaAutomationForm->TempAlwaysOnTop(1);
     }
 #endif
+    if (gupcPredefinedCommandsForm != 0)
+    {
+        gupcPredefinedCommandsForm->TempAlwaysOnTop(1);
+    }
     if (!strLogFilename.isEmpty())
     {
         //Update log file
@@ -9101,6 +9263,11 @@ MainWindow::on_btn_ExitAutorun_clicked(
                     guaAutomationForm->ConnectionChange(false);
                 }
 #endif
+                //Notify predefined commands form
+                if (gupcPredefinedCommandsForm != 0)
+                {
+                    gupcPredefinedCommandsForm->ConnectionChange(false);
+                }
 
                 //Disallow file drops
                 setAcceptDrops(false);
@@ -9371,6 +9538,11 @@ MainWindow::on_btn_ExitAutorun_clicked(
                     guaAutomationForm->ConnectionChange(false);
                 }
 #endif
+                //Notify predefined commands form
+                if (gupcPredefinedCommandsForm != 0)
+                {
+                    gupcPredefinedCommandsForm->ConnectionChange(false);
+                }
 
                 //Disallow file drops
                 setAcceptDrops(false);

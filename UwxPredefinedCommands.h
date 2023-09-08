@@ -1,9 +1,9 @@
 /******************************************************************************
-** Copyright (C) 2015-2023 Laird Connectivity
+** Copyright (C) 2023 Laird Connectivity
 **
 ** Project: UwTerminalX
 **
-** Module: UwxAutomation.h
+** Module: UwxPredefinedCommands.h
 **
 ** Notes:
 **
@@ -22,18 +22,22 @@
 ** SPDX-License-Identifier: GPL-3.0
 **
 *******************************************************************************/
-#ifndef UWXAUTOMATION_H
-#define UWXAUTOMATION_H
+#ifndef UWXPREDEFINEDCOMMANDS_H
+#define UWXPREDEFINEDCOMMANDS_H
 
 /******************************************************************************/
 // Include Files
 /******************************************************************************/
 #include <QDialog>
 #include "UwxPopup.h"
+#include <QTableView>
 #include <QFileDialog>
 #include <QFile>
 #include <QStatusBar>
-#include <QWheelEvent>
+#include <QPainter>
+#include <QPushButton>
+#include "UwxPredefinedCommandsTab.h"
+#include "PredefinedCommandsTableModel.h"
 
 /******************************************************************************/
 // Defines
@@ -43,31 +47,41 @@
 /******************************************************************************/
 // Constants
 /******************************************************************************/
-const quint16 nAutoItemAllow = 200;    //Number of items in the list to allow
-const quint16 nAutoItemsOnScreen = 10; //Number of items in the list to allow
-const quint16 nAutoWheelScroll = 120;  //Number of lines to scroll per scrolls
+const quint16 nVerticalHeaderHeight = 30;  //Vertical header height
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
 /******************************************************************************/
 namespace Ui
 {
-    class UwxAutomation;
+    class UwxPredefinedCommands;
 }
 
 /******************************************************************************/
 // Class definitions
 /******************************************************************************/
-class UwxAutomation : public QDialog
+class UwxPredefinedCommands : public QDialog
 {
     Q_OBJECT
 
 public:
     explicit
-    UwxAutomation(
+    UwxPredefinedCommands(
         QWidget *parent = 0
         );
-    ~UwxAutomation(
+    ~UwxPredefinedCommands(
+        );
+    void addCommand(
+        QString command, QString description
+        );
+    UwxPredefinedCommandsTab *addCommandGroup(
+        QString name
+        );
+    UwxPredefinedCommandsTab *getCurrentPredefinedCommandsTab(
+        );
+    QTableView *getCurrentTableView(
+        );
+    PredefinedCommandsTableModel *getCurrentTableModel(
         );
     void
     SetPopupHandle(
@@ -82,12 +96,20 @@ public:
         bool bEnabled
         );
     void
-    SetFirstLineFocus(
-        );
-    void
     LoadFile(
         QString strLoadFile
         );
+
+private:
+    void
+        on_btn_Add_clicked(
+            );
+    void
+        on_btn_Remove_clicked(
+            );
+    void
+        on_btn_Clear_clicked(
+            );
 
 private slots:
     void
@@ -97,102 +119,21 @@ private slots:
     on_btn_Save_clicked(
         );
     void
-    on_btn_Top_clicked(
-        );
+        on_btn_Add_Tab_clicked(
+            );
     void
-    on_btn_Up_clicked(
-        );
-    void
-    on_btn_Down_clicked(
-        );
-    void
-    on_btn_Bottom_clicked(
-        );
+        on_btn_Remove_Tab_clicked(
+            );
     void
     on_btn_Close_clicked(
-        );
-    void
-    on_btn_Send1_clicked(
-        );
-    void
-    on_btn_Send2_clicked(
-        );
-    void
-    on_btn_Send3_clicked(
-        );
-    void
-    on_btn_Send4_clicked(
-        );
-    void
-    on_btn_Send5_clicked(
-        );
-    void
-    on_btn_Send6_clicked(
-        );
-    void
-    on_btn_Send7_clicked(
-        );
-    void
-    on_btn_Send8_clicked(
-        );
-    void
-    on_btn_Send9_clicked(
-        );
-    void
-    on_btn_Send10_clicked(
-        );
-    void
-    LoadTextData(
-        );
-    void
-    on_edit_Line1_editingFinished(
-        );
-    void
-    on_edit_Line2_editingFinished(
-        );
-    void
-    on_edit_Line3_editingFinished(
-        );
-    void
-    on_edit_Line4_editingFinished(
-        );
-    void
-    on_edit_Line5_editingFinished(
-        );
-    void
-    on_edit_Line6_editingFinished(
-        );
-    void
-    on_edit_Line7_editingFinished(
-        );
-    void
-    on_edit_Line8_editingFinished(
-        );
-    void
-    on_edit_Line9_editingFinished(
-        );
-    void
-    on_edit_Line10_editingFinished(
-        );
-    void
-    ArrayHighest(
-        );
-    void
-    ArrayPositionUpdate(
-        );
-    void
-    EnterPressed(
-        );
-    void
-    on_btn_Clear_clicked(
         );
     void
     on_check_OnTop_stateChanged(
         int
         );
     void
-    wheelEvent(
-        QWheelEvent *event
+    sendButtonClicked(
+        const QUuid
         );
 
 signals:
@@ -203,15 +144,13 @@ signals:
         );
 
 private:
-    Ui::UwxAutomation *ui;
+    Ui::UwxPredefinedCommands *ui;
     PopupMessage *mFormAuto; //Holds handle of error message dialogue
-    QString mstrAutoItemArray[(nAutoItemAllow+1)]; //Holds the text items
-    unsigned char mchItemPosition; //Current position of the array for the text boxes
-    unsigned char mchItemHighest; //Highest number in the array with an entry that has data
     QStatusBar *msbStatusBar; //Pointer to automation status bar
+    bool serialPortOpen = false;
 };
 
-#endif // UWXAUTOMATION_H
+#endif // UWXPREDEFINEDCOMMANDS_H
 
 /******************************************************************************/
 // END OF FILE

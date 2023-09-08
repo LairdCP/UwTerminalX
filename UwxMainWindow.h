@@ -72,6 +72,7 @@
 #if SKIPAUTOMATIONFORM != 1
 #include "UwxAutomation.h"
 #endif
+#include "UwxPredefinedCommands.h"
 #if SKIPERRORCODEFORM != 1
 #include "UwxErrorCode.h"
 #endif
@@ -222,6 +223,7 @@ const qint8 MenuActionCopy                      = 30;
 const qint8 MenuActionCopyAll                   = 31;
 const qint8 MenuActionPaste                     = 32;
 const qint8 MenuActionSelectAll                 = 33;
+const qint8 MenuActionPredefinedCommands        = 34;
 //Constants for web selection combo box
 const qint8 WebSelectionBL654Applications       = 0;
 const qint8 WebSelectionBL653Applications       = 1;
@@ -952,6 +954,7 @@ private:
 #if SKIPAUTOMATIONFORM != 1
     UwxAutomation *guaAutomationForm; //Automation form
 #endif
+    UwxPredefinedCommands *gupcPredefinedCommandsForm; // Predefined commands form
 #if SKIPERRORCODEFORM != 1
     UwxErrorCode *gecErrorCodeForm; //Error code lookup form
 #endif

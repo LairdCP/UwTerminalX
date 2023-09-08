@@ -21,22 +21,36 @@ TARGET = UwTerminalX
 TEMPLATE = app
 
 SOURCES += main.cpp\
+    CommandGroup.cpp \
+    InputDialog.cpp \
     LrdScrollEdit.cpp \
+    PredefinedCommand.cpp \
+    PredefinedCommandsTableModel.cpp \
     UwxMainWindow.cpp \
     UwxPopup.cpp \
     LrdLogger.cpp \
-    UwxEscape.cpp
+    UwxEscape.cpp \
+    UwxPredefinedCommands.cpp \
+    UwxPredefinedCommandsTab.cpp
 
 HEADERS  += \
+    CommandGroup.h \
+    InputDialog.h \
     LrdScrollEdit.h \
+    PredefinedCommand.h \
+    PredefinedCommandsTableModel.h \
     UwxMainWindow.h \
     UwxPopup.h \
     LrdLogger.h \
-    UwxEscape.h
+    UwxEscape.h \
+    UwxPredefinedCommands.h \
+    UwxPredefinedCommandsTab.h
 
 FORMS    += \
     UwxPopup.ui \
-    UwxMainWindow.ui
+    UwxMainWindow.ui \
+    UwxPredefinedCommands.ui \
+    UwxPredefinedCommandsTab.ui
 
 RESOURCES += \
     UwTerminalXImages.qrc
