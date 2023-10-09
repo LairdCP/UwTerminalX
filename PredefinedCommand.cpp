@@ -31,11 +31,19 @@
 /******************************************************************************/
 // Local Functions or Private Members
 /******************************************************************************/
-PredefinedCommand::PredefinedCommand(QString command, QString description)
+PredefinedCommand::PredefinedCommand(QUuid uuid, QString command, QString description)
 {
     this->mstrCommand = command;
     this->mstrDescription = description;
-    this->uuid = QUuid::createUuid();
+    this->uuid = uuid;
+}
+
+//=============================================================================
+//=============================================================================
+PredefinedCommand::PredefinedCommand(QString command, QString description)
+    : PredefinedCommand(QUuid::createUuid(), command, description)
+{
+
 }
 
 //=============================================================================
@@ -73,6 +81,37 @@ bool PredefinedCommand::setDescription(QString description)
 const QUuid PredefinedCommand::getUuid() const
 {
     return this->uuid;
+}
+
+//=============================================================================
+//=============================================================================
+PredefinedCommand *PredefinedCommand::fromJson(const QJsonObject &json)
+{
+    PredefinedCommand *result = new PredefinedCommand();
+
+    if (const QJsonValue v = json["uuid"]; v.isString())
+        result->uuid = QUuid(v.toString());
+
+    if (const QJsonValue v = json["command"]; v.isString())
+        result->mstrCommand = v.toString();
+
+    if (const QJsonValue v = json["description"]; v.isString())
+        result->mstrDescription = v.toString();
+
+    return result;
+}
+
+//=============================================================================
+//=============================================================================
+QJsonObject PredefinedCommand::toJson() const
+{
+    QJsonObject json;
+
+    json["uuid"] = uuid.toString();
+    json["command"] = mstrCommand;
+    json["description"] = mstrDescription;
+
+    return json;
 }
 
 //=============================================================================

@@ -94,6 +94,44 @@ const QUuid CommandGroup::getUuid() const
 
 //=============================================================================
 //=============================================================================
+CommandGroup *CommandGroup::fromJson(const QJsonObject &json)
+{
+    CommandGroup *result = new CommandGroup("");
+
+    if (const QJsonValue v = json["uuid"]; v.isString())
+        result->uuid = QUuid(v.toString());
+
+    if (const QJsonValue v = json["name"]; v.isString())
+        result->mstrName = v.toString();
+
+    if (const QJsonValue v = json["commands"]; v.isArray()) {
+        const QJsonArray commands = v.toArray();
+        result->mlPredefinedCommands->reserve(commands.size());
+        for (const QJsonValue &command : commands)
+            result->mlPredefinedCommands->append(*PredefinedCommand::fromJson(command.toObject()));
+    }
+
+    return result;
+}
+
+//=============================================================================
+//=============================================================================
+QJsonObject CommandGroup::toJson() const
+{
+    QJsonObject json;
+
+    json["uuid"] = uuid.toString();
+    json["name"] = mstrName;
+    QJsonArray commandsArray;
+    for (const PredefinedCommand &command : qAsConst(*mlPredefinedCommands))
+        commandsArray.append(command.toJson());
+    json["commands"] = commandsArray;
+
+    return json;
+}
+
+//=============================================================================
+//=============================================================================
 CommandGroup::~CommandGroup()
 {
     delete this->mlPredefinedCommands;

@@ -31,6 +31,9 @@
 /******************************************************************************/
 #include <QString>
 #include <QList>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 #include "PredefinedCommand.h"
 
 /******************************************************************************/
@@ -53,6 +56,8 @@ public:
     PredefinedCommand *getPredefinedCommandAt(int index);
     void clear();
     const QUuid getUuid() const;
+    static CommandGroup *fromJson(const QJsonObject &json);
+    QJsonObject toJson() const;
 
 private:
     QString mstrName;

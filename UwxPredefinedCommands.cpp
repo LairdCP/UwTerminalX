@@ -30,6 +30,7 @@
 #include <QString>
 #include <QHeaderView>
 #include <QInputDialog>
+#include <QMessageBox>
 #include "UwxPredefinedCommands.h"
 #include "ui_UwxPredefinedCommands.h"
 #include "UwxPredefinedCommandsTab.h"
@@ -77,8 +78,14 @@ UwxPredefinedCommands::UwxPredefinedCommands(QWidget *parent) : QDialog(parent),
 //=============================================================================
 UwxPredefinedCommandsTab *UwxPredefinedCommands::addCommandGroup(QString name)
 {
+    return addCommandGroup(new CommandGroup(name));
+}
+
+//=============================================================================
+//=============================================================================
+UwxPredefinedCommandsTab *UwxPredefinedCommands::addCommandGroup(CommandGroup *commandGroup)
+{
     // Create tab
-    CommandGroup *commandGroup = new CommandGroup(name);
     UwxPredefinedCommandsTab *tab = new UwxPredefinedCommandsTab();
     PredefinedCommandsTableModel *mpctmTableModel = new PredefinedCommandsTableModel(commandGroup, tab);
     tab->getTableView()->setModel(mpctmTableModel);
@@ -132,12 +139,15 @@ void UwxPredefinedCommands::addCommand(QString command, QString description)
     PredefinedCommand *newCommand = new PredefinedCommand(command, description);
     model->addCommand(*newCommand);
     model->insertRow(model->rowCount(QModelIndex()));
+    addSendButton(newCommand, getCurrentTableView(), model->getCommandGroup()->count() - 1);
+}
 
+void UwxPredefinedCommands::addSendButton(PredefinedCommand *newCommand, QTableView *tableView, int index)
+{
     // Create a new 'Send' push button, add it to the table, and connect a slot to its 'clicked' signal
     QPushButton *sendButton = new QPushButton("&Send");
     sendButton->setEnabled(this->serialPortOpen);
-    int rowIndex = model->getCommandGroup()->count() - 1;
-    getCurrentTableView()->setIndexWidget(model->index(rowIndex, 0), sendButton);
+    tableView->setIndexWidget(tableView->model()->index(index, 0), sendButton);
     connect(sendButton,
             &QPushButton::clicked,
             this,
@@ -173,12 +183,12 @@ UwxPredefinedCommands::on_btn_Load_clicked(
     )
 {
     //Load button clicked
-    qDebug() << "Load button clicked";
     QString strLoadFile;
-    strLoadFile = QFileDialog::getOpenFileName(this, tr("Open Predefined Commands File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
+    strLoadFile = QFileDialog::getOpenFileName(this, tr("Open Predefined Commands File"), "", tr("JSON Files (*.json);;All Files (*.*)"));
     if (strLoadFile != "")
     {
         //We have a file to load!
+        LoadFile(strLoadFile);
     }
 }
 
@@ -189,11 +199,12 @@ UwxPredefinedCommands::on_btn_Save_clicked(
     )
 {
     //Save button clicked
-    qDebug() << "Save button clicked";
     QString strSaveFile;
-    strSaveFile = QFileDialog::getSaveFileName(this, tr("Save Automation File"), "", tr("Text Files (*.txt);;All Files (*.*)"));
+    strSaveFile = QFileDialog::getSaveFileName(this, tr("Save Predefined Commands File"), "", tr("JSON Files (*.json);;All Files (*.*)"));
     if (strSaveFile != "")
     {
+        // We have a file to save!
+        SaveFile(strSaveFile);
     }
 }
 
@@ -264,9 +275,14 @@ void
 {
     if (ui->tabWidget->count() > 1) {
         PredefinedCommandsTableModel *currentTableModel = getCurrentTableModel();
-        ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
-        delete currentTableModel;
-        ui->btn_Remove_Tab->setEnabled(ui->tabWidget->count() > 1);
+        if (QMessageBox::question(this,
+                                  "Remove Group",
+                                  QString("Are you sure you want to remove group \"%1\"?").arg(currentTableModel->getCommandGroup()->getName()),
+                                  QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes) {
+            ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+            delete currentTableModel;
+            ui->btn_Remove_Tab->setEnabled(ui->tabWidget->count() > 1);
+        }
     }
 }
 
@@ -293,12 +309,12 @@ UwxPredefinedCommands::ConnectionChange(
     // Enabled/disable 'Send' buttons based on new connection state
     for (int i = 0; i < ui->tabWidget->count(); i++)
     {
-        UwxPredefinedCommandsTab *currentTab = (UwxPredefinedCommandsTab *)ui->tabWidget->widget(i);
+        UwxPredefinedCommandsTab *currentTab = reinterpret_cast<UwxPredefinedCommandsTab *>(ui->tabWidget->widget(i));
         QTableView *currentView = currentTab->getTableView();
-        PredefinedCommandsTableModel *currentModel = (PredefinedCommandsTableModel *)currentView->model();
+        PredefinedCommandsTableModel *currentModel = reinterpret_cast<PredefinedCommandsTableModel *>(currentView->model());
         for (int j = 0; j < currentModel->rowCount(QModelIndex()); j++)
         {
-            QPushButton *currentButton = (QPushButton *)currentView->indexWidget(currentModel->index(j, 0));
+            QPushButton *currentButton = reinterpret_cast<QPushButton *>(currentView->indexWidget(currentModel->index(j, 0)));
             currentButton->setEnabled(this->serialPortOpen);
         }
     }
@@ -326,7 +342,7 @@ void UwxPredefinedCommands::sendButtonClicked(const QUuid commandUuid)
 //=============================================================================
 UwxPredefinedCommandsTab *UwxPredefinedCommands::getCurrentPredefinedCommandsTab()
 {
-    return (UwxPredefinedCommandsTab *)ui->tabWidget->currentWidget();
+    return reinterpret_cast<UwxPredefinedCommandsTab *>(ui->tabWidget->currentWidget());
 }
 
 //=============================================================================
@@ -340,7 +356,7 @@ QTableView *UwxPredefinedCommands::getCurrentTableView()
 //=============================================================================
 PredefinedCommandsTableModel *UwxPredefinedCommands::getCurrentTableModel()
 {
-    return (PredefinedCommandsTableModel *)getCurrentTableView()->model();
+    return reinterpret_cast<PredefinedCommandsTableModel *>(getCurrentTableView()->model());
 }
 
 //=============================================================================
@@ -410,6 +426,42 @@ UwxPredefinedCommands::TempAlwaysOnTop(
 //=============================================================================
 //=============================================================================
 void
+UwxPredefinedCommands::SaveFile(
+    QString strSaveFile
+    )
+{
+    QFile file(strSaveFile);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        // Unable to open file
+        QString strMessage = tr("Error during predefined commands file save: Access to selected file is denied: ").append(strSaveFile);
+        mFormAuto->SetMessage(&strMessage);
+        mFormAuto->show();
+        return;
+    }
+
+    QJsonObject json;
+
+    QJsonArray groups;
+    for (int i = 0; i < ui->tabWidget->count(); i++)
+    {
+
+        UwxPredefinedCommandsTab *tab = reinterpret_cast<UwxPredefinedCommandsTab *>(ui->tabWidget->widget(i));
+        QTableView *tableView = tab->getTableView();
+        PredefinedCommandsTableModel *model = reinterpret_cast<PredefinedCommandsTableModel *>(tableView->model());
+        groups.append(model->getCommandGroup()->toJson());
+    }
+    json["groups"] = groups;
+
+    file.write(QJsonDocument(json).toJson());
+    file.flush();
+    file.close();
+    msbStatusBar->showMessage(QString(strSaveFile).append(": saved."));
+}
+
+//=============================================================================
+//=============================================================================
+void
 UwxPredefinedCommands::LoadFile(
     QString strLoadFile
     )
@@ -423,6 +475,52 @@ UwxPredefinedCommands::LoadFile(
         mFormAuto->show();
         return;
     }
+
+    QByteArray saveData = file.readAll();
+    file.close();
+
+    QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
+
+    QJsonObject json = loadDoc.object();
+
+    if (const QJsonValue v = json["groups"]; v.isArray()) {
+        const QJsonArray groups = v.toArray();
+
+        // Clear current commands
+        int tabCount = ui->tabWidget->count();
+        for (int i = tabCount - 1; i >= 0; i--)
+        {
+            UwxPredefinedCommandsTab *tab = reinterpret_cast<UwxPredefinedCommandsTab *>(ui->tabWidget->widget(i));
+            QTableView *tableView = tab->getTableView();
+            PredefinedCommandsTableModel *model = reinterpret_cast<PredefinedCommandsTableModel *>(tableView->model());
+
+            model->clear();
+            tableView->reset();
+            ui->tabWidget->removeTab(i);
+            delete model;
+            delete tab;
+        }
+
+        for (const QJsonValue &group : groups)
+        {
+            CommandGroup *newGroup = CommandGroup::fromJson(group.toObject());
+            UwxPredefinedCommandsTab *newTab = addCommandGroup(newGroup);
+            for (int i = 0; i < newGroup->count(); i++)
+            {
+                addSendButton(newGroup->getPredefinedCommandAt(i), newTab->getTableView(), i);
+            }
+
+            newTab->getRemoveButton()->setEnabled(newGroup->count() > 0);
+        }
+
+        if (ui->tabWidget->count() == 0) {
+            // If no groups were added, add a default one
+            addCommandGroup("New Group");
+        }
+
+        ui->btn_Remove_Tab->setEnabled(true);
+    }
+    msbStatusBar->showMessage(QString(strLoadFile).append(": loaded."));
 }
 
 /******************************************************************************/

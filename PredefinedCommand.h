@@ -31,6 +31,8 @@
 /******************************************************************************/
 #include <QString>
 #include <QUuid>
+#include <QJsonObject>
+#include <QJsonValue>
 
 /******************************************************************************/
 // Forward declaration of Class, Struct & Unions
@@ -42,13 +44,16 @@
 class PredefinedCommand
 {
 public:
-    explicit PredefinedCommand(QString command, QString description = "");
+    explicit PredefinedCommand(QString command = "", QString description = "");
+    explicit PredefinedCommand(QUuid uuid, QString command = "", QString description = "");
 
     QString getCommand();
     bool setCommand(QString command);
     QString getDescription();
     bool setDescription(QString description);
     const QUuid getUuid() const;
+    static PredefinedCommand *fromJson(const QJsonObject &json);
+    QJsonObject toJson() const;
     ~PredefinedCommand();
 
 private:

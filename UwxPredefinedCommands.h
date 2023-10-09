@@ -36,6 +36,8 @@
 #include <QStatusBar>
 #include <QPainter>
 #include <QPushButton>
+#include <QJsonDocument>
+#include <QMenu>
 #include "UwxPredefinedCommandsTab.h"
 #include "PredefinedCommandsTableModel.h"
 
@@ -77,6 +79,10 @@ public:
     UwxPredefinedCommandsTab *addCommandGroup(
         QString name
         );
+    UwxPredefinedCommandsTab *addCommandGroup(
+        CommandGroup *group
+        );
+    void addSendButton(PredefinedCommand *newCommand, QTableView *tableView, int index);
     UwxPredefinedCommandsTab *getCurrentPredefinedCommandsTab(
         );
     QTableView *getCurrentTableView(
@@ -98,6 +104,10 @@ public:
     void
     LoadFile(
         QString strLoadFile
+        );
+    void
+    SaveFile(
+        QString strSaveFile
         );
 
 private:
