@@ -591,6 +591,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "0");
         ++nCurrentDevice;
 
+        //Vela IF820
+        strPrefix = QString("Port").append(QString::number(nCurrentDevice));
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Name"), "Vela IF820");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Baud"), "115200");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Parity"), "0");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Stop"), "1");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Data"), "8");
+        gpPredefinedDevice->setValue(QString(strPrefix).append("Flow"), "0");
+        ++nCurrentDevice;
+
         //Mark as completed
         gpPredefinedDevice->setValue(QString("DoneSetup"), "1");
     }
