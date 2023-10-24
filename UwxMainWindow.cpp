@@ -103,10 +103,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //Setup the GUI
     ui->setupUi(this);
 
-#if !defined(_WIN32) && !defined(__APPLE__)
-    setWindowIcon(QIcon(":/images/UwTerminal32.png"));
-#endif
-
 #if SKIPSPEEDTEST == 1
     //Delete speed test elements to reduce RAM usage
     ui->tab_SpeedTest->setEnabled(false);

@@ -483,8 +483,9 @@ UwxPredefinedCommands::LoadFile(
 
     QJsonObject json = loadDoc.object();
 
-    if (const QJsonValue v = json["groups"]; v.isArray()) {
-        const QJsonArray groups = v.toArray();
+    const QJsonValue groupsValue = json["groups"];
+    if (groupsValue.isArray()) {
+        const QJsonArray groups = groupsValue.toArray();
 
         // Clear current commands
         int tabCount = ui->tabWidget->count();

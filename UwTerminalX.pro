@@ -98,6 +98,7 @@ RESOURCES += \
             #64-bit windows
             win32: LIBS += -L$$PWD/FTDI/Win64/ -lftd2xx
         }
+        win32:!*g++*: LIBS += -llegacy_stdio_definitions
 
         HEADERS  += FTDI/ftd2xx.h
     }

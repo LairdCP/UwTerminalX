@@ -98,14 +98,17 @@ CommandGroup *CommandGroup::fromJson(const QJsonObject &json)
 {
     CommandGroup *result = new CommandGroup("");
 
-    if (const QJsonValue v = json["uuid"]; v.isString())
-        result->uuid = QUuid(v.toString());
+    const QJsonValue uuidValue = json["uuid"];
+    if (uuidValue.isString())
+        result->uuid = QUuid(uuidValue.toString());
 
-    if (const QJsonValue v = json["name"]; v.isString())
-        result->mstrName = v.toString();
+    const QJsonValue nameValue = json["name"];
+    if (nameValue.isString())
+        result->mstrName = nameValue.toString();
 
-    if (const QJsonValue v = json["commands"]; v.isArray()) {
-        const QJsonArray commands = v.toArray();
+    const QJsonValue commandsValue = json["commands"];
+    if (commandsValue.isArray()) {
+        const QJsonArray commands = commandsValue.toArray();
         result->mlPredefinedCommands->reserve(commands.size());
         for (const QJsonValue &command : commands)
             result->mlPredefinedCommands->append(*PredefinedCommand::fromJson(command.toObject()));

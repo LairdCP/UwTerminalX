@@ -89,14 +89,17 @@ PredefinedCommand *PredefinedCommand::fromJson(const QJsonObject &json)
 {
     PredefinedCommand *result = new PredefinedCommand();
 
-    if (const QJsonValue v = json["uuid"]; v.isString())
-        result->uuid = QUuid(v.toString());
+    const QJsonValue uuidValue = json["uuid"];
+    if (uuidValue.isString())
+        result->uuid = QUuid(uuidValue.toString());
 
-    if (const QJsonValue v = json["command"]; v.isString())
-        result->mstrCommand = v.toString();
+    const QJsonValue commandValue = json["command"];
+    if (commandValue.isString())
+        result->mstrCommand = commandValue.toString();
 
-    if (const QJsonValue v = json["description"]; v.isString())
-        result->mstrDescription = v.toString();
+    const QJsonValue descriptionValue = json["description"];
+    if (descriptionValue.isString())
+        result->mstrDescription = descriptionValue.toString();
 
     return result;
 }
